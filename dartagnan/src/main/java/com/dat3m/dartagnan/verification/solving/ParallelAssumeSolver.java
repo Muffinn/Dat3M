@@ -24,6 +24,21 @@ import static com.dat3m.dartagnan.wmm.relation.RelationNameRepository.CO;
 import static com.dat3m.dartagnan.wmm.relation.RelationNameRepository.RF;
 import static java.util.Collections.singletonList;
 
+class endThreadCounter {
+    private int threadCounter = 0;
+
+    endThreadCounter(){};
+
+    public void count(){
+        threadCounter++;
+    }
+    public int getThreadCounter() {
+        return threadCounter;
+    }
+
+}
+
+
 public class ParallelAssumeSolver {
 
 
@@ -34,7 +49,7 @@ public class ParallelAssumeSolver {
     public static Result run(SolverContext ctx, ProverEnvironment prover, VerificationTask task)
             throws InterruptedException, SolverException, InvalidConfigurationException {
 		Result res = Result.PASS;
-        Integer numberOfResults = 0;
+        endThreadCounter numberOfResults = new endThreadCounter();
 
 		task.preprocessProgram();
 		task.performStaticProgramAnalyses();
@@ -132,18 +147,21 @@ public class ParallelAssumeSolver {
 			// Case 2.4: w und r und loc, aber r liest von einem anderen Store
 		}
 
-
+        int loopcount = 0;
         while (true){
-            System.out.println("LoopAffe");
+
+            logger.info("Mainloop: loop: " + loopcount);
+            loopcount++;
             synchronized(res){
-                if(res == FAIL){
+                if(res.equals(FAIL)){
                     // TODO: kill all threads
                     return res;
                 } else {
                     synchronized (numberOfResults) {
-                        if (numberOfResults == numberOfRelations * 2) {//
+                        if (numberOfResults.getThreadCounter() == numberOfRelations * 2) {//
                             return res;
                         }
+                        logger.info("Mainloop: numberOfResults: " + numberOfResults.getThreadCounter() + " numberOfRelations" + numberOfRelations);
                     }
                     res.wait();
                 }
@@ -153,10 +171,9 @@ public class ParallelAssumeSolver {
 	}
 
 	private static void runThread(SolverContext ctx, ProverEnvironment prover, VerificationTask task, Tuple tuple, boolean assumption,
-                                  int threadID, Integer numberOfResults, Result endRes, BooleanFormula propertyEncoding)
+                                  int threadID, endThreadCounter numberOfResults, Result endRes, BooleanFormula propertyEncoding)
 			throws InterruptedException, SolverException, InvalidConfigurationException {
 		Result res = Result.UNKNOWN;
-        System.out.println("ThreadAFFE" + threadID + assumption);
 
 		/*task.initializeEncoders(ctx);
         ProgramEncoder programEncoder = task.getProgramEncoder();
@@ -192,20 +209,23 @@ public class ParallelAssumeSolver {
         BooleanFormulaManager bmgr = ctx.getFormulaManager().getBooleanFormulaManager();
         PropertyEncoder propertyEncoder = task.getPropertyEncoder();
 
+
 		BooleanFormula var = task.getMemoryModel().getRelationRepository().getRelation(RF).getSMTVar(tuple,ctx);
 		prover.addConstraint(assumption ? var : bmgr.not(var));
 
         BooleanFormula assumptionLiteral = bmgr.makeVariable("DAT3M_spec_assumption");
         BooleanFormula assumedSpec = bmgr.implication(assumptionLiteral, propertyEncoding);
         prover.addConstraint(assumedSpec);
-        
-        logger.info("Starting first solver.check()");
+
+
+        logger.info("Thread " + threadID + ": Starting first solver.check()");
         if(prover.isUnsatWithAssumptions(singletonList(assumptionLiteral))) {
-			prover.addConstraint(propertyEncoder.encodeBoundEventExec(ctx));
+            //System.out.println("ThreadSuchAFFEPASS" + threadID + assumption);
+            prover.addConstraint(propertyEncoder.encodeBoundEventExec(ctx));
             logger.info("Starting second solver.check()");
             res = prover.isUnsat()? PASS : Result.UNKNOWN;
         } else {
-        	res = FAIL;
+            res = FAIL;
         }
     
         if(logger.isDebugEnabled()) {        	
@@ -217,30 +237,35 @@ public class ParallelAssumeSolver {
         }
 
         res = task.getProgram().getAss().getInvert() ? res.invert() : res;
-        logger.info("Verification finished with result " + res);
+        logger.info("Thread " + threadID + ": Verification finished with result " + res);
         synchronized (endRes){
-            if(endRes == FAIL){
+            if(endRes.equals(FAIL)){
                 return;
             }
-            if (res == FAIL){
+            if (res.equals(FAIL)){
                 endRes = FAIL;
                 endRes.notify();
             }
-            if (res == UNKNOWN){
+            if (res.equals(UNKNOWN)){
                 endRes = UNKNOWN;
                 synchronized (numberOfResults){
-                    numberOfResults++;
+                    numberOfResults.count();
+                    logger.info("Thread " + threadID +  ": Inced to" + numberOfResults.getThreadCounter());
                 }
                 endRes.notify();
             }
-            if(res == PASS){
+            if(res.equals(PASS)){
+
                 synchronized (numberOfResults){
-                    numberOfResults++;
+                    numberOfResults.count();
+                    logger.info("Thread " + threadID +  ": Inced to" + numberOfResults.getThreadCounter());
                 }
                 endRes.notify();
+                return;
             }
         }
+        logger.error("Thread " + threadID + ": reached unreachable end ?!?!?!?");
         return;
-        //return res;
+
     }
 }
