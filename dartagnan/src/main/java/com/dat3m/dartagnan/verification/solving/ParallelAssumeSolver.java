@@ -57,12 +57,16 @@ public class ParallelAssumeSolver {
         }
 
         logger.info("Starting encoding using " + ctx.getVersion());
-        prover.addConstraint(programEncoder.encodeFullProgram(ctx));
-        prover.addConstraint(wmmEncoder.encodeFullMemoryModel(ctx));
+        BooleanFormula fullProgramFormula = programEncoder.encodeFullProgram(ctx);
+        //prover.addConstraint(programEncoder.encodeFullProgram(ctx));
+        BooleanFormula wmmFormula = wmmEncoder.encodeFullMemoryModel(ctx);
+        //prover.addConstraint(wmmEncoder.encodeFullMemoryModel(ctx));
         // For validation this contains information.
         // For verification graph.encode() just returns ctx.mkTrue()
-        prover.addConstraint(task.getWitness().encode(task.getProgram(), ctx));
-        prover.addConstraint(symmEncoder.encodeFullSymmetry(ctx));
+        BooleanFormula witnessFormula = task.getWitness().encode(task.getProgram(), ctx);
+        //prover.addConstraint(task.getWitness().encode(task.getProgram(), ctx));
+        BooleanFormula symmFormula = symmEncoder.encodeFullSymmetry(ctx);
+        //prover.addConstraint(symmEncoder.encodeFullSymmetry(ctx));
 
 
 		Relation rf = task.getMemoryModel().getRelationRepository().getRelation(RF);
@@ -76,16 +80,22 @@ public class ParallelAssumeSolver {
         //Result results[][] = new Result[numberOfRelations][2];
         System.out.println("number of Relations Affe:" + numberOfRelations);
 
+        ProverEnvironment[] proverEnvironments = new ProverEnvironment[numberOfRelations * 2];
 
 
         for(int i = 0; i < numberOfRelations; i++) {
 			Tuple tuple = tupleList.get(i);
-            int threadID = i;
+            int threadID1 = i * 2;
+            proverEnvironments[threadID1] = ctx.newProverEnvironment();
+            proverEnvironments[threadID1].addConstraint(fullProgramFormula);
+            proverEnvironments[threadID1].addConstraint(wmmFormula);
+            proverEnvironments[threadID1].addConstraint(witnessFormula);
+            proverEnvironments[threadID1].addConstraint(symmFormula);
 			// Case 1: true
-			try(ProverEnvironment prover1 = ctx.newProverEnvironment()) {
+			try{
                 new Thread(()-> {
                     try {
-                        runThread(ctx, prover1, task, tuple, true, threadID, numberOfResults, res);
+                        runThread(ctx, proverEnvironments[threadID1], task, tuple, true, threadID1, numberOfResults, res, propertyEncoding);
                     } catch (InterruptedException e){
                         logger.warn("Timeout elapsed. The SMT solver was stopped");
                         System.out.println("TIMEOUT");
@@ -99,9 +109,15 @@ public class ParallelAssumeSolver {
                 System.out.println("ERROR");
             }
 			// Case 2: false
-			ProverEnvironment prover2 = ctx.newProverEnvironment();
+			int threadID2 = i * 2 + 1;
+            proverEnvironments[threadID2] = ctx.newProverEnvironment();
+            proverEnvironments[threadID2].addConstraint(fullProgramFormula);
+            proverEnvironments[threadID2].addConstraint(wmmFormula);
+            proverEnvironments[threadID2].addConstraint(witnessFormula);
+            proverEnvironments[threadID2].addConstraint(symmFormula);
 
-			new Thread(()->{try{runThread(ctx,prover2,task,tuple,false, threadID, numberOfResults, res);
+
+			new Thread(()->{try{runThread(ctx,proverEnvironments[threadID2], task, tuple,false, threadID2, numberOfResults, res,propertyEncoding);
                 } catch (InterruptedException e){
                     logger.warn("Timeout elapsed. The SMT solver was stopped");
                     System.out.println("TIMEOUT");
@@ -125,7 +141,7 @@ public class ParallelAssumeSolver {
                     return res;
                 } else {
                     synchronized (numberOfResults) {
-                        if (numberOfResults == numberOfRelations * 2) {
+                        if (numberOfResults == numberOfRelations * 2) {//
                             return res;
                         }
                     }
@@ -137,18 +153,19 @@ public class ParallelAssumeSolver {
 	}
 
 	private static void runThread(SolverContext ctx, ProverEnvironment prover, VerificationTask task, Tuple tuple, boolean assumption,
-                                  int threadID, Integer numberOfResults, Result endRes)
+                                  int threadID, Integer numberOfResults, Result endRes, BooleanFormula propertyEncoding)
 			throws InterruptedException, SolverException, InvalidConfigurationException {
 		Result res = Result.UNKNOWN;
         System.out.println("ThreadAFFE" + threadID + assumption);
 
-		task.initializeEncoders(ctx);
+		/*task.initializeEncoders(ctx);
         ProgramEncoder programEncoder = task.getProgramEncoder();
         PropertyEncoder propertyEncoder = task.getPropertyEncoder();
         WmmEncoder wmmEncoder = task.getWmmEncoder();
         SymmetryEncoder symmEncoder = task.getSymmetryEncoder();
 
 		BooleanFormulaManager bmgr = ctx.getFormulaManager().getBooleanFormulaManager();
+
 
 		BooleanFormula propertyEncoding = propertyEncoder.encodeSpecification(task.getProperty(), ctx);
         if(bmgr.isFalse(propertyEncoding)) {
@@ -170,7 +187,10 @@ public class ParallelAssumeSolver {
         // For verification graph.encode() just returns ctx.mkTrue()
         prover.addConstraint(task.getWitness().encode(task.getProgram(), ctx));
         prover.addConstraint(symmEncoder.encodeFullSymmetry(ctx));
+        */
 
+        BooleanFormulaManager bmgr = ctx.getFormulaManager().getBooleanFormulaManager();
+        PropertyEncoder propertyEncoder = task.getPropertyEncoder();
 
 		BooleanFormula var = task.getMemoryModel().getRelationRepository().getRelation(RF).getSMTVar(tuple,ctx);
 		prover.addConstraint(assumption ? var : bmgr.not(var));
