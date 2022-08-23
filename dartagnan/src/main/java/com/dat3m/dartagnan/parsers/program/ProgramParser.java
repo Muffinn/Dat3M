@@ -2,6 +2,7 @@ package com.dat3m.dartagnan.parsers.program;
 
 import com.dat3m.dartagnan.exception.ParsingException;
 import com.dat3m.dartagnan.program.Program;
+
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 
@@ -14,14 +15,15 @@ public class ProgramParser {
 
     private static final String TYPE_LITMUS_AARCH64     = "AARCH64";
     private static final String TYPE_LITMUS_PPC         = "PPC";
+    private static final String TYPE_LITMUS_RISCV       = "RISCV";
     private static final String TYPE_LITMUS_X86         = "X86";
     private static final String TYPE_LITMUS_LISA        = "LISA";
     private static final String TYPE_LITMUS_C           = "C";
 
     public Program parse(File file) throws Exception {
     	if(file.getPath().endsWith("c")) {
-            compileWithClang(file);
-            compileWithSmack(file);
+            compileWithClang(file, "");
+            compileWithSmack(file, "");
             String name = file.getName().substring(0, file.getName().lastIndexOf('.'));
             return new ProgramParser().parse(new File(System.getenv("DAT3M_OUTPUT") + "/" + name + ".bpl"));    		
     	}
@@ -36,18 +38,22 @@ public class ProgramParser {
         return program;
     }
 
-    public Program parse(String raw, String format) throws Exception {
+    public Program parse(String raw, String path, String format, String cflags) throws Exception {
         switch (format) {
         	case "c":
         	case "i":
-				File CFile = File.createTempFile("dat3m", ".c");
+				File CFile = path.equals("") ?
+						// This is for the case where the user fully typed the program instead of loading it
+						File.createTempFile("dat3m", ".c") :
+						// This is for the case where the user loaded the program 						
+						new File(path, "dat3m.c");
 				CFile.deleteOnExit();
         		String name = CFile.getName().substring(0, CFile.getName().lastIndexOf('.'));
                 try (FileWriter writer = new FileWriter(CFile)) {
                     writer.write(raw);
                 }
-                compileWithClang(CFile);
-	            compileWithSmack(CFile);
+                compileWithClang(CFile, cflags);
+	            compileWithSmack(CFile, cflags);
 	            File BplFile = new File(System.getenv("DAT3M_OUTPUT") + "/" + name + ".bpl");
 	            BplFile.deleteOnExit();
 	            Program p = new ProgramParser().parse(BplFile);
@@ -85,6 +91,8 @@ public class ProgramParser {
             return new ParserLitmusX86();
         } else if(programText.indexOf(TYPE_LITMUS_LISA) == 0){
             return new ParserLitmusLISA();
+        } else if(programText.indexOf(TYPE_LITMUS_RISCV) == 0){
+            return new ParserLitmusRISCV();
         }
         throw new ParsingException("Unknown input file type");
     }

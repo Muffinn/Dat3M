@@ -8,6 +8,7 @@ import com.dat3m.dartagnan.program.analysis.Dependency;
 import com.dat3m.dartagnan.program.analysis.ExecutionAnalysis;
 import com.dat3m.dartagnan.program.event.core.CondJump;
 import com.dat3m.dartagnan.program.event.core.Event;
+import com.dat3m.dartagnan.program.event.core.ExecutionStatus;
 import com.dat3m.dartagnan.program.event.core.Label;
 import com.dat3m.dartagnan.program.event.core.utils.RegWriter;
 import com.dat3m.dartagnan.program.memory.Memory;
@@ -225,14 +226,30 @@ public class ProgramEncoder implements Encoder {
      * Contextualized with the result of {@link #encodeDependencies(SolverContext) encode}.
      */
     public BooleanFormula dependencyEdge(Event writer, Event reader, SolverContext ctx) {
-        Preconditions.checkArgument(writer instanceof RegWriter);
-        Register register = ((RegWriter) writer).getResultRegister();
-        Dependency.State r = dep.of(reader, register);
-        Preconditions.checkArgument(r.may.contains(writer));
-        BooleanFormulaManager bmgr = ctx.getFormulaManager().getBooleanFormulaManager();
-        return r.must.contains(writer) ? 
-        		execution(writer, reader, exec, ctx) :
-        		dependencyEdgeVariable(writer, reader, bmgr);
+        Preconditions.checkArgument(writer instanceof RegWriter || reader instanceof ExecutionStatus);
+
+        if(reader instanceof ExecutionStatus) {
+            // RISCV store conditionals are not instances of RegWriter, but they still propagate dependencies.
+            // The propagation with future events follows from the status writing to the register.
+            // We achieve this by using an instance of ExecutionStatus that tracks dependencies.
+            // BasicRegRelation will add the corresponding pair to the maxTupleSet if dependency is tracked.
+            // Thus, the whole dependency depends on the store being executed.
+            ExecutionStatus status = (ExecutionStatus)reader;
+            Preconditions.checkArgument(status.doesTrackDep(),
+                    "ExecutionStatus %s does not track dependencies", status);
+            Preconditions.checkArgument(status.getStatusEvent().equals(writer),
+                    "ExecutionStatus %s tracks %s, but %s was provided.",
+                    status, status.getStatusEvent(), writer);
+            return execution(writer, reader, exec, ctx);
+        } else {
+            Register register = ((RegWriter) writer).getResultRegister();
+            Dependency.State r = dep.of(reader, register);
+            Preconditions.checkArgument(r.may.contains(writer));
+            BooleanFormulaManager bmgr = ctx.getFormulaManager().getBooleanFormulaManager();
+            return r.must.contains(writer) ?
+                    execution(writer, reader, exec, ctx) :
+                    dependencyEdgeVariable(writer, reader, bmgr);
+        }
     }
 
     /**
@@ -258,7 +275,16 @@ public class ProgramEncoder implements Encoder {
                     assert writer instanceof RegWriter;
                     BooleanFormula edge;
                     if(state.must.contains(writer)) {
-                        edge = bmgr.and(writer.exec(), reader.cf());
+                        if (exec.isImplied(reader, writer) && reader.cfImpliesExec()) {
+                            // This special case is important. Usually, we encode "dep => regValue = regWriterResult"
+                            // By getting rid of the guard "dep" in this special case, we end up with an unconditional
+                            // "regValue = regWriterResult", which allows the solver to eliminate one of the variables
+                            // in preprocessing.
+                            assert state.may.size() == 1;
+                            edge = bmgr.makeTrue();
+                        } else {
+                            edge = bmgr.and(writer.exec(), reader.cf());
+                        }
                     } else {
                         edge = dependencyEdgeVariable(writer, reader, bmgr);
                         enc = bmgr.and(enc, bmgr.equivalence(edge, bmgr.and(writer.exec(), reader.cf(), bmgr.not(overwrite))));
@@ -286,6 +312,11 @@ public class ProgramEncoder implements Encoder {
 
         FormulaManager fmgr = ctx.getFormulaManager();
         BooleanFormulaManager bmgr = fmgr.getBooleanFormulaManager();
+
+        if (program.getFormat() == Program.SourceLanguage.BOOGIE) {
+            // Boogie does not have assertions over final register values, so we do not need to encode them.
+            return bmgr.makeTrue();
+        }
 
         BooleanFormula enc = bmgr.makeTrue();
         for(Map.Entry<Register,Dependency.State> e : dep.finalWriters().entrySet()) {
