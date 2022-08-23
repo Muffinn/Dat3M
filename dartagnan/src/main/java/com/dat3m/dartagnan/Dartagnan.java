@@ -150,7 +150,7 @@ public class Dartagnan extends BaseOptions {
                 					RefinementTask.fromVerificationTaskWithDefaultBaselineWMM(task));
                 			break;
 						case PARALLELASSUME:
-							result = ParallelAssumeSolver.run(ctx, prover, task);
+							result = ParallelAssumeSolver.run(ctx, prover, task, o.getSolver(),sdm, solverConfig);
 							break;
                 	}
                 }
