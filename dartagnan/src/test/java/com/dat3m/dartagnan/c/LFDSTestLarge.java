@@ -6,10 +6,14 @@ import com.dat3m.dartagnan.utils.rules.CSVLogger;
 import com.dat3m.dartagnan.utils.rules.Provider;
 import com.dat3m.dartagnan.verification.RefinementTask;
 import com.dat3m.dartagnan.verification.solving.AssumeSolver;
+import com.dat3m.dartagnan.verification.solving.ParallelAssumeSolver;
 import com.dat3m.dartagnan.verification.solving.RefinementSolver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.sosy_lab.common.configuration.Configuration;
+import org.sosy_lab.common.configuration.ConfigurationBuilder;
+import org.sosy_lab.java_smt.SolverContextFactory;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -34,7 +38,7 @@ public class LFDSTestLarge extends AbstractCTest {
 
     @Override
     protected long getTimeout() {
-        return 600000;
+        return 60000000;
     }
 
     protected Provider<Integer> getBoundProvider() {
@@ -45,8 +49,11 @@ public class LFDSTestLarge extends AbstractCTest {
     public static Iterable<Object[]> data() throws IOException {
 		return Arrays.asList(new Object[][]{
             {"safe_stack-3", TSO, FAIL},
-            {"safe_stack-3", ARM8, FAIL},
-            {"safe_stack-3", POWER, FAIL},
+            /*{"safe_stack-3", TSO, FAIL},
+            {"safe_stack-3", TSO, FAIL},
+            {"safe_stack-3", TSO, FAIL},
+            /*{"safe_stack-3", ARM8, FAIL},
+            {"safe_stack-3", POWER, FAIL}, //Power ausschalten
             {"dglm-3", TSO, UNKNOWN},
             {"dglm-3", ARM8, UNKNOWN},
             {"dglm-3", POWER, UNKNOWN},
@@ -55,20 +62,27 @@ public class LFDSTestLarge extends AbstractCTest {
             {"ms-3", POWER, UNKNOWN},
             {"treiber-3", TSO, UNKNOWN},
             {"treiber-3", ARM8, UNKNOWN},
-            {"treiber-3", POWER, UNKNOWN},
+            {"treiber-3", POWER, UNKNOWN},*/
         });
     }
 
 	//@Test
-	@CSVLogger.FileName("csv/assume")
+	//@CSVLogger.FileName("csv/assume")
 	public void testAssume() throws Exception {
 		assertEquals(expected, AssumeSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get()));
 	}
 
-	@Test
+	//@Test
 	@CSVLogger.FileName("csv/refinement")
 	public void testRefinement() throws Exception {
 		assertEquals(expected, RefinementSolver.run(contextProvider.get(), proverProvider.get(),
 				RefinementTask.fromVerificationTaskWithDefaultBaselineWMM(taskProvider.get())));
 	}
+
+    @Test
+    //@CSVLogger.FileName("csv/assume")
+    public void testParallelAssume() throws Exception {
+        assertEquals(expected, ParallelAssumeSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3, shutdownManagerProvider.get(),
+        Configuration.defaultConfiguration()));
+    }
 }

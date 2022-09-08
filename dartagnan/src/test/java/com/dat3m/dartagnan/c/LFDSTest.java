@@ -5,11 +5,14 @@ import com.dat3m.dartagnan.utils.rules.CSVLogger;
 import com.dat3m.dartagnan.utils.rules.Provider;
 import com.dat3m.dartagnan.verification.RefinementTask;
 import com.dat3m.dartagnan.verification.solving.AssumeSolver;
+import com.dat3m.dartagnan.verification.solving.ParallelAssumeSolver;
 import com.dat3m.dartagnan.verification.solving.RefinementSolver;
 import com.dat3m.dartagnan.configuration.Arch;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.sosy_lab.common.configuration.Configuration;
+import org.sosy_lab.java_smt.SolverContextFactory;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -44,12 +47,12 @@ public class LFDSTest extends AbstractCTest {
     public static Iterable<Object[]> data() throws IOException {
 		return Arrays.asList(new Object[][]{
             {"dglm-3", TSO, UNKNOWN},
-            {"dglm-3", ARM8, UNKNOWN},
-            {"dglm-3", POWER, UNKNOWN},
-            {"dglm-3", RISCV, UNKNOWN},
-            {"dglm-3-CAS-relaxed", TSO, UNKNOWN},
+            //{"dglm-3", ARM8, UNKNOWN},
+            //{"dglm-3", POWER, UNKNOWN},
+            //{"dglm-3", RISCV, UNKNOWN},
+            //{"dglm-3-CAS-relaxed", TSO, UNKNOWN},
             {"dglm-3-CAS-relaxed", ARM8, FAIL},
-            {"dglm-3-CAS-relaxed", POWER, FAIL},
+            //{"dglm-3-CAS-relaxed", POWER, FAIL},
             {"dglm-3-CAS-relaxed", RISCV, FAIL},
             {"ms-3", TSO, UNKNOWN},
             {"ms-3", ARM8, UNKNOWN},
@@ -85,10 +88,17 @@ public class LFDSTest extends AbstractCTest {
 		assertEquals(expected, AssumeSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get()));
 	}
 
-	@Test
+	//@Test
 	@CSVLogger.FileName("csv/refinement")
 	public void testRefinement() throws Exception {
 		assertEquals(expected, RefinementSolver.run(contextProvider.get(), proverProvider.get(),
 				RefinementTask.fromVerificationTaskWithDefaultBaselineWMM(taskProvider.get())));
 	}
+
+    @Test
+    //@CSVLogger.FileName("csv/assume")
+    public void testParallelAssume() throws Exception {
+        assertEquals(expected, ParallelAssumeSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3, shutdownManagerProvider.get(),
+                Configuration.defaultConfiguration()));
+    }
 }
