@@ -57,7 +57,7 @@ public class ParallelAssumeSolver {
 		task.performStaticWmmAnalyses();
 
         Set<Event> branchRepresentatives = task.getAnalysisContext().get(BranchEquivalence.class).getAllRepresentatives();
-        BooleanFormula wasExecuted = branchRepresentatives.iterator().next().exec();  //note hier geht's weiter gleich weiter
+
 
 
 
@@ -94,7 +94,7 @@ public class ParallelAssumeSolver {
 		List<Tuple> tupleList = new ArrayList<>(rfEncodeSet);
 		Collections.shuffle(tupleList);
 
-        int numberOfRelations = Math.min(4, tupleList.size()); //meeting hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiieeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeerrrrrrrrr
+        int numberOfRelations = Math.min(3, tupleList.size());
 
         ThreadPackage mainThreadPackage = new ThreadPackage();
         mainThreadPackage.setProverEnvironment(prover);
@@ -114,14 +114,14 @@ public class ParallelAssumeSolver {
             int threadID1 = i * 2;
 
             populateThreadPackage(threadPackages[threadID1], mainThreadPackage, formulaContainer, sdm, solverConfig, solver);
-
+            BooleanFormula wasExecuted = branchRepresentatives.iterator().next().exec();  //note hier geht's weiter gleich weiter
 
 
             // Case 1: true
 			try{
                 threads.add(new Thread(()-> {
                     try {
-                        runThread(threadPackages[threadID1], mainThreadPackage, task, tuple, true,
+                        runThread(threadPackages[threadID1], mainThreadPackage, task, wasExecuted,
                                 threadID1, resultCollector);
                     } catch (InterruptedException e){
                         logger.warn("Timeout elapsed. The SMT solver was stopped");
@@ -139,12 +139,13 @@ public class ParallelAssumeSolver {
 			// Case 2: false
 			int threadID2 = i * 2 + 1;
 
+            sdm.requestShutdown("");
+
             populateThreadPackage(threadPackages[threadID2], mainThreadPackage, formulaContainer, sdm, solverConfig, solver);
+            BooleanFormula wasNotExecuted = bmgr.not(branchRepresentatives.iterator().next().exec());  //note hier geht's weiter gleich weiter
 
 
-
-            threads.add(new Thread(()->{try{runThread(threadPackages[threadID2], mainThreadPackage, task, tuple,
-                    false, threadID2, resultCollector);
+            threads.add(new Thread(()->{try{runThread(threadPackages[threadID2], mainThreadPackage, task, wasNotExecuted, threadID2, resultCollector);
                 } catch (InterruptedException e){
                     logger.warn("Timeout elapsed. The SMT solver was stopped");
                     System.out.println("TIMEOUT");
@@ -168,16 +169,17 @@ public class ParallelAssumeSolver {
             synchronized(resultCollector){
                 if(resultCollector.getAggregatedResult().equals(FAIL)){
                     // TODO: kill all threads
-                    for(Thread t:threads){
+                    sdm.requestShutdown("Done");
+                    /*for(Thread t:threads){
                         logger.info("tried to interrupt");
                         t.interrupt();
-                    }
+                    }*/
                     logger.info("Parallel calculations ended. Result: FAIL");
                     return resultCollector.getAggregatedResult();
                 } else {
 
                         if (resultCollector.getNumberOfFinishedThreads() == numberOfRelations * 2) {//
-                            logger.info("Parallel calculations ended. Result: UNKOWN/PASS");
+                            logger.info("Parallel calculations ended. Result: UNKNOWN/PASS");
                             return resultCollector.getAggregatedResult();
                         }
                         logger.info("Mainloop: numberOfResults: " + resultCollector.getAggregatedResult() + " numberOfRelations" + numberOfRelations);
@@ -218,10 +220,11 @@ public class ParallelAssumeSolver {
     }
 
 
-	private static void runThread(ThreadPackage threadPackage , ThreadPackage mainThreadPackage, VerificationTask task, Tuple tuple, boolean assumption,
+	private static void runThread(ThreadPackage threadPackage , ThreadPackage mainThreadPackage, VerificationTask task, BooleanFormula threadFormula,
                                   int threadID, ParallelResultCollector resultCollector)
 			throws InterruptedException, SolverException {
-		Result res;
+
+        Result res;
         SolverContext ctx = threadPackage.getSolverContext();
         SolverContext mainCtx = mainThreadPackage.getSolverContext();
         ProverEnvironment prover = threadPackage.getProverEnvironment();
@@ -232,23 +235,24 @@ public class ParallelAssumeSolver {
         bmgr = ctx.getFormulaManager().getBooleanFormulaManager();
         PropertyEncoder propertyEncoder = task.getPropertyEncoder();
 
-		BooleanFormula var = task.getMemoryModel().getRelationRepository().getRelation(RF).getSMTVar(tuple,ctx);
-		prover.addConstraint(assumption ? var : bmgr.not(var));
+		// note BooleanFormula var = task.getMemoryModel().getRelationRepository().getRelation(RF).getSMTVar(tuple,ctx);
+		// note prover.addConstraint(assumption ? var : bmgr.not(var));
+
+        prover.addConstraint(ctx.getFormulaManager().translateFrom(threadFormula, mainCtx.getFormulaManager()));
 
         BooleanFormula assumptionLiteral = bmgr.makeVariable("DAT3M_spec_assumption");
 
         BooleanFormula assumedSpec = bmgr.implication(assumptionLiteral, propertyEncoding);
-
 
         prover.addConstraint(assumedSpec);
 
 
         logger.info("Thread " + threadID + ": Starting first solver.check()");
         if(prover.isUnsatWithAssumptions(singletonList(assumptionLiteral))) {
-            logger.info("check1 success" + threadID);
-            prover.addConstraint(ctx.getFormulaManager().translateFrom(propertyEncoder.encodeBoundEventExec(mainCtx),mainCtx.getFormulaManager())); //meeting hier war der Fehler
 
-            logger.info("Starting second solver.check()");
+            prover.addConstraint(ctx.getFormulaManager().translateFrom(propertyEncoder.encodeBoundEventExec(mainCtx),mainCtx.getFormulaManager()));
+
+            logger.info("Thread " + threadID + "Starting second solver.check()");
             res = prover.isUnsat()? PASS : Result.UNKNOWN;
         } else {
             res = FAIL;

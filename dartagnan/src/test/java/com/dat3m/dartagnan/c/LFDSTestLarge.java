@@ -48,25 +48,25 @@ public class LFDSTestLarge extends AbstractCTest {
 	@Parameterized.Parameters(name = "{index}: {0}, target={1}")
     public static Iterable<Object[]> data() throws IOException {
 		return Arrays.asList(new Object[][]{
-            {"safe_stack-3", TSO, FAIL},
             /*{"safe_stack-3", TSO, FAIL},
             {"safe_stack-3", TSO, FAIL},
             {"safe_stack-3", TSO, FAIL},
+            {"safe_stack-3", TSO, FAIL},
             /*{"safe_stack-3", ARM8, FAIL},
-            {"safe_stack-3", POWER, FAIL}, //Power ausschalten
+            {"safe_stack-3", POWER, FAIL}, //Power ausschalten*/
             {"dglm-3", TSO, UNKNOWN},
-            {"dglm-3", ARM8, UNKNOWN},
-            {"dglm-3", POWER, UNKNOWN},
+            //{"dglm-3", ARM8, UNKNOWN},
+            //{"dglm-3", POWER, UNKNOWN},
             {"ms-3", TSO, UNKNOWN},
-            {"ms-3", ARM8, UNKNOWN},
-            {"ms-3", POWER, UNKNOWN},
+            //{"ms-3", ARM8, UNKNOWN},
+            //{"ms-3", POWER, UNKNOWN},
             {"treiber-3", TSO, UNKNOWN},
-            {"treiber-3", ARM8, UNKNOWN},
-            {"treiber-3", POWER, UNKNOWN},*/
+            //{"treiber-3", ARM8, UNKNOWN},
+            //{"treiber-3", POWER, UNKNOWN},
         });
     }
 
-	//@Test
+	@Test
 	//@CSVLogger.FileName("csv/assume")
 	public void testAssume() throws Exception {
 		assertEquals(expected, AssumeSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get()));
@@ -79,7 +79,7 @@ public class LFDSTestLarge extends AbstractCTest {
 				RefinementTask.fromVerificationTaskWithDefaultBaselineWMM(taskProvider.get())));
 	}
 
-    @Test
+    //@Test
     //@CSVLogger.FileName("csv/assume")
     public void testParallelAssume() throws Exception {
         assertEquals(expected, ParallelAssumeSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3, shutdownManagerProvider.get(),
