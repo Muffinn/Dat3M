@@ -60,13 +60,13 @@ public class LFDSTestLarge extends AbstractCTest {
             {"ms-3", TSO, UNKNOWN},
             //{"ms-3", ARM8, UNKNOWN},
             //{"ms-3", POWER, UNKNOWN},
-            {"treiber-3", TSO, UNKNOWN},
+            //{"treiber-3", TSO, UNKNOWN},
             //{"treiber-3", ARM8, UNKNOWN},
             //{"treiber-3", POWER, UNKNOWN},
         });
     }
 
-	@Test
+	//@Test
 	//@CSVLogger.FileName("csv/assume")
 	public void testAssume() throws Exception {
 		assertEquals(expected, AssumeSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get()));
@@ -79,7 +79,7 @@ public class LFDSTestLarge extends AbstractCTest {
 				RefinementTask.fromVerificationTaskWithDefaultBaselineWMM(taskProvider.get())));
 	}
 
-    //@Test
+    @Test
     //@CSVLogger.FileName("csv/assume")
     public void testParallelAssume() throws Exception {
         assertEquals(expected, ParallelAssumeSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3, shutdownManagerProvider.get(),
