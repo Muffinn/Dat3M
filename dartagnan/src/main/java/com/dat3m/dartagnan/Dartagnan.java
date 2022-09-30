@@ -8,7 +8,6 @@ import com.dat3m.dartagnan.program.Program;
 import com.dat3m.dartagnan.program.Program.SourceLanguage;
 import com.dat3m.dartagnan.utils.Result;
 import com.dat3m.dartagnan.utils.options.BaseOptions;
-import com.dat3m.dartagnan.verification.RefinementTask;
 import com.dat3m.dartagnan.verification.VerificationTask;
 import com.dat3m.dartagnan.verification.model.ExecutionModel;
 import com.dat3m.dartagnan.verification.solving.*;
@@ -148,8 +147,7 @@ public class Dartagnan extends BaseOptions {
                 			result = AssumeSolver.run(ctx, prover, task);
                 			break;
                 		case CAAT:
-                			result = RefinementSolver.run(ctx, prover,
-                					RefinementTask.fromVerificationTaskWithDefaultBaselineWMM(task));
+							result = RefinementSolver.run(ctx, prover, task);
                 			break;
 						case PARALLELASSUME:
 							result = ParallelAssumeSolver.run(ctx, prover, task, o.getSolver(),sdm, solverConfig);
@@ -209,8 +207,7 @@ public class Dartagnan extends BaseOptions {
         	System.out.println("TIMEOUT");
         	System.exit(0);
         } catch (Exception e) {
-        	logger.info("balaba");
-			logger.error(e.getMessage());
+        	logger.error(e.getMessage(), e);
         	System.out.println("ERROR");
         	System.exit(1);
         }

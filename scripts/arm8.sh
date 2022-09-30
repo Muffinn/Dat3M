@@ -33,11 +33,23 @@ for METHOD in ${METHODS[@]}; do
 
     ## Run Dartagnan
     for BENCHMARK in ${BENCHMARKS[@]}; do
-        start=`python3 -c 'import time; print(int(time.time() * 1000))'`
-        OUTPUT=$(timeout $TIMEOUT java -Xmx2048m -jar dartagnan/target/dartagnan-3.0.0.jar cat/$CAT --bound=2 --target=arm8 --method=$MOPT $BPL_PATH$BENCHMARK.bpl)
-        end=`python3 -c 'import time; print(int(time.time() * 1000))'`
-        TIME=$((end-start))
-        
+        ## safe_stack is unsafe and thus we run it several times to avoid minimise time fluctuations
+        if [[ "$BENCHMARK" == "lfds/safe_stack-3" ]];
+        then
+            start=`python3 -c 'import time; print(int(time.time() * 1000))'`
+            for i in 1 2 3
+            do
+                OUTPUT=$(timeout $TIMEOUT java -Xmx4g -jar dartagnan/target/dartagnan-3.1.0.jar cat/$CAT --bound=2 --target=arm8 --method=$MOPT $DAT3M_OPTIONS $BPL_PATH$BENCHMARK.bpl)
+            done
+            end=`python3 -c 'import time; print(int(time.time() * 1000))'`
+            TIME=$(($((end-start))/3))
+        else
+            start=`python3 -c 'import time; print(int(time.time() * 1000))'`
+            OUTPUT=$(timeout $TIMEOUT java -Xmx2048m -jar dartagnan/target/dartagnan-3.1.0.jar cat/$CAT --bound=2 --target=arm8 --method=$MOPT $DAT3M_OPTIONS $BPL_PATH$BENCHMARK.bpl)
+            end=`python3 -c 'import time; print(int(time.time() * 1000))'`
+            TIME=$((end-start))
+        fi
+                
         if [[ $OUTPUT == *"$DAT3M_FINISHED"* ]];
         then
             if [[ $OUTPUT == *"$DAT3M_FAIL"* ]];

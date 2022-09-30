@@ -2,7 +2,6 @@ package com.dat3m.dartagnan.parsers.cat.visitors;
 
 import com.dat3m.dartagnan.parsers.CatBaseVisitor;
 import com.dat3m.dartagnan.parsers.CatParser;
-import com.dat3m.dartagnan.parsers.CatVisitor;
 import com.dat3m.dartagnan.program.event.Tag;
 import com.dat3m.dartagnan.program.filter.FilterAbstract;
 import com.dat3m.dartagnan.program.filter.FilterBasic;
@@ -19,7 +18,7 @@ import com.dat3m.dartagnan.wmm.relation.unary.*;
 
 import static com.dat3m.dartagnan.wmm.relation.RelationNameRepository.ID;
 
-public class VisitorRelation extends CatBaseVisitor<Relation> implements CatVisitor<Relation> {
+public class VisitorRelation extends CatBaseVisitor<Relation> {
 
     private final VisitorBase base;
 
@@ -120,7 +119,12 @@ public class VisitorRelation extends CatBaseVisitor<Relation> implements CatVisi
 
     @Override
     public Relation visitExprFencerel(CatParser.ExprFencerelContext ctx) {
-        return base.relationRepository.getRelation(RelFencerel.class, ctx.n.getText());
+        boolean orig = base.recursiveDef;
+        base.recursiveDef = false;
+        FilterAbstract filter = ctx.e.accept(base.filterVisitor);
+        Relation relation = base.relationRepository.getRelation(RelFencerel.class, filter);
+        base.recursiveDef = orig;
+        return relation;
     }
 
     @Override

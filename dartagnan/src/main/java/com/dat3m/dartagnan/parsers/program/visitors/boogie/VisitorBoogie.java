@@ -9,7 +9,6 @@ import com.dat3m.dartagnan.expression.processing.ExprSimplifier;
 import com.dat3m.dartagnan.parsers.BoogieBaseVisitor;
 import com.dat3m.dartagnan.parsers.BoogieParser;
 import com.dat3m.dartagnan.parsers.BoogieParser.*;
-import com.dat3m.dartagnan.parsers.BoogieVisitor;
 import com.dat3m.dartagnan.parsers.program.boogie.Function;
 import com.dat3m.dartagnan.parsers.program.boogie.FunctionCall;
 import com.dat3m.dartagnan.parsers.program.boogie.PthreadPool;
@@ -53,7 +52,7 @@ import static com.dat3m.dartagnan.parsers.program.visitors.boogie.SvcompProcedur
 import static com.dat3m.dartagnan.parsers.program.visitors.boogie.LkmmProcedures.*;
 import static com.dat3m.dartagnan.parsers.program.visitors.boogie.SvcompProcedures.handleSvcompFunction;
 
-public class VisitorBoogie extends BoogieBaseVisitor<Object> implements BoogieVisitor<Object> {
+public class VisitorBoogie extends BoogieBaseVisitor<Object> {
 
     private static final Logger logger = LogManager.getLogger(VisitorBoogie.class);
 	
@@ -76,7 +75,6 @@ public class VisitorBoogie extends BoogieBaseVisitor<Object> implements BoogieVi
 	
 	private final Map<String, Proc_declContext> procedures = new HashMap<>();
 	protected PthreadPool pool = new PthreadPool();
-	protected List<Register> allocationRegs = new ArrayList<>();
 	
 	private int nextScopeID = 0;
 	protected Scope currentScope = new Scope(nextScopeID, null);
@@ -437,15 +435,10 @@ public class VisitorBoogie extends BoogieBaseVisitor<Object> implements BoogieVi
 	        		} catch (Exception e) {
 	        			// Nothing to be done
 	        		}
-	        		if(!allocationRegs.contains(value)) {
-	        			// These events are eventually compiled and we need to compare its mo, thus it cannot be null
-	        			programBuilder.addChild(threadCount, EventFactory.newLoad(register, (IExpr)value, ""))
-	        					.setCLine(currentLine)
-	        					.setSourceCodeFile(sourceCodeFile);
-	        		} else {
-	        			// These events are eventually compiled and we need to compare its mo, thus it cannot be null
-	        			programBuilder.addChild(threadCount, EventFactory.newLoad(register, (IExpr)value, ""));
-	        		}						        			
+	        		// These events are eventually compiled and we need to compare its mo, thus it cannot be null
+	        		programBuilder.addChild(threadCount, EventFactory.newLoad(register, (IExpr)value, ""))
+	        				.setCLine(currentLine)
+	        				.setSourceCodeFile(sourceCodeFile);
 		            continue;
 	        	}
 	        	value = value.visit(exprSimplifier);

@@ -4,7 +4,6 @@ import com.dat3m.dartagnan.configuration.Arch;
 import com.dat3m.dartagnan.utils.Result;
 import com.dat3m.dartagnan.utils.rules.CSVLogger;
 import com.dat3m.dartagnan.utils.rules.Provider;
-import com.dat3m.dartagnan.verification.RefinementTask;
 import com.dat3m.dartagnan.verification.solving.AssumeSolver;
 import com.dat3m.dartagnan.verification.solving.ParallelAssumeSolver;
 import com.dat3m.dartagnan.verification.solving.RefinementSolver;
@@ -72,8 +71,7 @@ public class LFDSTestLarge extends AbstractCTest {
 	//@Test
 	@CSVLogger.FileName("csv/refinement")
 	public void testRefinement() throws Exception {
-		assertEquals(expected, RefinementSolver.run(contextProvider.get(), proverProvider.get(),
-				RefinementTask.fromVerificationTaskWithDefaultBaselineWMM(taskProvider.get())));
+		assertEquals(expected, RefinementSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get()));
 	}
 
     @Test

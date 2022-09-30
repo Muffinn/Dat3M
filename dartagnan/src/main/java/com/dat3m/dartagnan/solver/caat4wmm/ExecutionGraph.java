@@ -14,6 +14,7 @@ import com.dat3m.dartagnan.solver.caat.predicates.sets.SetPredicate;
 import com.dat3m.dartagnan.solver.caat4wmm.basePredicates.*;
 import com.dat3m.dartagnan.verification.VerificationTask;
 import com.dat3m.dartagnan.verification.model.ExecutionModel;
+import com.dat3m.dartagnan.wmm.Wmm;
 import com.dat3m.dartagnan.wmm.axiom.Axiom;
 import com.dat3m.dartagnan.wmm.axiom.ForceEncodeAxiom;
 import com.dat3m.dartagnan.wmm.relation.Relation;
@@ -92,10 +93,12 @@ public class ExecutionGraph {
     // --------------------------------------------------
 
     private void constructMappings(boolean createOnlyAxiomRelevantGraphs) {
+        final Wmm memoryModel = verificationTask.getMemoryModel();
+
         Set<RelationGraph> graphs = new HashSet<>();
         Set<Constraint> constraints = new HashSet<>();
 
-        for (Axiom axiom : verificationTask.getAxioms()) {
+        for (Axiom axiom : memoryModel.getAxioms()) {
             if (axiom instanceof ForceEncodeAxiom || axiom.isFlagged()) {
                 continue;
             }
@@ -104,7 +107,7 @@ public class ExecutionGraph {
         }
 
         if (!createOnlyAxiomRelevantGraphs) {
-            for (Relation rel : verificationTask.getRelationDependencyGraph().getNodeContents()) {
+            for (Relation rel : memoryModel.getRelationDependencyGraph().getNodeContents()) {
                 if (!EXCLUDED_RELS.contains(rel.getName())) {
                     RelationGraph graph = getOrCreateGraphFromRelation(rel);
                     graphs.add(graph);
@@ -290,7 +293,7 @@ public class ExecutionGraph {
             } else if (relClass == RelInt.class) {
                 graph = new InternalGraph();
             } else if (relClass == RelFencerel.class) {
-                graph = new FenceGraph(((RelFencerel) rel).getFenceName());
+                graph = new FenceGraph(((RelFencerel) rel).getFilter());
             } else if (relClass == RelSetIdentity.class) {
                 SetPredicate set = getOrCreateSetFromFilter(((RelSetIdentity) rel).getFilter());
                 graph = new SetIdentityGraph(set);

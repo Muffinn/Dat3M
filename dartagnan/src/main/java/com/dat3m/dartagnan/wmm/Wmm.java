@@ -8,8 +8,9 @@ import com.dat3m.dartagnan.wmm.relation.RecursiveRelation;
 import com.dat3m.dartagnan.wmm.relation.Relation;
 import com.dat3m.dartagnan.wmm.utils.RecursiveGroup;
 import com.dat3m.dartagnan.wmm.utils.RelationRepository;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
+import org.sosy_lab.common.configuration.Configuration;
+import org.sosy_lab.common.configuration.InvalidConfigurationException;
 
 import java.util.*;
 
@@ -31,6 +32,7 @@ public class Wmm {
 
     public Wmm() {
         relationRepository = new RelationRepository();
+        BASE_RELATIONS.forEach(relationRepository::getRelation);
     }
 
     public void addAxiom(Axiom ax) {
@@ -40,6 +42,8 @@ public class Wmm {
     public List<Axiom> getAxioms() {
         return axioms;
     }
+
+    public Set<Relation> getRelations() { return relationRepository.getRelations(); }
 
     public List<RecursiveGroup> getRecursiveGroups() { return recursiveGroups; }
 
@@ -56,9 +60,7 @@ public class Wmm {
     }
 
     public void addRecursiveGroup(Set<RecursiveRelation> recursiveGroup){
-        int id = 1 << recursiveGroups.size();
-        Preconditions.checkArgument(id >= 0, "Exceeded maximum number of recursive relations.");
-        recursiveGroups.add(new RecursiveGroup(id, recursiveGroup));
+        recursiveGroups.add(new RecursiveGroup(recursiveGroup));
     }
 
 
@@ -84,6 +86,16 @@ public class Wmm {
 
 
     // ====================== Utility Methods ====================
+
+    public void configureAll(Configuration config) throws InvalidConfigurationException {
+        for (Relation rel : getRelations()) {
+            rel.configure(config);
+        }
+
+        for (Axiom ax : axioms) {
+            ax.configure(config);
+        }
+    }
     
     private DependencyGraph<Relation> relationDependencyGraph;
     
