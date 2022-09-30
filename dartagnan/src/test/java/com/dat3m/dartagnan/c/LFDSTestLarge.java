@@ -38,7 +38,7 @@ public class LFDSTestLarge extends AbstractCTest {
 
     @Override
     protected long getTimeout() {
-        return 60000000;
+        return 600000;
     }
 
     protected Provider<Integer> getBoundProvider() {
@@ -48,20 +48,17 @@ public class LFDSTestLarge extends AbstractCTest {
 	@Parameterized.Parameters(name = "{index}: {0}, target={1}")
     public static Iterable<Object[]> data() throws IOException {
 		return Arrays.asList(new Object[][]{
-            /*{"safe_stack-3", TSO, FAIL},
-            {"safe_stack-3", TSO, FAIL},
-            {"safe_stack-3", TSO, FAIL},
-            {"safe_stack-3", TSO, FAIL},
-            /*{"safe_stack-3", ARM8, FAIL},
-            {"safe_stack-3", POWER, FAIL}, //Power ausschalten*/
+            //{"safe_stack-3", TSO, FAIL},
+            //{"safe_stack-3", ARM8, FAIL},
+            //{"safe_stack-3", POWER, FAIL}, //Power ausschalten*/
             {"dglm-3", TSO, UNKNOWN},
-            //{"dglm-3", ARM8, UNKNOWN},
+            {"dglm-3", ARM8, UNKNOWN},
             //{"dglm-3", POWER, UNKNOWN},
             {"ms-3", TSO, UNKNOWN},
-            //{"ms-3", ARM8, UNKNOWN},
+            {"ms-3", ARM8, UNKNOWN},
             //{"ms-3", POWER, UNKNOWN},
-            //{"treiber-3", TSO, UNKNOWN},
-            //{"treiber-3", ARM8, UNKNOWN},
+            {"treiber-3", TSO, UNKNOWN},
+            {"treiber-3", ARM8, UNKNOWN},
             //{"treiber-3", POWER, UNKNOWN},
         });
     }
@@ -81,8 +78,44 @@ public class LFDSTestLarge extends AbstractCTest {
 
     @Test
     //@CSVLogger.FileName("csv/assume")
-    public void testParallelAssume() throws Exception {
-        assertEquals(expected, ParallelAssumeSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3, shutdownManagerProvider.get(),
-        Configuration.defaultConfiguration()));
+    public void testParallelAssumeSORT() throws Exception {
+        assertEquals(expected, ParallelAssumeSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.MATHSAT5, shutdownManagerProvider.get(),
+        Configuration.defaultConfiguration(), ParallelAssumeSolver.QueueType.MUTUALLY_EXCLUSIVE_EVENTS, 8,3 , 4));
     }
+
+    /*@Test
+    //@CSVLogger.FileName("csv/assume")
+    public void testParallelAssumeMESORT() throws Exception {
+        assertEquals(expected, ParallelAssumeSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3, shutdownManagerProvider.get(),
+                Configuration.defaultConfiguration(), ParallelAssumeSolver.QueueType.MUTUALLY_EXCLUSIVE_SORT, 8, 3, 1));
+    }
+    //MATHSAT5
+    @Test
+    //@CSVLogger.FileName("csv/assume")
+    public void testParallelAssumeMESHUFFLE() throws Exception {
+        assertEquals(expected, ParallelAssumeSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3, shutdownManagerProvider.get(),
+                Configuration.defaultConfiguration(), ParallelAssumeSolver.QueueType.MUTUALLY_EXCLUSIVE_SHUFFLE, 8, 3, 1));
+    }
+
+    @Test
+    //@CSVLogger.FileName("csv/assume")
+    public void testParallelAssumeEVENTS() throws Exception {
+        assertEquals(expected, ParallelAssumeSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3, shutdownManagerProvider.get(),
+                Configuration.defaultConfiguration(), ParallelAssumeSolver.QueueType.EVENTS, 8, 3, 1));
+    }
+
+    @Test
+    //@CSVLogger.FileName("csv/assume")
+    public void testParallelAssumeMEEVENTS() throws Exception {
+        assertEquals(expected, ParallelAssumeSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3, shutdownManagerProvider.get(),
+                Configuration.defaultConfiguration(), ParallelAssumeSolver.QueueType.MUTUALLY_EXCLUSIVE_EVENTS, 8, 3, 1));
+    }
+
+    @Test
+    //@CSVLogger.FileName("csv/assume")
+    public void testParallelAssumeSHUFFLE() throws Exception {
+        assertEquals(expected, ParallelAssumeSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3, shutdownManagerProvider.get(),
+                Configuration.defaultConfiguration(), ParallelAssumeSolver.QueueType.RELATIONS_SHUFFLE, 8, 3, 1));
+    }*/
+
 }
