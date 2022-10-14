@@ -2,6 +2,7 @@ package com.dat3m.dartagnan.verification.solving;
 
 import com.dat3m.dartagnan.program.analysis.ExecutionAnalysis;
 import com.dat3m.dartagnan.program.event.core.Event;
+import com.dat3m.dartagnan.verification.Context;
 import com.dat3m.dartagnan.verification.VerificationTask;
 import com.dat3m.dartagnan.wmm.utils.Tuple;
 import org.sosy_lab.java_smt.api.BooleanFormula;
@@ -18,13 +19,15 @@ public class FormulaQueueManager {
     private SolverContext ctx;
     private BooleanFormulaManager bmgr;
     private VerificationTask task;
+    private Context analysisContext;
 
 
-    public FormulaQueueManager(SolverContext ctx, VerificationTask task){
+    public FormulaQueueManager(SolverContext ctx, VerificationTask task, Context analysisContext){
         this.formulaQueue = new ConcurrentLinkedQueue<BooleanFormula>();
         this.ctx = ctx;
         this.bmgr = ctx.getFormulaManager().getBooleanFormulaManager();
         this.task = task;
+        this.analysisContext = analysisContext;
     }
 
     public BooleanFormula getNextFormula() {
@@ -122,7 +125,7 @@ public class FormulaQueueManager {
 
 
     private void removeMutualExclusiveEvents(List<Event> eventList, int numberOfWantedEvents){
-        ExecutionAnalysis exec = task.getAnalysisContext().get(ExecutionAnalysis.class);
+        ExecutionAnalysis exec = analysisContext.get(ExecutionAnalysis.class);
         for(int i = 1; i < eventList.size(); i++){
             for(int j = 0; j < i; j++){
                 if(exec.areMutuallyExclusive(eventList.get(i), eventList.get(j))){
@@ -160,7 +163,7 @@ public class FormulaQueueManager {
     }
 
     private boolean areMutuallyExclusiv(Tuple firstTuple, Tuple secondTuple){
-        ExecutionAnalysis exec = task.getAnalysisContext().get(ExecutionAnalysis.class);
+        ExecutionAnalysis exec = analysisContext.get(ExecutionAnalysis.class);
         return exec.areMutuallyExclusive(firstTuple.getFirst(), secondTuple.getFirst())
                 || exec.areMutuallyExclusive(firstTuple.getFirst(), secondTuple.getSecond())
                 || exec.areMutuallyExclusive(firstTuple.getSecond(), secondTuple.getFirst())

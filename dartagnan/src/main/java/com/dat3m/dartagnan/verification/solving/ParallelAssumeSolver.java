@@ -4,11 +4,14 @@ import com.dat3m.dartagnan.encoding.ProgramEncoder;
 import com.dat3m.dartagnan.encoding.PropertyEncoder;
 import com.dat3m.dartagnan.encoding.SymmetryEncoder;
 import com.dat3m.dartagnan.encoding.WmmEncoder;
+import com.dat3m.dartagnan.program.Program;
 import com.dat3m.dartagnan.program.analysis.BranchEquivalence;
 import com.dat3m.dartagnan.program.analysis.ExecutionAnalysis;
 import com.dat3m.dartagnan.program.event.core.Event;
 import com.dat3m.dartagnan.utils.Result;
+import com.dat3m.dartagnan.verification.Context;
 import com.dat3m.dartagnan.verification.VerificationTask;
+import com.dat3m.dartagnan.wmm.Wmm;
 import com.dat3m.dartagnan.wmm.axiom.Axiom;
 import com.dat3m.dartagnan.wmm.relation.Relation;
 import com.dat3m.dartagnan.wmm.relation.RelationNameRepository;
@@ -32,7 +35,7 @@ import static java.util.Collections.singletonList;
 
 
 
-public class ParallelAssumeSolver {
+public class ParallelAssumeSolver extends ModelChecker{
 
 
 
@@ -54,17 +57,27 @@ public class ParallelAssumeSolver {
             throws InterruptedException, SolverException, InvalidConfigurationException {
 
 
+        Result res = Result.UNKNOWN;
+        Program program = task.getProgram();
+        Wmm memoryModel = task.getMemoryModel();
+        Context analysisContext = Context.create();
+        Configuration config = task.getConfig();
 
-		task.preprocessProgram();
-		task.performStaticProgramAnalyses();
-		task.performStaticWmmAnalyses();
+        memoryModel.configureAll(config);
+        preprocessProgram(task, config);
+        performStaticProgramAnalyses(task, analysisContext, config);
+        performStaticWmmAnalyses(task, analysisContext, config);
 
+        ProgramEncoder programEncoder = ProgramEncoder.fromConfig(program, analysisContext, config);
+        PropertyEncoder propertyEncoder = PropertyEncoder.fromConfig(program, memoryModel,analysisContext, config);
+        WmmEncoder wmmEncoder = WmmEncoder.fromConfig(memoryModel, analysisContext, config);
+        SymmetryEncoder symmetryEncoder = SymmetryEncoder.fromConfig(memoryModel, analysisContext, config);
 
-        task.initializeEncoders(ctx);
-        ProgramEncoder programEncoder = task.getProgramEncoder();
-        PropertyEncoder propertyEncoder = task.getPropertyEncoder();
-        WmmEncoder wmmEncoder = task.getWmmEncoder();
-        SymmetryEncoder symmEncoder = task.getSymmetryEncoder();
+        programEncoder.initializeEncoding(ctx);
+        propertyEncoder.initializeEncoding(ctx);
+        wmmEncoder.initializeEncoding(ctx);
+        symmetryEncoder.initializeEncoding(ctx);
+
 
         BooleanFormulaManager bmgr = ctx.getFormulaManager().getBooleanFormulaManager();
 
@@ -75,7 +88,6 @@ public class ParallelAssumeSolver {
             return PASS;
 
         }
-        ExecutionAnalysis exec = task.getAnalysisContext().get(ExecutionAnalysis.class);
         //exec.areMutuallyExclusive();
 
 
@@ -87,7 +99,7 @@ public class ParallelAssumeSolver {
         formulaContainer.setFullProgramFormula(programEncoder.encodeFullProgram(ctx));
         formulaContainer.setWmmFormula(wmmEncoder.encodeFullMemoryModel(ctx));
         formulaContainer.setWitnessFormula(task.getWitness().encode(task.getProgram(), ctx));
-        formulaContainer.setSymmFormula(symmEncoder.encodeFullSymmetry(ctx));
+        formulaContainer.setSymmFormula(symmetryEncoder.encodeFullSymmetry(ctx));
 
         ThreadPackage mainThreadPackage = new ThreadPackage();
         mainThreadPackage.setProverEnvironment(prover);
@@ -100,11 +112,11 @@ public class ParallelAssumeSolver {
 		TupleSet rfEncodeSet = rf.getEncodeTupleSet();
 		List<Tuple> tupleList = new ArrayList<>(rfEncodeSet);
 
-        Set<Event> branchRepresentatives = task.getAnalysisContext().get(BranchEquivalence.class).getAllRepresentatives();
+        Set<Event> branchRepresentatives = analysisContext.get(BranchEquivalence.class).getAllRepresentatives();
         List<Event> eventList = new ArrayList<>(branchRepresentatives);
 
 
-        FormulaQueueManager fqmgr = new FormulaQueueManager(ctx, task);
+        FormulaQueueManager fqmgr = new FormulaQueueManager(ctx, task, analysisContext);
         switch(queueTypeSetting){
             case RELATIONS_SHUFFLE:
                 Collections.shuffle(tupleList);
@@ -146,15 +158,8 @@ public class ParallelAssumeSolver {
 
         }
 
-        //int numberOfRelations = Math.min(3, tupleList.size());
         int totalThreadnumber = fqmgr.getQueuesize();
 
-
-
-        /*ThreadPackage[] threadPackages = new ThreadPackage[totalThreadnumber];
-        for (int i = 0; i < totalThreadnumber; i++){
-            threadPackages[i] = new ThreadPackage();
-        }*/
 
         List<Thread> threads = new ArrayList<Thread>(totalThreadnumber);
 
@@ -166,21 +171,15 @@ public class ParallelAssumeSolver {
                     resultCollector.wait();
                 }
             }
-
             int threadID1 = i;
-            ThreadPackage newthreadPackage = new ThreadPackage();
-            //populateThreadPackage(newthreadPackage, mainThreadPackage, formulaContainer, sdm, solverConfig, solver);
-            //BooleanFormula wasExecuted = branchRepresentatives.iterator().next().exec();  //note hier geht's weiter gleich weiter
             BooleanFormula checkFormula = fqmgr.getNextFormula();
-
-
             // Case 1: true
 			try{
                 threads.add(new Thread(()-> {
                     try {
                         runThread(mainThreadPackage, task, checkFormula,
                                 threadID1, resultCollector, formulaContainer,
-                                sdm, solverConfig, solver);
+                                sdm, solverConfig, solver, propertyEncoder);
                     } catch (InterruptedException e){
                         logger.warn("Timeout elapsed. The SMT solver was stopped");
                         System.out.println("TIMEOUT");
@@ -194,24 +193,6 @@ public class ParallelAssumeSolver {
                 logger.error(e.getMessage());
                 System.out.println("ERROR");
             }
-			// Case 2: false
-			/*int threadID2 = i * 2 + 1;
-
-
-            populateThreadPackage(threadPackages[threadID2], mainThreadPackage, formulaContainer, sdm, solverConfig, solver);
-            BooleanFormula wasNotExecuted = bmgr.not(branchRepresentatives.iterator().next().exec());  //note hier geht's weiter gleich weiter
-
-
-            threads.add(new Thread(()->{try{runThread(threadPackages[threadID2], mainThreadPackage, task, wasNotExecuted, threadID2, resultCollector);
-                } catch (InterruptedException e){
-                    logger.warn("Timeout elapsed. The SMT solver was stopped");
-                    System.out.println("TIMEOUT");
-                } catch (Exception e) {
-                    logger.error(e.getMessage());
-                    System.out.println("ERROR");
-                }
-            }));
-            threads.get(threads.size() - 1).start();*/
 		}
 
         int loopcount = 0;
@@ -264,7 +245,8 @@ public class ParallelAssumeSolver {
 
         threadPackage.setPropertyEncoding(newPropertyEncoding);
 
-        ProverEnvironment newProverEnvironment = newSolverContext.newProverEnvironment();
+        ProverEnvironment newProverEnvironment = newSolverContext.newProverEnvironment(SolverContext.ProverOptions.GENERATE_MODELS);//meeting was macht das?
+
 
         threadPackage.setProverEnvironment(newProverEnvironment);
 
@@ -277,7 +259,7 @@ public class ParallelAssumeSolver {
 
 	private static void runThread(ThreadPackage mainThreadPackage, VerificationTask task, BooleanFormula threadFormula,
                                   int threadID, ParallelResultCollector resultCollector,  FormulaContainer mainThreadFormulas,
-                                  ShutdownManager sdm, Configuration solverConfig, SolverContextFactory.Solvers solver)
+                                  ShutdownManager sdm, Configuration solverConfig, SolverContextFactory.Solvers solver, PropertyEncoder propertyEncoder)
 			throws InterruptedException, SolverException, InvalidConfigurationException {
 
         long startTime = System.currentTimeMillis();
@@ -287,20 +269,20 @@ public class ParallelAssumeSolver {
 
         Result res;
         SolverContext ctx = myThreadPackage.getSolverContext();
-        SolverContext mainCtx = mainThreadPackage.getSolverContext();
+        SolverContext mainCtx;
+        synchronized(mainThreadPackage){mainCtx = mainThreadPackage.getSolverContext();}
         ProverEnvironment prover = myThreadPackage.getProverEnvironment();
         BooleanFormula propertyEncoding = myThreadPackage.getPropertyEncoding();
 
 
         BooleanFormulaManager bmgr = ctx.getFormulaManager().getBooleanFormulaManager();
-        PropertyEncoder propertyEncoder = task.getPropertyEncoder();
 
 		// note BooleanFormula var = task.getMemoryModel().getRelationRepository().getRelation(RF).getSMTVar(tuple,ctx);
 		// note prover.addConstraint(assumption ? var : bmgr.not(var));
 
 
 
-        prover.addConstraint(ctx.getFormulaManager().translateFrom(threadFormula, mainCtx.getFormulaManager()));
+        synchronized (mainCtx){prover.addConstraint(ctx.getFormulaManager().translateFrom(threadFormula, mainCtx.getFormulaManager()));}
 
         BooleanFormula assumptionLiteral = bmgr.makeVariable("DAT3M_spec_assumption");
 
@@ -312,7 +294,7 @@ public class ParallelAssumeSolver {
         logger.info("Thread " + threadID + ": Starting first solver.check()");
         if(prover.isUnsatWithAssumptions(singletonList(assumptionLiteral))) {
 
-            prover.addConstraint(ctx.getFormulaManager().translateFrom(propertyEncoder.encodeBoundEventExec(mainCtx),mainCtx.getFormulaManager()));
+            synchronized (mainCtx) {prover.addConstraint(ctx.getFormulaManager().translateFrom(propertyEncoder.encodeBoundEventExec(mainCtx),mainCtx.getFormulaManager()));}
 
             //prover.addConstraint(propertyEncoder.encodeBoundEventExec(ctx));
 
@@ -390,7 +372,5 @@ public class ParallelAssumeSolver {
 
 
 
-    public enum QueueType{
-        RELATIONS_SHUFFLE, RELATIONS_SORT, SINGLE_LITERAL, EMPTY, MUTUALLY_EXCLUSIVE_SORT, MUTUALLY_EXCLUSIVE_SHUFFLE, EVENTS, MUTUALLY_EXCLUSIVE_EVENTS;
-    }
+
 }

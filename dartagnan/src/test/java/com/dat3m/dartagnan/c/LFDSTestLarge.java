@@ -4,9 +4,7 @@ import com.dat3m.dartagnan.configuration.Arch;
 import com.dat3m.dartagnan.utils.Result;
 import com.dat3m.dartagnan.utils.rules.CSVLogger;
 import com.dat3m.dartagnan.utils.rules.Provider;
-import com.dat3m.dartagnan.verification.solving.AssumeSolver;
-import com.dat3m.dartagnan.verification.solving.ParallelAssumeSolver;
-import com.dat3m.dartagnan.verification.solving.RefinementSolver;
+import com.dat3m.dartagnan.verification.solving.*;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -50,11 +48,11 @@ public class LFDSTestLarge extends AbstractCTest {
             //{"safe_stack-3", TSO, FAIL},
             //{"safe_stack-3", ARM8, FAIL},
             //{"safe_stack-3", POWER, FAIL}, //Power ausschalten*/
-            {"dglm-3", TSO, UNKNOWN},
-            {"dglm-3", ARM8, UNKNOWN},
+            //{"dglm-3", TSO, UNKNOWN},
+            //{"dglm-3", ARM8, UNKNOWN},
             //{"dglm-3", POWER, UNKNOWN},
-            {"ms-3", TSO, UNKNOWN},
-            {"ms-3", ARM8, UNKNOWN},
+            //{"ms-3", TSO, UNKNOWN},
+            //{"ms-3", ARM8, UNKNOWN},
             //{"ms-3", POWER, UNKNOWN},
             {"treiber-3", TSO, UNKNOWN},
             {"treiber-3", ARM8, UNKNOWN},
@@ -74,46 +72,20 @@ public class LFDSTestLarge extends AbstractCTest {
 		assertEquals(expected, RefinementSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get()));
 	}
 
-    @Test
-    //@CSVLogger.FileName("csv/assume")
-    public void testParallelAssumeSORT() throws Exception {
-        assertEquals(expected, ParallelAssumeSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.MATHSAT5, shutdownManagerProvider.get(),
-        Configuration.defaultConfiguration(), ParallelAssumeSolver.QueueType.MUTUALLY_EXCLUSIVE_EVENTS, 8,3 , 4));
-    }
-
-    /*@Test
-    //@CSVLogger.FileName("csv/assume")
-    public void testParallelAssumeMESORT() throws Exception {
-        assertEquals(expected, ParallelAssumeSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3, shutdownManagerProvider.get(),
-                Configuration.defaultConfiguration(), ParallelAssumeSolver.QueueType.MUTUALLY_EXCLUSIVE_SORT, 8, 3, 1));
-    }
-    //MATHSAT5
-    @Test
-    //@CSVLogger.FileName("csv/assume")
-    public void testParallelAssumeMESHUFFLE() throws Exception {
-        assertEquals(expected, ParallelAssumeSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3, shutdownManagerProvider.get(),
-                Configuration.defaultConfiguration(), ParallelAssumeSolver.QueueType.MUTUALLY_EXCLUSIVE_SHUFFLE, 8, 3, 1));
-    }
 
     @Test
-    //@CSVLogger.FileName("csv/assume")
-    public void testParallelAssumeEVENTS() throws Exception {
-        assertEquals(expected, ParallelAssumeSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3, shutdownManagerProvider.get(),
-                Configuration.defaultConfiguration(), ParallelAssumeSolver.QueueType.EVENTS, 8, 3, 1));
+    @CSVLogger.FileName("csv/refinement")
+    public void testParallelRefinement() throws Exception {
+        assertEquals(expected, ParallelRefinementSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), shutdownManagerProvider.get()));
     }
 
-    @Test
+    //@Test
     //@CSVLogger.FileName("csv/assume")
-    public void testParallelAssumeMEEVENTS() throws Exception {
+    public void testParallelAssume() throws Exception {
         assertEquals(expected, ParallelAssumeSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3, shutdownManagerProvider.get(),
-                Configuration.defaultConfiguration(), ParallelAssumeSolver.QueueType.MUTUALLY_EXCLUSIVE_EVENTS, 8, 3, 1));
+        Configuration.defaultConfiguration(), QueueType.MUTUALLY_EXCLUSIVE_EVENTS, 5,3 , 6));
     }
 
-    @Test
-    //@CSVLogger.FileName("csv/assume")
-    public void testParallelAssumeSHUFFLE() throws Exception {
-        assertEquals(expected, ParallelAssumeSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3, shutdownManagerProvider.get(),
-                Configuration.defaultConfiguration(), ParallelAssumeSolver.QueueType.RELATIONS_SHUFFLE, 8, 3, 1));
-    }*/
+
 
 }
