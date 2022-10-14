@@ -158,11 +158,12 @@ public class Dartagnan extends BaseOptions {
                 		case CAAT:
 							modelChecker = RefinementSolver.run(ctx, prover, task);
                 			break;
+							/*case PARALLELASSUME:
+							result = ParallelAssumeSolver.run(ctx, prover, task, o.getSolver(),sdm, solverConfig);
+							break;*/
 						default:
 							throw new InvalidConfigurationException("unsupported method " + o.getMethod());
-						case PARALLELASSUME:
-							result = ParallelAssumeSolver.run(ctx, prover, task, o.getSolver(),sdm, solverConfig);
-							break;
+
                 	}
                 }
 

@@ -60,7 +60,7 @@ public class FormulaQueueManager {
 
     private void recursiveRelationTuples(BooleanFormula currentFormula, int length, int maxLength, int anzTrue, int maxTrue, List<Tuple> tupleList, String relationName){
 
-        BooleanFormula var = task.getMemoryModel().getRelationRepository().getRelation(relationName).getSMTVar(tupleList.get(length), ctx);
+        BooleanFormula var = task.getMemoryModel().getRelation(relationName).getSMTVar(tupleList.get(length), encodingctx);
         BooleanFormula notVar = bmgr.not(var);
         var = bmgr.and(var, currentFormula);
         notVar = bmgr.and(notVar, currentFormula);
@@ -104,7 +104,7 @@ public class FormulaQueueManager {
 
     private void recursiveEventsQueue(BooleanFormula currentFormula, int length, int maxLength, int anzTrue, int maxTrue, List<Event> eventList){
 
-        BooleanFormula var = eventList.get(length).exec();
+        BooleanFormula var = eventList.get(length).exec(); //encodingContext.exec(evebtList.get(length));
         BooleanFormula notVar = bmgr.not(var);
         var = bmgr.and(var, currentFormula);
         notVar = bmgr.and(notVar, currentFormula);
