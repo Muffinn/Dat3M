@@ -1,6 +1,13 @@
 package com.dat3m.dartagnan.verification.solving;
 
+import com.dat3m.dartagnan.encoding.EncodingContext;
+import com.dat3m.dartagnan.verification.VerificationTask;
 import com.dat3m.dartagnan.wmm.utils.Tuple;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.sosy_lab.java_smt.api.BooleanFormula;
+import org.sosy_lab.java_smt.api.BooleanFormulaManager;
+import org.sosy_lab.java_smt.api.SolverContext;
 
 import java.util.BitSet;
 import java.util.List;
@@ -8,6 +15,10 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class FormulaQueueManager {
+
+    private static final Logger logger = LogManager.getLogger(AssumeSolver.class);
+
+
     //private Queue<BooleanFormula> formulaQueue;
     private Queue<BitSet> bitsetQueue;
     private List<Tuple> tupleList;
@@ -107,6 +118,31 @@ public class FormulaQueueManager {
             addBitSet((BitSet)currentBitSet.clone());
             System.out.println("Added BitSet: " + currentBitSet);
         }
+    }
+
+    public BooleanFormula generateRelationFormula(SolverContext ctx, EncodingContext encodingCTX, VerificationTask mainTask, int threadID){
+        int positiveCount = 0;
+        BitSet myBitSet = getNextBitSet();
+        BooleanFormulaManager bmgr = ctx.getFormulaManager().getBooleanFormulaManager();
+        BooleanFormula myFormula = bmgr.makeTrue();
+        String relationName = getRelationName();
+        for (int i = 0; i < queueTypeSettingInt1; i++){
+            if(myBitSet.get(i)){
+                BooleanFormula var = mainTask.getMemoryModel().getRelation(relationName).getSMTVar(tupleList.get(i), encodingCTX);
+                myFormula = bmgr.and(var, myFormula);
+                positiveCount++;
+                if(positiveCount == queueTypeSettingInt2){
+                    logger.info("Thread " + threadID + ": " +  "generated Formula: " + myFormula);
+                    return myFormula;
+                }
+            }else{
+                BooleanFormula notVar = bmgr.not(mainTask.getMemoryModel().getRelation(relationName).getSMTVar(tupleList.get(i), encodingCTX));
+                myFormula = bmgr.and(notVar, myFormula);
+            }
+        }
+        logger.info("Thread " + threadID + ": " +  "generated Formula: " + myFormula);
+        return myFormula;
+
     }
 
 

@@ -75,17 +75,19 @@ public class LFDSTestLarge extends AbstractCTest {
 	}
 
 
-    /*@Test
-    @CSVLogger.FileName("csv/refinement")
+    //@Test
+    //@CSVLogger.FileName("csv/assume")
     public void testParallelRefinement() throws Exception {
-        assertEquals(expected, ParallelRefinementSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), shutdownManagerProvider.get()));
-    }*/
+        ParallelRefinementSolver s = ParallelRefinementSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3,
+                Configuration.defaultConfiguration(), QueueType.MUTUALLY_EXCLUSIVE_EVENTS, 3,2 , 5,shutdownManagerProvider.get());
+        assertEquals(expected, s.getResult());
+    }
 
     @Test
     //@CSVLogger.FileName("csv/assume")
     public void testParallelAssume() throws Exception {
         ParallelAssumeSolver s = ParallelAssumeSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3,
-        Configuration.defaultConfiguration(), QueueType.MUTUALLY_EXCLUSIVE_EVENTS, 5,3 , 6,shutdownManagerProvider.get());
+        Configuration.defaultConfiguration(), QueueType.MUTUALLY_EXCLUSIVE_EVENTS, 15,1 , 5,shutdownManagerProvider.get());
         assertEquals(expected, s.getResult());
     }
 

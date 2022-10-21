@@ -29,7 +29,7 @@ public class ParallelAssumeThreadSolver extends ModelChecker{
 
 
 
-    private static final Logger logger = LogManager.getLogger(AssumeSolver.class);
+    private static final Logger logger = LogManager.getLogger(ParallelRefinementThreadSolver.class);
 
     private final SolverContext myCTX;
     private final ProverEnvironment myProver;
@@ -107,10 +107,7 @@ public class ParallelAssumeThreadSolver extends ModelChecker{
         myProver.addConstraint(assumedSpec);
 
         //------------myformula-Generation------------
-        BitSet myBitSet = mainFQMGR.getNextBitSet();
         QueueType queueType = mainFQMGR.getQueueType();
-        int queueInt1 = mainFQMGR.getQueueTypeSettingInt1();
-        int queueInt2 = mainFQMGR.getQueueTypeSettingInt2();
         BooleanFormula myFormula  = myCTX.getFormulaManager().getBooleanFormulaManager().makeTrue();
         switch (queueType){
             case RELATIONS_SORT:
@@ -121,8 +118,8 @@ public class ParallelAssumeThreadSolver extends ModelChecker{
             case EMPTY:
             case MUTUALLY_EXCLUSIVE_SORT:
             case MUTUALLY_EXCLUSIVE_SHUFFLE:
-            List<Tuple> tupleList = mainFQMGR.getTupleList();
-            myFormula = generateRelationFormula(queueInt1, queueInt2, myBitSet, tupleList, context);
+
+            myFormula = mainFQMGR.generateRelationFormula(myCTX, context, mainTask, myThreadID);
         }
         myProver.addConstraint(myFormula);
         //----------------------------------------

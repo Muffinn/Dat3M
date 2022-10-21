@@ -66,14 +66,6 @@ public class ParallelAssumeSolver extends ModelChecker{
         return parallelAssumeSolver;
     }
 
-    /**
-     * Solver function with Default Settings for the queue population
-     */
-    /*public static Result run(SolverContext ctx, ProverEnvironment prover, VerificationTask task, SolverContextFactory.Solvers solver,
-                             ShutdownManager sdm, Configuration solverConfig)
-            throws InterruptedException, SolverException, InvalidConfigurationException {
-        return run(ctx, prover, task,solver, sdm, solverConfig, QueueType.RELATIONS_SHUFFLE, 5, 2, 6);
-    }*/
 
     private void run(QueueType queueTypeSetting, int queueTypeSettingInt1, int queueTypeSettingInt2, int maxNumberOfThreads)
             throws InterruptedException, SolverException, InvalidConfigurationException {
@@ -81,7 +73,6 @@ public class ParallelAssumeSolver extends ModelChecker{
 
         resultCollector = new ParallelResultCollector(PASS, 0,maxNumberOfThreads, fqmgr.getQueueSize());
 
-        Program program = mainTask.getProgram();
         Wmm memoryModel = mainTask.getMemoryModel();
         Context analysisContext = Context.create();
         Configuration config = mainTask.getConfig();
@@ -93,23 +84,11 @@ public class ParallelAssumeSolver extends ModelChecker{
 
 
         context = EncodingContext.of(mainTask, analysisContext, mainCTX);
-        /*ProgramEncoder programEncoder = ProgramEncoder.withContext(context);
-        PropertyEncoder propertyEncoder = PropertyEncoder.withContext(context);*/
+
         WmmEncoder wmmEncoder = WmmEncoder.withContext(context);
-        /*SymmetryEncoder symmetryEncoder = SymmetryEncoder.withContext(context, memoryModel, analysisContext);
 
-        programEncoder.initializeEncoding(mainCTX);
-        propertyEncoder.initializeEncoding(mainCTX);*/
         wmmEncoder.initializeEncoding(mainCTX);
-        /*symmetryEncoder.initializeEncoding(mainCTX);
 
-
-        BooleanFormula propertyEncoding = propertyEncoder.encodeSpecification();
-        if(mainCTX.getFormulaManager().getBooleanFormulaManager().isFalse(propertyEncoding)) {
-            logger.info("Verification finished: property trivially holds");
-            res = PASS;
-            return;
-        }*/
 
         int totalThreadnumber = fqmgr.getQueueSize();
 
