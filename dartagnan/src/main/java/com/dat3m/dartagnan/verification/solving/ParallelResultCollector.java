@@ -6,36 +6,31 @@ public class ParallelResultCollector {
 
     private int numberOfFinishedThreads;
     private Result aggregatedResult;
-    private int maxNumberOfThreads;
-    private int currentNumberOfThreads;
+    private int maxConcurrentThreads;
+    private int currentlyRunningThreads;
     private long[] finishTimeCollector;
 
     ParallelResultCollector(){
         this.numberOfFinishedThreads = 0;
         this.aggregatedResult = Result.PASS;
-        this.currentNumberOfThreads = 0;
-        this.maxNumberOfThreads = 6;
+        this.currentlyRunningThreads = 0;
+        this.maxConcurrentThreads = 0;
     }
 
-    ParallelResultCollector(Result result, int numberOfFinishedThreads){
-        this.numberOfFinishedThreads = numberOfFinishedThreads;
-        this.aggregatedResult = result;
-        this.currentNumberOfThreads = 0;
-        this.maxNumberOfThreads = 6;
-    }
 
-    ParallelResultCollector(Result result, int numberOfFinishedThreads, int maxNumberOfThreads, int totalThreadNumber){
+
+    ParallelResultCollector(Result result, int numberOfFinishedThreads, int maxConcurrentThreads, int totalThreadAmount){
         this.numberOfFinishedThreads = numberOfFinishedThreads;
         this.aggregatedResult = result;
-        this.currentNumberOfThreads = 0;
-        this.maxNumberOfThreads = maxNumberOfThreads;
-        this.finishTimeCollector = new long[totalThreadNumber];
+        this.currentlyRunningThreads = 0;
+        this.maxConcurrentThreads = maxConcurrentThreads;
+        this.finishTimeCollector = new long[totalThreadAmount];
     }
 
 
     public synchronized void updateResult(Result result,int threadID, long startTime){
         numberOfFinishedThreads++;
-        currentNumberOfThreads--;
+        currentlyRunningThreads--;
         finishTimeCollector[threadID] = System.currentTimeMillis() - startTime;
         if(result == Result.UNKNOWN){
             if(aggregatedResult == Result.PASS){
@@ -48,8 +43,8 @@ public class ParallelResultCollector {
     }
 
     public synchronized boolean canAddThread(){
-        if(currentNumberOfThreads < maxNumberOfThreads){
-            currentNumberOfThreads++;
+        if(currentlyRunningThreads < maxConcurrentThreads){
+            currentlyRunningThreads++;
             return true;
         }
         return false;
@@ -69,6 +64,10 @@ public class ParallelResultCollector {
             System.out.println("Thread " + i + " took " + printTime + " seconds.");
         }
 
+    }
+
+    public void setMaxConcurrentThreads(int maxConcurrentThreads){
+        this.maxConcurrentThreads = maxConcurrentThreads;
     }
 }
 

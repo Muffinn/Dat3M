@@ -5,6 +5,7 @@ import com.dat3m.dartagnan.utils.rules.CSVLogger;
 import com.dat3m.dartagnan.utils.rules.Provider;
 import com.dat3m.dartagnan.verification.solving.AssumeSolver;
 import com.dat3m.dartagnan.verification.solving.ParallelAssumeSolver;
+import com.dat3m.dartagnan.verification.solving.QueueType;
 import com.dat3m.dartagnan.verification.solving.RefinementSolver;
 import com.dat3m.dartagnan.configuration.Arch;
 import org.junit.Test;
@@ -98,7 +99,9 @@ public class LFDSTest extends AbstractCTest {
     @Test
     //@CSVLogger.FileName("csv/assume")
     public void testParallelAssume() throws Exception {
-        assertEquals(expected, ParallelAssumeSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3, shutdownManagerProvider.get(),
-                Configuration.defaultConfiguration()));
+        ParallelAssumeSolver s = ParallelAssumeSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3, Configuration.defaultConfiguration(), QueueType.RELATIONS_SHUFFLE,
+                5, 2, 5, shutdownManagerProvider.get());
+
+        assertEquals(expected, s.getResult());
     }
 }

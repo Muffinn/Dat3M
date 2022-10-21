@@ -48,8 +48,8 @@ public class LFDSTestLarge extends AbstractCTest {
             //{"safe_stack-3", TSO, FAIL},
             //{"safe_stack-3", ARM8, FAIL},
             //{"safe_stack-3", POWER, FAIL}, //Power ausschalten*/
-            //{"dglm-3", TSO, UNKNOWN},
-            //{"dglm-3", ARM8, UNKNOWN},
+            {"dglm-3", TSO, UNKNOWN},
+            {"dglm-3", ARM8, UNKNOWN},
             //{"dglm-3", POWER, UNKNOWN},
             //{"ms-3", TSO, UNKNOWN},
             //{"ms-3", ARM8, UNKNOWN},
@@ -75,19 +75,19 @@ public class LFDSTestLarge extends AbstractCTest {
 	}
 
 
-    @Test
+    /*@Test
     @CSVLogger.FileName("csv/refinement")
     public void testParallelRefinement() throws Exception {
         assertEquals(expected, ParallelRefinementSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), shutdownManagerProvider.get()));
-    }
+    }*/
 
-    //@Test
+    @Test
     //@CSVLogger.FileName("csv/assume")
     public void testParallelAssume() throws Exception {
-        assertEquals(expected, ParallelAssumeSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3, shutdownManagerProvider.get(),
-        Configuration.defaultConfiguration(), QueueType.MUTUALLY_EXCLUSIVE_EVENTS, 5,3 , 6));
+        ParallelAssumeSolver s = ParallelAssumeSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3,
+        Configuration.defaultConfiguration(), QueueType.MUTUALLY_EXCLUSIVE_EVENTS, 5,3 , 6,shutdownManagerProvider.get());
+        assertEquals(expected, s.getResult());
     }
-
 
 
 }
