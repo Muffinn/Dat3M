@@ -19,8 +19,8 @@ public class AcyclicityConstraint extends AbstractConstraint {
 
     private final RelationGraph constrainedGraph;
 
-    private static final ObjectPool<DenseIntegerSet> SET_COLLECTION_POOL =
-            new ObjectPool<>(DenseIntegerSet::new, 10);
+    private static final ThreadLocal<ObjectPool<DenseIntegerSet>> SET_COLLECTION_POOL =
+            ThreadLocal.withInitial(() ->  new ObjectPool<>(DenseIntegerSet::new, 10));
 
 
     private final List<DenseIntegerSet> violatingSccs = new ArrayList<>();
@@ -151,7 +151,7 @@ public class AcyclicityConstraint extends AbstractConstraint {
     }
 
     private void cleanUp() {
-        violatingSccs.forEach(SET_COLLECTION_POOL::returnToPool);
+        violatingSccs.forEach(SET_COLLECTION_POOL.get()::returnToPool);
         violatingSccs.clear();
         markedNodes.clear();
     }
@@ -178,7 +178,7 @@ public class AcyclicityConstraint extends AbstractConstraint {
 
     // The TEMP_LIST is used to temporary hold the nodes in an SCC.
     // The SCC will only actually get created if it is violating! (selfloop or size > 1)
-    private static final ArrayList<Integer> TEMP_LIST = new ArrayList<>();
+    private static final ThreadLocal<ArrayList<Integer>> TEMP_LIST = ThreadLocal.withInitial(() -> new ArrayList<>());
     private void strongConnect(Node v) {
         v.index = index;
         v.lowlink = index;
@@ -206,17 +206,17 @@ public class AcyclicityConstraint extends AbstractConstraint {
             do {
                 w = stack.pop();
                 w.isOnStack = false;
-                TEMP_LIST.add(w.id);
+                TEMP_LIST.get().add(w.id);
             } while (w != v);
 
-            if (v.hasSelfLoop || TEMP_LIST.size() > 1) {
-                DenseIntegerSet scc = SET_COLLECTION_POOL.get();
+            if (v.hasSelfLoop || TEMP_LIST.get().size() > 1) {
+                DenseIntegerSet scc = SET_COLLECTION_POOL.get().get();
                 scc.ensureCapacity(domain.size());
                 scc.clear();
-                scc.addAll(TEMP_LIST);
+                scc.addAll(TEMP_LIST.get());
                 violatingSccs.add(scc);
             }
-            TEMP_LIST.clear();
+            TEMP_LIST.get().clear();
         }
     }
 
