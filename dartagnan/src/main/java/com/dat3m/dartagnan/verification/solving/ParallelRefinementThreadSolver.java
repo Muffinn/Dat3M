@@ -35,6 +35,7 @@ import org.sosy_lab.java_smt.SolverContextFactory;
 import org.sosy_lab.java_smt.api.*;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.BiPredicate;
 
 import static com.dat3m.dartagnan.GlobalSettings.REFINEMENT_GENERATE_GRAPHVIZ_DEBUG_FILES;
@@ -58,7 +59,7 @@ import static com.dat3m.dartagnan.wmm.relation.RelationNameRepository.*;
 @Options
 public class ParallelRefinementThreadSolver extends ModelChecker {
 
-    private static final Logger logger = LogManager.getLogger(ParallelRefinementThreadSolver.class);
+    private final static Logger logger = LogManager.getLogger(ParallelRefinementThreadSolver.class);
 
     private final SolverContext myCTX;
     private final ProverEnvironment myProver;
@@ -66,9 +67,13 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
 
     private final ParallelResultCollector mainResultCollector;
     private final FormulaQueueManager mainFQMGR;
+    private final ParallelRefinementCollector mainRefinementCollector;
     private final ShutdownManager sdm;
     private final Context mainAnalysisContext;
     private final int myThreadID;
+    private final int refreshInterval;
+
+    private Queue<DNF<CoreLiteral>> myReasonsQueue;
 
     // =========================== Configurables ===========================
 
@@ -81,7 +86,7 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
     // ======================================================================
 
     public ParallelRefinementThreadSolver(VerificationTask mainTask, FormulaQueueManager mainFQMGR, ShutdownManager sdm,
-                                           ParallelResultCollector mainResultCollector, SolverContextFactory.Solvers solver, Configuration solverConfig, Context mainAnalysisContext, int threadID)
+                                           ParallelResultCollector mainResultCollector, ParallelRefinementCollector mainRefinementCollector, SolverContextFactory.Solvers solver, Configuration solverConfig, Context mainAnalysisContext, int threadID)
             throws InterruptedException, SolverException, InvalidConfigurationException{
         myCTX = SolverContextFactory.createSolverContext(
                 solverConfig,
@@ -92,9 +97,12 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
         this.mainTask = mainTask;
         this.sdm = sdm;
         this.mainFQMGR = mainFQMGR;
+        this.mainRefinementCollector = mainRefinementCollector;
         this.mainResultCollector = mainResultCollector;
         this.mainAnalysisContext = mainAnalysisContext;
         myThreadID = threadID;
+        this.refreshInterval = 5;
+        this.myReasonsQueue = new ConcurrentLinkedQueue<DNF<CoreLiteral>>();
     }
 
 
@@ -104,6 +112,7 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
         long startTime = System.currentTimeMillis();
         logger.info("Thread " + myThreadID + ": " + "ThreadSolver Run starts");
 
+        mainRefinementCollector.registerReasonQueue(myReasonsQueue);
 
         Context baselineContext;
         VerificationTask baselineTask;
@@ -180,6 +189,7 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
                 mainResultCollector.updateResult(res, myThreadID, startTime);
                 mainResultCollector.notify();
             }
+            mainRefinementCollector.deregisterReasonQueue(myReasonsQueue);
        	    return;
         }
 
@@ -215,7 +225,9 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
         		}
         		logger.debug(smtStatistics.toString());
         	}
+
             iterationCount++;
+
             curTime = System.currentTimeMillis();
             totalNativeSolvingTime += (curTime - lastTime);
 
@@ -228,8 +240,15 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
             try (Model model = myProver.getModel()) {
                 solverResult = solver.check(model);
             } catch (SolverException e) {
-                logger.error(e);
+                logger.error("Thread " + myThreadID + ": " + e);
                 throw e;
+            }
+
+            if((iterationCount % refreshInterval) - 1 == 0){
+                //long newtime = System.currentTimeMillis();
+                addForeignReasons(refiner);
+                //long tookTime = System.currentTimeMillis() - newtime;
+                //logger.info("Thread " + myThreadID + ": " + tookTime + "tooktime");
             }
 
             WMMSolver.Statistics stats = solverResult.getStatistics();
@@ -240,6 +259,9 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
             if (status == INCONSISTENT) {
                 long refineTime = System.currentTimeMillis();
                 DNF<CoreLiteral> reasons = solverResult.getCoreReasons();
+                mainRefinementCollector.addReason(reasons, myReasonsQueue);
+
+
                 BooleanFormula refinement = refiner.refine(reasons, context);
                 myProver.addConstraint(refinement);
                 globalRefinement = bmgr.and(globalRefinement, refinement); // Track overall refinement progress
@@ -296,6 +318,7 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
                 mainResultCollector.updateResult(res, myThreadID, startTime);
                 mainResultCollector.notify();
             }
+            mainRefinementCollector.deregisterReasonQueue(myReasonsQueue);
             return;
         }
 
@@ -335,9 +358,10 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
             mainResultCollector.updateResult(res, myThreadID, startTime);
             mainResultCollector.notify();
         }
+        mainRefinementCollector.deregisterReasonQueue(myReasonsQueue);
 
 
-        logger.info("Verification finished with result " + res);
+        logger.info("Thread " + myThreadID + ": " + "Verification finished with result " + res);
     }
     // ======================= Helper Methods ======================
 
@@ -524,27 +548,17 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
         return baseline;
     }
 
-    private BooleanFormula generateRelationFormula(int queueInt1, int queueInt2, BitSet myBitSet, List<Tuple> tupleList, EncodingContext myContext){
-        int positiveCount = 0;
-        BooleanFormulaManager bmgr = myCTX.getFormulaManager().getBooleanFormulaManager();
-        BooleanFormula myFormula = bmgr.makeTrue();
-        String relationName = mainFQMGR.getRelationName();
-        for (int i = 0; i < queueInt1; i++){
-            if(myBitSet.get(i)){
-                BooleanFormula var = mainTask.getMemoryModel().getRelation(relationName).getSMTVar(tupleList.get(i), myContext);
-                myFormula = bmgr.and(var, myFormula);
-                positiveCount++;
-                if(positiveCount == queueInt2){
-                    logger.info("Thread " + myThreadID + ": " +  "generated Formula: " + myFormula);
-                    return myFormula;
-                }
-            }else{
-                BooleanFormula notVar = bmgr.not(mainTask.getMemoryModel().getRelation(relationName).getSMTVar(tupleList.get(i), myContext));
-                myFormula = bmgr.and(notVar, myFormula);
+
+
+    private void addForeignReasons(Refiner refiner)
+            throws InterruptedException{
+        synchronized (myReasonsQueue){
+            DNF<CoreLiteral> reason = myReasonsQueue.poll();
+            while (reason != null){
+                BooleanFormula refinement = refiner.refine(reason, context);
+                myProver.addConstraint(refinement);
+                reason = myReasonsQueue.poll();
             }
         }
-        logger.info("Thread " + myThreadID + ": " +  "generated Formula: " + myFormula);
-        return myFormula;
-
     }
 }

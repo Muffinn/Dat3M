@@ -29,7 +29,7 @@ public class GlobalSettings {
     */
     public static final boolean REFINEMENT_GENERATE_GRAPHVIZ_DEBUG_FILES = false;
 
-    public static final Refiner.SymmetryLearning REFINEMENT_SYMMETRY_LEARNING = Refiner.SymmetryLearning.FULL;
+    public static final Refiner.SymmetryLearning REFINEMENT_SYMMETRY_LEARNING = Refiner.SymmetryLearning.NONE;
 
     // --------------------
 

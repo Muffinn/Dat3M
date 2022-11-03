@@ -68,6 +68,7 @@ public class ParallelRefinementSolver extends ModelChecker {
 
     private ParallelResultCollector resultCollector;
     private final FormulaQueueManager fqmgr;
+    private final ParallelRefinementCollector refinementCollector;
     private final ShutdownManager sdm;
     private final SolverContextFactory.Solvers solverType;
     private final Configuration solverConfig;
@@ -91,6 +92,7 @@ public class ParallelRefinementSolver extends ModelChecker {
         mainTask = t;
         this.sdm = sdm;
         this.fqmgr = new FormulaQueueManager();
+        this.refinementCollector = new ParallelRefinementCollector(0);
         this.solverType = solverType;
         this.solverConfig = solverConfig;
     }
@@ -257,7 +259,7 @@ public class ParallelRefinementSolver extends ModelChecker {
 
     private void runThread(Context analysisContext, int threadID)
             throws InterruptedException, SolverException, InvalidConfigurationException{
-        ParallelRefinementThreadSolver myThreadSolver = new ParallelRefinementThreadSolver(mainTask, fqmgr, sdm, resultCollector, solverType, solverConfig, analysisContext, threadID);
+        ParallelRefinementThreadSolver myThreadSolver = new ParallelRefinementThreadSolver(mainTask, fqmgr, sdm, resultCollector, refinementCollector, solverType, solverConfig, analysisContext, threadID);
         myThreadSolver.run();
     }
 
@@ -449,3 +451,13 @@ public class ParallelRefinementSolver extends ModelChecker {
         return baseline;
     }
 }
+
+/*Event e;
+Conjunction<CoreLiteral> coreReason;
+ExecutionAnalysis exec;
+
+boolean isRelevant =
+  coreReason.getLiterals().stream()
+    .filter(ExecLiteral.class::isInstance)
+    .map(literal -> (Event) literal.getData())
+    .noneMatch(o -> exec.areMutuallyExclusive(e, o))*/

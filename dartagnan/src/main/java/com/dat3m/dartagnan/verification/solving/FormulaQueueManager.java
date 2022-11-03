@@ -5,6 +5,7 @@ import com.dat3m.dartagnan.verification.VerificationTask;
 import com.dat3m.dartagnan.wmm.utils.Tuple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.sosy_lab.common.configuration.InvalidConfigurationException;
 import org.sosy_lab.java_smt.api.BooleanFormula;
 import org.sosy_lab.java_smt.api.BooleanFormulaManager;
 import org.sosy_lab.java_smt.api.SolverContext;
@@ -20,7 +21,7 @@ public class FormulaQueueManager {
 
 
     //private Queue<BooleanFormula> formulaQueue;
-    private Queue<BitSet> bitsetQueue;
+    private Queue<BitSet[]> bitsetQueue;
     private List<Tuple> tupleList;
     //private SolverContext ctx;
     //private BooleanFormulaManager bmgr;
@@ -33,24 +34,25 @@ public class FormulaQueueManager {
     private String relationName;
 
     public FormulaQueueManager(){
-        this.bitsetQueue = new ConcurrentLinkedQueue<BitSet>();
+        this.bitsetQueue = new ConcurrentLinkedQueue<BitSet[]>();
     }
 
-    public FormulaQueueManager(QueueType queueTypeSetting, int queueTypeSettingInt1, int queueTypeSettingInt2){
-        this.bitsetQueue = new ConcurrentLinkedQueue<BitSet>();
+    public FormulaQueueManager(QueueType queueTypeSetting, int queueTypeSettingInt1, int queueTypeSettingInt2)
+                 throws InvalidConfigurationException{
+        this.bitsetQueue = new ConcurrentLinkedQueue<BitSet[]>();
         populateFormulaQueue(queueTypeSetting, queueTypeSettingInt1, queueTypeSettingInt2);
         this.queueType = queueTypeSetting;
         this.queueTypeSettingInt1 = queueTypeSettingInt1;
         this.queueTypeSettingInt2 = queueTypeSettingInt2;
     }
 
-    public synchronized BitSet getNextBitSet() {
+    public synchronized BitSet[] getNextBitSet() {
         return bitsetQueue.remove();
     }
 
 
-    private void addBitSet(BitSet addedBitSet){
-        bitsetQueue.add(addedBitSet);
+    private void addBitSet(BitSet[] addedBitSetArray){
+        bitsetQueue.add(addedBitSetArray);
     }
 
     public int getQueueSize(){return bitsetQueue.size();}
@@ -77,7 +79,8 @@ public class FormulaQueueManager {
 
     public synchronized List<Tuple> getTupleList(){return tupleList;}
 
-    public void populateFormulaQueue(QueueType queueTypeSetting, int queueTypeSettingInt1, int queueTypeSettingInt2){
+    public void populateFormulaQueue(QueueType queueTypeSetting, int queueTypeSettingInt1, int queueTypeSettingInt2)
+    throws InvalidConfigurationException{
         this.setQueueSettings(queueTypeSetting, queueTypeSettingInt1, queueTypeSettingInt2);
         switch(queueTypeSetting){
             case EMPTY:
@@ -89,19 +92,68 @@ public class FormulaQueueManager {
             case MUTUALLY_EXCLUSIVE_SORT:
             case EVENTS:
             case MUTUALLY_EXCLUSIVE_EVENTS:
-                createTrueFalseBitQueue(queueTypeSettingInt1, queueTypeSettingInt2);
+                createTreeStyleBitSetQueue(queueTypeSettingInt1, queueTypeSettingInt2);
                 break;
         }
 
-        return;
     }
 
-    private void createTrueFalseBitQueue(int maxLength, int maxTrue){
-        BitSet bitSet = new BitSet(maxLength);
-        recursiveTrueFalseBitQueue(bitSet, 0, maxLength, 0, maxTrue);
+    private void createTreeStyleBitSetQueue(int nrOfTrees, int treeDepth) throws InvalidConfigurationException{
+        if(nrOfTrees < 1){
+            throw new InvalidConfigurationException("TreeStyleBitSetQueue creation failed. There must be at least one Tree.");
+        }
+        if(treeDepth < 0){
+            throw new InvalidConfigurationException("TreeStyleBitSetQueue creation failed. Tree Depth can't be negative.");
+        }
+
+        BitSet varBitSet = new BitSet(nrOfTrees + treeDepth);
+        BitSet notVarBitSet = new BitSet(nrOfTrees + treeDepth);
+
+        int i = 0;
+        while (i + 1 < nrOfTrees){
+            varBitSet.set(i);
+            createTreeBitSet(treeDepth, varBitSet, notVarBitSet, i + 1);
+            varBitSet.clear(i);
+            notVarBitSet.set(i);
+            i++;
+        }
+        createTreeBitSet(treeDepth, varBitSet, notVarBitSet, i + 1);
     }
 
-    private void recursiveTrueFalseBitQueue(BitSet currentBitSet, int currentLength, int maxLength, int currentTrue, int maxTrue){
+    private void createTreeBitSet(int treeDepth, BitSet varBitSet, BitSet notVarBitSet, int startPoint){
+
+        if(treeDepth == 0){
+            BitSet[] newBitSetPair = new BitSet[2];
+            newBitSetPair[0]= (BitSet)varBitSet.clone();
+            newBitSetPair[1] = (BitSet)notVarBitSet.clone();
+            addBitSet(newBitSetPair);
+            return;
+        }
+
+        varBitSet.set(startPoint);
+        if(treeDepth == 1){
+            BitSet[] newBitSetPair = new BitSet[2];
+            newBitSetPair[0]= (BitSet)varBitSet.clone();
+            newBitSetPair[1] = (BitSet)notVarBitSet.clone();
+            addBitSet(newBitSetPair);
+            varBitSet.clear(startPoint);
+            notVarBitSet.set(startPoint);
+            newBitSetPair = new BitSet[2];
+            newBitSetPair[0]= (BitSet)varBitSet.clone();
+            newBitSetPair[1] = (BitSet)notVarBitSet.clone();
+            addBitSet(newBitSetPair);
+            notVarBitSet.clear(startPoint);
+        } else {
+            createTreeBitSet(treeDepth - 1, varBitSet, notVarBitSet, startPoint + 1);
+            varBitSet.clear(startPoint);
+            notVarBitSet.set(startPoint);
+            createTreeBitSet(treeDepth - 1, varBitSet, notVarBitSet, startPoint + 1);
+            notVarBitSet.clear(startPoint);
+        }
+    }
+
+
+    /*private void recursiveTrueFalseBitQueue(BitSet currentBitSet, int currentLength, int maxLength, int currentTrue, int maxTrue){
         currentBitSet.set(currentLength);
         if(!(currentTrue + 1 == maxTrue || currentLength + 1 == maxLength)){
             recursiveTrueFalseBitQueue(currentBitSet, currentLength + 1, maxLength, currentTrue + 1, maxTrue);
@@ -118,31 +170,29 @@ public class FormulaQueueManager {
             addBitSet((BitSet)currentBitSet.clone());
             System.out.println("Added BitSet: " + currentBitSet);
         }
-    }
+    }*/
 
     public BooleanFormula generateRelationFormula(SolverContext ctx, EncodingContext encodingCTX, VerificationTask mainTask, int threadID){
-        int positiveCount = 0;
-        BitSet myBitSet = getNextBitSet();
+        BitSet[] myBitSets = getNextBitSet();
         BooleanFormulaManager bmgr = ctx.getFormulaManager().getBooleanFormulaManager();
         BooleanFormula myFormula = bmgr.makeTrue();
         String relationName = getRelationName();
-        for (int i = 0; i < queueTypeSettingInt1; i++){
-            if(myBitSet.get(i)){
+        int i = 0;
+        while(myBitSets[0].get(i) || myBitSets[1].get(i)){
+            if (myBitSets[0].get(i)){
                 BooleanFormula var = mainTask.getMemoryModel().getRelation(relationName).getSMTVar(tupleList.get(i), encodingCTX);
                 myFormula = bmgr.and(var, myFormula);
-                positiveCount++;
-                if(positiveCount == queueTypeSettingInt2){
-                    logger.info("Thread " + threadID + ": " +  "generated Formula: " + myFormula);
-                    return myFormula;
-                }
-            }else{
+            } else if(myBitSets[1].get(i)){
                 BooleanFormula notVar = bmgr.not(mainTask.getMemoryModel().getRelation(relationName).getSMTVar(tupleList.get(i), encodingCTX));
                 myFormula = bmgr.and(notVar, myFormula);
+            }
+            i++;
+            if(i >= myBitSets[0].size()){
+                break;
             }
         }
         logger.info("Thread " + threadID + ": " +  "generated Formula: " + myFormula);
         return myFormula;
-
     }
 
 

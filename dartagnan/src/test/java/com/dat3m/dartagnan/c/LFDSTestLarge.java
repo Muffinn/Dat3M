@@ -51,8 +51,8 @@ public class LFDSTestLarge extends AbstractCTest {
             {"dglm-3", TSO, UNKNOWN},
             {"dglm-3", ARM8, UNKNOWN},
             //{"dglm-3", POWER, UNKNOWN},
-            //{"ms-3", TSO, UNKNOWN},
-            //{"ms-3", ARM8, UNKNOWN},
+            {"ms-3", TSO, UNKNOWN},
+            {"ms-3", ARM8, UNKNOWN},
             //{"ms-3", POWER, UNKNOWN},
             {"treiber-3", TSO, UNKNOWN},
             {"treiber-3", ARM8, UNKNOWN},
@@ -67,7 +67,7 @@ public class LFDSTestLarge extends AbstractCTest {
         assertEquals(expected, s.getResult());
 	}
 
-	//@Test
+	@Test
 	@CSVLogger.FileName("csv/refinement")
 	public void testRefinement() throws Exception {
         RefinementSolver s = RefinementSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get());
@@ -75,19 +75,21 @@ public class LFDSTestLarge extends AbstractCTest {
 	}
 
 
-    //@Test
-    //@CSVLogger.FileName("csv/assume")
+    @Test
+    @CSVLogger.FileName("csv/refinement")
     public void testParallelRefinement() throws Exception {
+
         ParallelRefinementSolver s = ParallelRefinementSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3,
-                Configuration.defaultConfiguration(), QueueType.MUTUALLY_EXCLUSIVE_EVENTS, 3,2 , 5,shutdownManagerProvider.get());
+                Configuration.defaultConfiguration(), QueueType.MUTUALLY_EXCLUSIVE_EVENTS, 12,0 , 4,shutdownManagerProvider.get());
         assertEquals(expected, s.getResult());
     }
 
-    @Test
+    //@Test
     //@CSVLogger.FileName("csv/assume")
     public void testParallelAssume() throws Exception {
+
         ParallelAssumeSolver s = ParallelAssumeSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3,
-        Configuration.defaultConfiguration(), QueueType.MUTUALLY_EXCLUSIVE_EVENTS, 15,1 , 5,shutdownManagerProvider.get());
+        Configuration.defaultConfiguration(), QueueType.MUTUALLY_EXCLUSIVE_EVENTS, 15,0 , 4,shutdownManagerProvider.get());
         assertEquals(expected, s.getResult());
     }
 
