@@ -1,6 +1,7 @@
 package com.dat3m.dartagnan.verification.solving;
 
 import com.dat3m.dartagnan.encoding.EncodingContext;
+import com.dat3m.dartagnan.program.event.core.Event;
 import com.dat3m.dartagnan.verification.VerificationTask;
 import com.dat3m.dartagnan.wmm.utils.Tuple;
 import org.apache.logging.log4j.LogManager;
@@ -23,6 +24,7 @@ public class FormulaQueueManager {
     //private Queue<BooleanFormula> formulaQueue;
     private Queue<BitSet[]> bitsetQueue;
     private List<Tuple> tupleList;
+    private List<Event> eventList;
     //private SolverContext ctx;
     //private BooleanFormulaManager bmgr;
     //private VerificationTask task;
@@ -53,6 +55,7 @@ public class FormulaQueueManager {
 
     private void addBitSet(BitSet[] addedBitSetArray){
         bitsetQueue.add(addedBitSetArray);
+        logger.info("Created BitSet Pair " + addedBitSetArray[0] + " and not " + addedBitSetArray[1]);
     }
 
     public int getQueueSize(){return bitsetQueue.size();}
@@ -75,6 +78,10 @@ public class FormulaQueueManager {
 
     public void setTupleList(List<Tuple> tupleList){
         this.tupleList = tupleList;
+    }
+
+    public void setEventList(List<Event> tupleList){
+        this.eventList = tupleList;
     }
 
     public synchronized List<Tuple> getTupleList(){return tupleList;}
@@ -117,7 +124,7 @@ public class FormulaQueueManager {
             notVarBitSet.set(i);
             i++;
         }
-        createTreeBitSet(treeDepth, varBitSet, notVarBitSet, i + 1);
+        createTreeBitSet(treeDepth, varBitSet, notVarBitSet, i);
     }
 
     private void createTreeBitSet(int treeDepth, BitSet varBitSet, BitSet notVarBitSet, int startPoint){
@@ -184,6 +191,33 @@ public class FormulaQueueManager {
                 myFormula = bmgr.and(var, myFormula);
             } else if(myBitSets[1].get(i)){
                 BooleanFormula notVar = bmgr.not(mainTask.getMemoryModel().getRelation(relationName).getSMTVar(tupleList.get(i), encodingCTX));
+                myFormula = bmgr.and(notVar, myFormula);
+            }
+            i++;
+            if(i >= myBitSets[0].size()){
+                break;
+            }
+        }
+        logger.info("Thread " + threadID + ": " +  "generated Formula: " + myFormula);
+        return myFormula;
+    }
+
+
+    public BooleanFormula generateEventFormula(SolverContext ctx, EncodingContext encodingCTX, int threadID){
+        BitSet[] myBitSets = getNextBitSet();
+        BooleanFormulaManager bmgr = ctx.getFormulaManager().getBooleanFormulaManager();
+        BooleanFormula myFormula = bmgr.makeTrue();
+
+
+
+        int i = 0;
+        while(myBitSets[0].get(i) || myBitSets[1].get(i)){
+            if (myBitSets[0].get(i)){
+
+                BooleanFormula var = encodingCTX.execution(eventList.get(i));
+                myFormula = bmgr.and(var, myFormula);
+            } else if(myBitSets[1].get(i)){
+                BooleanFormula notVar = bmgr.not(encodingCTX.execution(eventList.get(i)));
                 myFormula = bmgr.and(notVar, myFormula);
             }
             i++;

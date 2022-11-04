@@ -3,6 +3,8 @@ package com.dat3m.dartagnan.verification.solving;
 import com.dat3m.dartagnan.configuration.Baseline;
 import com.dat3m.dartagnan.encoding.*;
 import com.dat3m.dartagnan.program.Program;
+import com.dat3m.dartagnan.program.analysis.BranchEquivalence;
+import com.dat3m.dartagnan.program.event.core.Event;
 import com.dat3m.dartagnan.program.filter.FilterAbstract;
 import com.dat3m.dartagnan.solver.caat.CAATSolver;
 import com.dat3m.dartagnan.solver.caat4wmm.Refiner;
@@ -171,8 +173,7 @@ public class ParallelRefinementSolver extends ModelChecker {
             case RELATIONS_SHUFFLE:
             case MUTUALLY_EXCLUSIVE_SHUFFLE:
             case MUTUALLY_EXCLUSIVE_SORT:
-            case EVENTS:
-            case MUTUALLY_EXCLUSIVE_EVENTS:
+
                 String relationName = RelationNameRepository.RF;
                 fqmgr.setRelationName(relationName);
                 Relation relation = baselineTask.getMemoryModel().getRelation(relationName);
@@ -181,7 +182,15 @@ public class ParallelRefinementSolver extends ModelChecker {
                 TupleSet rfEncodeSet = knowledge.getMaySet();
                 List<Tuple> tupleList = new ArrayList<>(rfEncodeSet);
                 fqmgr.setTupleList(tupleList);
+                break;
+            case EVENTS:
+            case MUTUALLY_EXCLUSIVE_EVENTS:
+                Set<Event> branchRepresentatives = context.getAnalysisContext().get(BranchEquivalence.class).getAllRepresentatives();
+                List<Event> eventList = new ArrayList<>(branchRepresentatives);
+                fqmgr.setEventList(eventList);
+
         }
+
 
         logger.info("Starting Thread creation.");
 

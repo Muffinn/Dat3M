@@ -169,13 +169,16 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
             case RELATIONS_SORT:
             case RELATIONS_SHUFFLE:
             case SINGLE_LITERAL:
-            case EVENTS:
-            case MUTUALLY_EXCLUSIVE_EVENTS:
-            case EMPTY:
+
             case MUTUALLY_EXCLUSIVE_SORT:
             case MUTUALLY_EXCLUSIVE_SHUFFLE:
-
+            case EMPTY:
                 myFormula = mainFQMGR.generateRelationFormula(myCTX, context, mainTask, myThreadID);
+                break;
+            case EVENTS:
+            case MUTUALLY_EXCLUSIVE_EVENTS:
+                myFormula = mainFQMGR.generateEventFormula(myCTX, context, myThreadID);
+
         }
         myProver.addConstraint(myFormula);
         //----------------------------------------
