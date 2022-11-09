@@ -3,6 +3,7 @@ package com.dat3m.dartagnan.verification.solving;
 import com.dat3m.dartagnan.configuration.Baseline;
 import com.dat3m.dartagnan.encoding.*;
 import com.dat3m.dartagnan.program.Program;
+import com.dat3m.dartagnan.program.event.core.Event;
 import com.dat3m.dartagnan.program.filter.FilterAbstract;
 import com.dat3m.dartagnan.solver.caat.CAATSolver;
 import com.dat3m.dartagnan.solver.caat4wmm.Refiner;
@@ -72,6 +73,10 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
     private final Context mainAnalysisContext;
     private final int myThreadID;
     private final int refreshInterval;
+    private final List<Event> trueEventList;
+    private final List<Event> falseEventList;
+    private final List<Tuple> trueTupleList;
+    private final List<Tuple> falseTupleList;
 
     private Queue<DNF<CoreLiteral>> myReasonsQueue;
 
@@ -103,6 +108,12 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
         myThreadID = threadID;
         this.refreshInterval = 5;
         this.myReasonsQueue = new ConcurrentLinkedQueue<DNF<CoreLiteral>>();
+
+        this.trueEventList = new ArrayList<Event>();
+        this.falseEventList = new ArrayList<Event>();
+        this.trueTupleList = new ArrayList<Tuple>();
+        this.falseTupleList = new ArrayList<Tuple>();
+
     }
 
 
@@ -114,6 +125,31 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
 
         mainRefinementCollector.registerReasonQueue(myReasonsQueue);
 
+
+        //------------------------
+        QueueType queueType = mainFQMGR.getQueueType();
+        switch (queueType){
+            case RELATIONS_SORT:
+            case RELATIONS_SHUFFLE:
+            case SINGLE_LITERAL:
+            case MUTUALLY_EXCLUSIVE_SORT:
+            case MUTUALLY_EXCLUSIVE_SHUFFLE:
+                List<List<Tuple>> tupleListList =  mainFQMGR.generateRelationListPair(myThreadID);
+                trueTupleList.addAll(tupleListList.get(0));
+                falseTupleList.addAll(tupleListList.get(1));
+
+                break;
+            case EMPTY:
+                break;
+            case EVENTS:
+            case MUTUALLY_EXCLUSIVE_EVENTS:
+                List<List<Event>> eventListList =  mainFQMGR.generateEventListPair(myThreadID);
+                trueEventList.addAll(eventListList.get(0));
+                falseEventList.addAll(eventListList.get(1));
+
+        }
+        //----------------------------------------
+
         Context baselineContext;
         VerificationTask baselineTask;
         Wmm memoryModel;
@@ -121,26 +157,27 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
         Set<Relation> cutRelations;
 
         synchronized (mainTask){
-        Program program = mainTask.getProgram();
-        memoryModel = mainTask.getMemoryModel();
-        Wmm baselineModel = createDefaultWmm();
-        analysisContext = Context.create();
-        Configuration config = mainTask.getConfig();
-        baselineTask = VerificationTask.builder()
-                .withConfig(mainTask.getConfig()).build(program, baselineModel, mainTask.getProperty());
+            Program program = mainTask.getProgram();
+            memoryModel = mainTask.getMemoryModel();
+            Wmm baselineModel = createDefaultWmm();
+            analysisContext = Context.create();
+            Configuration config = mainTask.getConfig();
+            baselineTask = VerificationTask.builder()
+                    .withConfig(mainTask.getConfig()).build(program, baselineModel, mainTask.getProperty());
 
-        //preprocessProgram(mainTask, config);
-        //preprocessMemoryModel(mainTask);
-        // We cut the rhs of differences to get a semi-positive model, if possible.
-        // This call modifies the baseline model!
-        cutRelations = cutRelationDifferences(memoryModel, baselineModel);
-        memoryModel.configureAll(config);
-        baselineModel.configureAll(config); // Configure after cutting!
+            //preprocessProgram(mainTask, config);
+            //preprocessMemoryModel(mainTask);
+            // We cut the rhs of differences to get a semi-positive model, if possible.
+            // This call modifies the baseline model!
+            cutRelations = cutRelationDifferences(memoryModel, baselineModel); //note nur einmal im main
+            memoryModel.configureAll(config);       //note nur einmal im main
+            baselineModel.configureAll(config); // Configure after cutting! //note nur einmal im main
 
-        performStaticProgramAnalyses(mainTask, analysisContext, config);
-        baselineContext = Context.createCopyFrom(analysisContext);
-        performStaticWmmAnalyses(mainTask, analysisContext, config);
-        performStaticWmmAnalyses(baselineTask, baselineContext, config);}
+            performStaticProgramAnalyses(mainTask, analysisContext, config);
+            baselineContext = Context.createCopyFrom(analysisContext);
+            performStaticWmmAnalyses(mainTask, analysisContext, config);
+            performStaticWmmAnalyses(baselineTask, baselineContext, config);
+        }
 
         context = EncodingContext.of(baselineTask, baselineContext, myCTX);
         ProgramEncoder programEncoder = ProgramEncoder.withContext(context);
@@ -163,21 +200,22 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
 
 
         //------------myformula-Generation------------
-        QueueType queueType = mainFQMGR.getQueueType();
         BooleanFormula myFormula  = myCTX.getFormulaManager().getBooleanFormulaManager().makeTrue();
         switch (queueType){
             case RELATIONS_SORT:
             case RELATIONS_SHUFFLE:
             case SINGLE_LITERAL:
-
             case MUTUALLY_EXCLUSIVE_SORT:
             case MUTUALLY_EXCLUSIVE_SHUFFLE:
+                myFormula = generateTupleFormula();
+
+                break;
             case EMPTY:
-                myFormula = mainFQMGR.generateRelationFormula(myCTX, context, mainTask, myThreadID);
+                myFormula = mainFQMGR.generateEmptyFormula(myCTX, myThreadID);
                 break;
             case EVENTS:
             case MUTUALLY_EXCLUSIVE_EVENTS:
-                myFormula = mainFQMGR.generateEventFormula(myCTX, context, myThreadID);
+                myFormula = generateEventFormula();
 
         }
         myProver.addConstraint(myFormula);
@@ -563,5 +601,39 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
                 reason = myReasonsQueue.poll();
             }
         }
+    }
+
+    private BooleanFormula generateTupleFormula(){
+        BooleanFormulaManager bmgr = myCTX.getFormulaManager().getBooleanFormulaManager();
+        BooleanFormula myFormula = bmgr.makeTrue();
+        for (Tuple trueTuple : trueTupleList){
+            BooleanFormula var = mainTask.getMemoryModel().getRelation(mainFQMGR.getRelationName()).getSMTVar(trueTuple, context);
+            myFormula = bmgr.and(myFormula, var);
+        }
+        for (Tuple falseTuple : falseTupleList){
+            BooleanFormula notVar = bmgr.not(mainTask.getMemoryModel().getRelation(mainFQMGR.getRelationName()).getSMTVar(falseTuple, context));
+            myFormula = bmgr.and(myFormula, notVar);
+        }
+        logger.info("Thread " + myThreadID + ": generated Formula " + myFormula);
+        return myFormula;
+
+
+    }
+
+    private BooleanFormula generateEventFormula(){
+        BooleanFormulaManager bmgr = myCTX.getFormulaManager().getBooleanFormulaManager();
+        BooleanFormula myFormula = bmgr.makeTrue();
+        for (Event trueEvent : trueEventList){
+            BooleanFormula var = context.execution(trueEvent);
+            myFormula = bmgr.and(myFormula, var);
+        }
+        for (Event falseEvent : falseEventList){
+            BooleanFormula notVar = bmgr.not(context.execution(falseEvent));
+            myFormula = bmgr.and(myFormula, notVar);
+        }
+        logger.info("Thread " + myThreadID + ": generated Formula " + myFormula);
+        return myFormula;
+
+
     }
 }

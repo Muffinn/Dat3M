@@ -9,8 +9,8 @@ import java.util.Queue;
 
 public class ParallelRefinementCollector {
     private int maxClauseLength;
-    private ArrayList<DNF<CoreLiteral>> fullReasonsList;
-    private ArrayList<Queue<DNF<CoreLiteral>>> reasonQueueList;
+    private final ArrayList<DNF<CoreLiteral>> fullReasonsList;
+    private final ArrayList<Queue<DNF<CoreLiteral>>> reasonQueueList;
 
     public void registerReasonQueue(Queue<DNF<CoreLiteral>> reasonQueue){
         synchronized (reasonQueueList){

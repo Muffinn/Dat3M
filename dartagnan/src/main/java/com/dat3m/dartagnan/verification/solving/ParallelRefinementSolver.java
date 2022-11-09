@@ -40,6 +40,7 @@ import org.sosy_lab.java_smt.api.*;
 
 import java.util.*;
 import java.util.function.BiPredicate;
+import java.util.stream.Collectors;
 
 import static com.dat3m.dartagnan.GlobalSettings.REFINEMENT_GENERATE_GRAPHVIZ_DEBUG_FILES;
 import static com.dat3m.dartagnan.configuration.OptionNames.BASELINE;
@@ -165,6 +166,7 @@ public class ParallelRefinementSolver extends ModelChecker {
         int totalThreadnumber = fqmgr.getQueueSize();
         List<Thread> threads = new ArrayList<Thread>(totalThreadnumber);
 
+
         switch(queueTypeSetting){
             case EMPTY:
             case SINGLE_LITERAL:
@@ -183,11 +185,23 @@ public class ParallelRefinementSolver extends ModelChecker {
                 List<Tuple> tupleList = new ArrayList<>(rfEncodeSet);
                 fqmgr.setTupleList(tupleList);
                 break;
+
             case EVENTS:
             case MUTUALLY_EXCLUSIVE_EVENTS:
+
                 Set<Event> branchRepresentatives = context.getAnalysisContext().get(BranchEquivalence.class).getAllRepresentatives();
                 List<Event> eventList = new ArrayList<>(branchRepresentatives);
                 fqmgr.setEventList(eventList);
+                break;
+            case EVENTS_SHUFFLE:
+                BranchEquivalence branchEquivalence = context.getAnalysisContext().get(BranchEquivalence.class);
+                Set<Event> initialClass = branchEquivalence.getInitialClass();
+                List<Event> eventListShuffle = branchEquivalence.getAllEquivalenceClasses().stream().filter(c -> c!=initialClass).map(c -> c.getRepresentative()).collect(Collectors.toList());
+                Random newRandom = new Random();
+                int randomInt = (int)Math.random() * 100000000;
+                logger.info("Randomseed: " + randomInt);
+                //eventListShuffle.shuffle(randomInt);
+                fqmgr.setEventList(eventListShuffle);
 
         }
 

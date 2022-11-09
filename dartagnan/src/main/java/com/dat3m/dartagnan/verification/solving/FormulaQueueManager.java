@@ -1,8 +1,10 @@
 package com.dat3m.dartagnan.verification.solving;
 
+import ap.Prover;
 import com.dat3m.dartagnan.encoding.EncodingContext;
 import com.dat3m.dartagnan.program.event.core.Event;
 import com.dat3m.dartagnan.verification.VerificationTask;
+import com.dat3m.dartagnan.wmm.Relation;
 import com.dat3m.dartagnan.wmm.utils.Tuple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -11,6 +13,7 @@ import org.sosy_lab.java_smt.api.BooleanFormula;
 import org.sosy_lab.java_smt.api.BooleanFormulaManager;
 import org.sosy_lab.java_smt.api.SolverContext;
 
+import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 import java.util.Queue;
@@ -91,8 +94,10 @@ public class FormulaQueueManager {
         this.setQueueSettings(queueTypeSetting, queueTypeSettingInt1, queueTypeSettingInt2);
         switch(queueTypeSetting){
             case EMPTY:
+                createEmptyBitSetQueue(queueTypeSettingInt1);
+                break;
             case SINGLE_LITERAL:
-                System.out.println("EMPTY AND SINGLE_LITERAL are not implemented"); //TODO implement :)
+                logger.warn("EMPTY AND SINGLE_LITERAL are not implemented"); //TODO implement :)
             case RELATIONS_SORT:
             case RELATIONS_SHUFFLE:
             case MUTUALLY_EXCLUSIVE_SHUFFLE:
@@ -104,6 +109,20 @@ public class FormulaQueueManager {
         }
 
     }
+
+    private void createEmptyBitSetQueue(int nrOfBitSets) throws InvalidConfigurationException {
+        if(nrOfBitSets < 1){
+            throw new InvalidConfigurationException("EmptyBitSetQueue must contain at least one item.");
+        }
+
+        for (int i = 0; i < nrOfBitSets; i++){
+            BitSet[] bitSetPair = new BitSet[2];
+            bitSetPair[0] = new BitSet();
+            bitSetPair[1] = new BitSet();
+            addBitSet(bitSetPair);
+        }
+    }
+
 
     private void createTreeStyleBitSetQueue(int nrOfTrees, int treeDepth) throws InvalidConfigurationException{
         if(nrOfTrees < 1){
@@ -203,6 +222,29 @@ public class FormulaQueueManager {
     }
 
 
+    public List<List<Tuple>> generateRelationListPair(int threadID){
+        List<List<Tuple>> relationListPair = new ArrayList<List<Tuple>>(2);
+        relationListPair.add(new ArrayList<Tuple>());
+        relationListPair.add(new ArrayList<Tuple>());
+
+
+        BitSet[] myBitSets = getNextBitSet();
+        int i = 0;
+        while(myBitSets[0].get(i) || myBitSets[1].get(i)){
+            if (myBitSets[0].get(i)){
+                relationListPair.get(0).add(tupleList.get(i));
+
+            } else if(myBitSets[1].get(i)){
+                relationListPair.get(1).add(tupleList.get(i));
+            }
+            i++;
+            if(i >= myBitSets[0].size()){
+                break;
+            }
+        }
+        return relationListPair;
+    }
+
     public BooleanFormula generateEventFormula(SolverContext ctx, EncodingContext encodingCTX, int threadID){
         BitSet[] myBitSets = getNextBitSet();
         BooleanFormulaManager bmgr = ctx.getFormulaManager().getBooleanFormulaManager();
@@ -225,6 +267,36 @@ public class FormulaQueueManager {
                 break;
             }
         }
+        logger.info("Thread " + threadID + ": " +  "generated Formula: " + myFormula);
+        return myFormula;
+    }
+
+    public List<List<Event>> generateEventListPair(int threadID){
+        List<List<Event>> eventListPair = new ArrayList<List<Event>>(2);
+        eventListPair.add(new ArrayList<Event>());
+        eventListPair.add(new ArrayList<Event>());
+
+
+        BitSet[] myBitSets = getNextBitSet();
+        int i = 0;
+        while(myBitSets[0].get(i) || myBitSets[1].get(i)){
+            if (myBitSets[0].get(i)){
+                eventListPair.get(0).add(eventList.get(i));
+
+            } else if(myBitSets[1].get(i)){
+                eventListPair.get(1).add(eventList.get(i));
+            }
+            i++;
+            if(i >= myBitSets[0].size()){
+                break;
+            }
+        }
+        return eventListPair;
+    }
+
+
+    public BooleanFormula generateEmptyFormula(SolverContext ctx, int threadID){
+        BooleanFormula myFormula = ctx.getFormulaManager().getBooleanFormulaManager().makeTrue();
         logger.info("Thread " + threadID + ": " +  "generated Formula: " + myFormula);
         return myFormula;
     }
