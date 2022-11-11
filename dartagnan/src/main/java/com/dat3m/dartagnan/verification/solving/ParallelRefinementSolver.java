@@ -75,6 +75,7 @@ public class ParallelRefinementSolver extends ModelChecker {
     private final ShutdownManager sdm;
     private final SolverContextFactory.Solvers solverType;
     private final Configuration solverConfig;
+    private final ParallelSolverConfiguration parallelConfig;
 
 
 
@@ -89,33 +90,34 @@ public class ParallelRefinementSolver extends ModelChecker {
 
     // ======================================================================
 
-    private ParallelRefinementSolver(SolverContext c, ProverEnvironment p, VerificationTask t, ShutdownManager sdm, SolverContextFactory.Solvers solverType, Configuration solverConfig) {
+    private ParallelRefinementSolver(SolverContext c, ProverEnvironment p, VerificationTask t, ShutdownManager sdm, SolverContextFactory.Solvers solverType, Configuration solverConfig, ParallelSolverConfiguration parallelConfig)
+            throws InvalidConfigurationException{
         mainCTX = c;
         mainProver = p;
         mainTask = t;
         this.sdm = sdm;
-        this.fqmgr = new FormulaQueueManager();
+        this.fqmgr = new FormulaQueueManager(parallelConfig);
         this.refinementCollector = new ParallelRefinementCollector(0);
         this.solverType = solverType;
         this.solverConfig = solverConfig;
+        this.parallelConfig = parallelConfig;
     }
 
     //TODO: We do not yet use Witness information. The problem is that WitnessGraph.encode() generates
     // constraints on hb, which is not encoded in Refinement.
     //TODO (2): Add possibility for Refinement to handle CAT-properties (it ignores them for now).
     public static ParallelRefinementSolver run(SolverContext ctx, ProverEnvironment prover, VerificationTask task, SolverContextFactory.Solvers solverType, Configuration solverConfig,
-                                               QueueType queueTypeSetting, int queueSettingInt1, int queueSettingInt2, int maxNumberOfThreads, ShutdownManager sdm)
+                                               int maxNumberOfThreads, ShutdownManager sdm, ParallelSolverConfiguration parallelConfig)
             throws InterruptedException, SolverException, InvalidConfigurationException {
-        ParallelRefinementSolver s = new ParallelRefinementSolver(ctx, prover, task, sdm, solverType, solverConfig);
+        ParallelRefinementSolver s = new ParallelRefinementSolver(ctx, prover, task, sdm, solverType, solverConfig, parallelConfig);
         task.getConfig().inject(s);
         logger.info("{}: {}", BASELINE, s.baselines);
-        s.run(queueTypeSetting, queueSettingInt1, queueSettingInt2, maxNumberOfThreads);
+        s.run(maxNumberOfThreads);
         return s;
     }
 
-    private void run(QueueType queueTypeSetting, int queueTypeSettingInt1, int queueTypeSettingInt2, int maxNumberOfThreads) throws InterruptedException, SolverException, InvalidConfigurationException {
+    private void run(int maxNumberOfThreads) throws InterruptedException, SolverException, InvalidConfigurationException {
 
-        fqmgr.populateFormulaQueue(queueTypeSetting, queueTypeSettingInt1, queueTypeSettingInt2);
 
         resultCollector = new ParallelResultCollector(PASS, 0,maxNumberOfThreads, fqmgr.getQueueSize());
 
@@ -166,8 +168,48 @@ public class ParallelRefinementSolver extends ModelChecker {
         int totalThreadnumber = fqmgr.getQueueSize();
         List<Thread> threads = new ArrayList<Thread>(totalThreadnumber);
 
+        //------------------------QueueManager-gets-QObjects----------
+        switch (parallelConfig.getFormulaItemType()){
+            case CO_RELATION_FORMULAS:
+                String relationCOName = RelationNameRepository.CO;
+                fqmgr.setRelationName(relationCOName);
+                Relation relationCO = baselineTask.getMemoryModel().getRelation(relationCOName);
+                RelationAnalysis relationAnalysisCO = context.getAnalysisContext().get(RelationAnalysis.class);
+                RelationAnalysis.Knowledge knowledgeCO = relationAnalysisCO.getKnowledge(relationCO);
+                TupleSet coEncodeSet = knowledgeCO.getMaySet();
+                List<Tuple> tupleListCO = new ArrayList<>(coEncodeSet);
+                fqmgr.setTupleList(tupleListCO);
+                fqmgr.orderRelations();
+                break;
+            case RF_RELATION_FORMULAS:
+                String relationRFName = RelationNameRepository.RF;
+                fqmgr.setRelationName(relationRFName);
+                Relation relationRF = baselineTask.getMemoryModel().getRelation(relationRFName);
+                RelationAnalysis relationAnalysisRF = context.getAnalysisContext().get(RelationAnalysis.class);
+                RelationAnalysis.Knowledge knowledge = relationAnalysisRF.getKnowledge(relationRF);
+                TupleSet rfEncodeSet = knowledge.getMaySet();
+                List<Tuple> tupleListRF = new ArrayList<>(rfEncodeSet);
+                fqmgr.setTupleList(tupleListRF);
+                fqmgr.orderRelations();
+                break;
+            case EVENT_FORMULAS:
+                BranchEquivalence branchEquivalence = context.getAnalysisContext().get(BranchEquivalence.class);
+                Set<Event> initialClass = branchEquivalence.getInitialClass();
+                List<Event> eventList = branchEquivalence.getAllEquivalenceClasses().stream().filter(c -> c!=initialClass).map(c -> c.getRepresentative()).collect(Collectors.toList());
+                fqmgr.setEventList(eventList);
+                fqmgr.orderEvents();
+                break;
+            case TAUTOLOGY_FORMULAS:
+                break;
 
-        switch(queueTypeSetting){
+            default:
+                throw(new InvalidConfigurationException("Formula Type " + parallelConfig.getFormulaQueueStyle().name() +" is not supported in ParallelRefinement."));
+        }
+
+
+
+
+        /*switch(queueTypeSetting){
             case EMPTY:
             case SINGLE_LITERAL:
                 System.out.println("EMPTY AND SINGLE_LITERAL are not implemented"); //TODO implement :)
@@ -203,7 +245,7 @@ public class ParallelRefinementSolver extends ModelChecker {
                 //eventListShuffle.shuffle(randomInt);
                 fqmgr.setEventList(eventListShuffle);
 
-        }
+        }*/
 
 
         logger.info("Starting Thread creation.");
@@ -228,7 +270,7 @@ public class ParallelRefinementSolver extends ModelChecker {
             try{
                 threads.add(new Thread(()-> {
                     try {
-                        runThread(analysisContext, threadID);
+                        runThread(threadID);
                     } catch (InterruptedException e){
                         logger.warn("Timeout elapsed. The SMT solver was stopped");
                         System.out.println("TIMEOUT");
@@ -280,9 +322,9 @@ public class ParallelRefinementSolver extends ModelChecker {
     }
 
 
-    private void runThread(Context analysisContext, int threadID)
+    private void runThread(int threadID)
             throws InterruptedException, SolverException, InvalidConfigurationException{
-        ParallelRefinementThreadSolver myThreadSolver = new ParallelRefinementThreadSolver(mainTask, fqmgr, sdm, resultCollector, refinementCollector, solverType, solverConfig, analysisContext, threadID);
+        ParallelRefinementThreadSolver myThreadSolver = new ParallelRefinementThreadSolver(mainTask, fqmgr, sdm, resultCollector, refinementCollector, solverType, solverConfig, threadID, parallelConfig);
         myThreadSolver.run();
     }
 

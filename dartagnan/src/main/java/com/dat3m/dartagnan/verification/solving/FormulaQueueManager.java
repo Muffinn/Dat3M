@@ -1,10 +1,8 @@
 package com.dat3m.dartagnan.verification.solving;
 
-import ap.Prover;
 import com.dat3m.dartagnan.encoding.EncodingContext;
 import com.dat3m.dartagnan.program.event.core.Event;
 import com.dat3m.dartagnan.verification.VerificationTask;
-import com.dat3m.dartagnan.wmm.Relation;
 import com.dat3m.dartagnan.wmm.utils.Tuple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -33,23 +31,17 @@ public class FormulaQueueManager {
     //private VerificationTask task;
     //private Context analysisContext;
 
-    private QueueType queueType;
-    private int queueTypeSettingInt1;
-    private int queueTypeSettingInt2;
     private String relationName;
+    private final ParallelSolverConfiguration parallelConfig;
 
-    public FormulaQueueManager(){
+    public FormulaQueueManager(ParallelSolverConfiguration parallelConfig)
+            throws InvalidConfigurationException{
         this.bitsetQueue = new ConcurrentLinkedQueue<BitSet[]>();
+        this.parallelConfig = parallelConfig;
+        populateFormulaQueue();
     }
 
-    public FormulaQueueManager(QueueType queueTypeSetting, int queueTypeSettingInt1, int queueTypeSettingInt2)
-                 throws InvalidConfigurationException{
-        this.bitsetQueue = new ConcurrentLinkedQueue<BitSet[]>();
-        populateFormulaQueue(queueTypeSetting, queueTypeSettingInt1, queueTypeSettingInt2);
-        this.queueType = queueTypeSetting;
-        this.queueTypeSettingInt1 = queueTypeSettingInt1;
-        this.queueTypeSettingInt2 = queueTypeSettingInt2;
-    }
+
 
     public synchronized BitSet[] getNextBitSet() {
         return bitsetQueue.remove();
@@ -63,19 +55,9 @@ public class FormulaQueueManager {
 
     public int getQueueSize(){return bitsetQueue.size();}
 
-    public synchronized int getQueueTypeSettingInt1(){return queueTypeSettingInt1;}
-
-    public synchronized int getQueueTypeSettingInt2(){return queueTypeSettingInt2;}
-
-    public synchronized QueueType getQueueType() {return queueType;}
 
     public void setRelationName(String relationName){this.relationName = relationName;}
 
-    public void setQueueSettings(QueueType queueType, int queueTypeSettingInt1, int queueTypeSettingInt2){
-        this.queueType = queueType;
-        this.queueTypeSettingInt2 = queueTypeSettingInt2;
-        this.queueTypeSettingInt1 = queueTypeSettingInt1;
-    }
 
     public synchronized String getRelationName() {return relationName;}
 
@@ -89,23 +71,17 @@ public class FormulaQueueManager {
 
     public synchronized List<Tuple> getTupleList(){return tupleList;}
 
-    public void populateFormulaQueue(QueueType queueTypeSetting, int queueTypeSettingInt1, int queueTypeSettingInt2)
-    throws InvalidConfigurationException{
-        this.setQueueSettings(queueTypeSetting, queueTypeSettingInt1, queueTypeSettingInt2);
-        switch(queueTypeSetting){
-            case EMPTY:
-                createEmptyBitSetQueue(queueTypeSettingInt1);
+    public void populateFormulaQueue()
+            throws InvalidConfigurationException{
+        switch(parallelConfig.getFormulaQueueStyle()){
+            case TAUTOLOGY_FORMULA_STYLE:
+                createEmptyBitSetQueue(parallelConfig.getQueueSettingInt1());
                 break;
-            case SINGLE_LITERAL:
-                logger.warn("EMPTY AND SINGLE_LITERAL are not implemented"); //TODO implement :)
-            case RELATIONS_SORT:
-            case RELATIONS_SHUFFLE:
-            case MUTUALLY_EXCLUSIVE_SHUFFLE:
-            case MUTUALLY_EXCLUSIVE_SORT:
-            case EVENTS:
-            case MUTUALLY_EXCLUSIVE_EVENTS:
-                createTreeStyleBitSetQueue(queueTypeSettingInt1, queueTypeSettingInt2);
+            case TREE_SHAPED_FORMULA_QUEUE:
+                createTreeStyleBitSetQueue(parallelConfig.getQueueSettingInt1(), parallelConfig.getQueueSettingInt2());
                 break;
+            default:
+                throw(new InvalidConfigurationException(parallelConfig.getFormulaQueueStyle().name() + "is not supported by populateFormulaQueue."));
         }
 
     }
@@ -176,6 +152,30 @@ public class FormulaQueueManager {
             createTreeBitSet(treeDepth - 1, varBitSet, notVarBitSet, startPoint + 1);
             notVarBitSet.clear(startPoint);
         }
+    }
+
+    public void orderEvents()
+            throws InvalidConfigurationException {
+        switch (parallelConfig.getFormulaItemOrder()){
+            case NO_ORDER:
+                break;
+
+            case RANDOM_ORDER:
+            default:
+                throw(new InvalidConfigurationException("Formula Order " + parallelConfig.getFormulaItemOrder().name() + " is not supported in ParallelRefinement."));
+        }
+    }
+    public void orderRelations()
+            throws InvalidConfigurationException {
+        switch (parallelConfig.getFormulaItemOrder()){
+            case NO_ORDER:
+                break;
+
+            case RANDOM_ORDER:
+            default:
+                throw(new InvalidConfigurationException("Formula Order " + parallelConfig.getFormulaItemOrder().name() + " is not supported in ParallelRefinement."));
+        }
+
     }
 
 
@@ -300,6 +300,11 @@ public class FormulaQueueManager {
         logger.info("Thread " + threadID + ": " +  "generated Formula: " + myFormula);
         return myFormula;
     }
+
+
+
+
+
 
 
     /*public void relationTuplesMutuallyExlusive(int maxLength, int maxTrue, List<Tuple> tupleList, String relationName){

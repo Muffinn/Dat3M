@@ -160,7 +160,7 @@ public class Dartagnan extends BaseOptions {
                 			break;
 							case PARALLELASSUME:
 							modelChecker = ParallelAssumeSolver.run(ctx, prover, task, SolverContextFactory.Solvers.Z3,
-									Configuration.defaultConfiguration(), QueueType.MUTUALLY_EXCLUSIVE_EVENTS, 5,3 , 6, sdm);
+									Configuration.defaultConfiguration(), QueueType.MUTUALLY_EXCLUSIVE_EVENTS, 5,3 , 6, sdm, ParallelSolverConfiguration.defaultConfiguration());
 							break;
 						default:
 							throw new InvalidConfigurationException("unsupported method " + o.getMethod());

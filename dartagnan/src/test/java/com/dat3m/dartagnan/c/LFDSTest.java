@@ -96,12 +96,4 @@ public class LFDSTest extends AbstractCTest {
         assertEquals(expected, s.getResult());
 	}
 
-    @Test
-    //@CSVLogger.FileName("csv/assume")
-    public void testParallelAssume() throws Exception {
-        ParallelAssumeSolver s = ParallelAssumeSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3, Configuration.defaultConfiguration(), QueueType.RELATIONS_SHUFFLE,
-                5, 2, 5, shutdownManagerProvider.get());
-
-        assertEquals(expected, s.getResult());
-    }
 }

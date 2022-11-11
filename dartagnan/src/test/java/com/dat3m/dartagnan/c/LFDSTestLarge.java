@@ -9,7 +9,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.sosy_lab.common.configuration.Configuration;
-import org.sosy_lab.common.configuration.ConfigurationBuilder;
 import org.sosy_lab.java_smt.SolverContextFactory;
 
 import java.io.IOException;
@@ -17,7 +16,6 @@ import java.util.Arrays;
 
 import static com.dat3m.dartagnan.configuration.Arch.*;
 import static com.dat3m.dartagnan.utils.ResourceHelper.TEST_RESOURCE_PATH;
-import static com.dat3m.dartagnan.utils.Result.FAIL;
 import static com.dat3m.dartagnan.utils.Result.UNKNOWN;
 import static org.junit.Assert.assertEquals;
 
@@ -80,7 +78,8 @@ public class LFDSTestLarge extends AbstractCTest {
     public void testParallelRefinement() throws Exception {
 
         ParallelRefinementSolver s = ParallelRefinementSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3,
-                Configuration.defaultConfiguration(), QueueType.RELATIONS_SHUFFLE, 9,0, 4,shutdownManagerProvider.get());
+                Configuration.defaultConfiguration(), 4,shutdownManagerProvider.get(),
+                ParallelSolverConfiguration.defaultConfiguration());
         assertEquals(expected, s.getResult());
     }
 
@@ -89,7 +88,8 @@ public class LFDSTestLarge extends AbstractCTest {
     public void testParallelEventRefinement() throws Exception {
 
         ParallelRefinementSolver s = ParallelRefinementSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3,
-                Configuration.defaultConfiguration(), QueueType.MUTUALLY_EXCLUSIVE_EVENTS, 9, 0, 4, shutdownManagerProvider.get());
+                Configuration.defaultConfiguration(),4, shutdownManagerProvider.get(),
+                ParallelSolverConfiguration.defaultConfiguration());
         assertEquals(expected, s.getResult());
     }
 
@@ -99,7 +99,8 @@ public class LFDSTestLarge extends AbstractCTest {
     public void testParallelAssume() throws Exception {
 
         ParallelAssumeSolver s = ParallelAssumeSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3,
-        Configuration.defaultConfiguration(), QueueType.MUTUALLY_EXCLUSIVE_EVENTS, 15,0 , 4,shutdownManagerProvider.get());
+        Configuration.defaultConfiguration(), QueueType.MUTUALLY_EXCLUSIVE_EVENTS, 15,0 , 4,shutdownManagerProvider.get(),
+                ParallelSolverConfiguration.defaultConfiguration());
         assertEquals(expected, s.getResult());
     }
 

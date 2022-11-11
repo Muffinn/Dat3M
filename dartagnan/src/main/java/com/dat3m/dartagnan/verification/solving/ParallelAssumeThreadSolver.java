@@ -107,7 +107,7 @@ public class ParallelAssumeThreadSolver extends ModelChecker{
         myProver.addConstraint(assumedSpec);
 
         //------------myformula-Generation------------
-        QueueType queueType = mainFQMGR.getQueueType();
+        /*QueueType queueType = mainFQMGR.getQueueType();
         BooleanFormula myFormula  = myCTX.getFormulaManager().getBooleanFormulaManager().makeTrue();
         switch (queueType){
             case RELATIONS_SORT:
@@ -119,8 +119,9 @@ public class ParallelAssumeThreadSolver extends ModelChecker{
             case MUTUALLY_EXCLUSIVE_SORT:
             case MUTUALLY_EXCLUSIVE_SHUFFLE:
 
-            myFormula = mainFQMGR.generateRelationFormula(myCTX, context, mainTask, myThreadID);
-        }
+
+        }*/
+        BooleanFormula myFormula = mainFQMGR.generateRelationFormula(myCTX, context, mainTask, myThreadID);
         myProver.addConstraint(myFormula);
         //----------------------------------------
 

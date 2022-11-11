@@ -69,16 +69,16 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
     private final ParallelResultCollector mainResultCollector;
     private final FormulaQueueManager mainFQMGR;
     private final ParallelRefinementCollector mainRefinementCollector;
-    private final ShutdownManager sdm;
-    private final Context mainAnalysisContext;
+    private final ParallelSolverConfiguration mainParallelConfig;
     private final int myThreadID;
     private final int refreshInterval;
+
     private final List<Event> trueEventList;
     private final List<Event> falseEventList;
     private final List<Tuple> trueTupleList;
     private final List<Tuple> falseTupleList;
 
-    private Queue<DNF<CoreLiteral>> myReasonsQueue;
+    private LinkedList<DNF<CoreLiteral>> myReasonsQueue;
 
     // =========================== Configurables ===========================
 
@@ -91,8 +91,10 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
     // ======================================================================
 
     public ParallelRefinementThreadSolver(VerificationTask mainTask, FormulaQueueManager mainFQMGR, ShutdownManager sdm,
-                                           ParallelResultCollector mainResultCollector, ParallelRefinementCollector mainRefinementCollector, SolverContextFactory.Solvers solver, Configuration solverConfig, Context mainAnalysisContext, int threadID)
-            throws InterruptedException, SolverException, InvalidConfigurationException{
+                                           ParallelResultCollector mainResultCollector, ParallelRefinementCollector mainRefinementCollector,
+                                          SolverContextFactory.Solvers solver, Configuration solverConfig, int threadID,
+                                          ParallelSolverConfiguration parallelConfig)
+            throws InvalidConfigurationException{
         myCTX = SolverContextFactory.createSolverContext(
                 solverConfig,
                 BasicLogManager.create(solverConfig),
@@ -100,14 +102,15 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
                 solver);
         myProver = myCTX.newProverEnvironment(SolverContext.ProverOptions.GENERATE_MODELS);
         this.mainTask = mainTask;
-        this.sdm = sdm;
         this.mainFQMGR = mainFQMGR;
         this.mainRefinementCollector = mainRefinementCollector;
         this.mainResultCollector = mainResultCollector;
-        this.mainAnalysisContext = mainAnalysisContext;
+        this.mainParallelConfig = parallelConfig;
         myThreadID = threadID;
         this.refreshInterval = 5;
-        this.myReasonsQueue = new ConcurrentLinkedQueue<DNF<CoreLiteral>>();
+        this.myReasonsQueue = new LinkedList<DNF<CoreLiteral>>();
+
+
 
         this.trueEventList = new ArrayList<Event>();
         this.falseEventList = new ArrayList<Event>();
@@ -127,27 +130,27 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
 
 
         //------------------------
-        QueueType queueType = mainFQMGR.getQueueType();
-        switch (queueType){
-            case RELATIONS_SORT:
-            case RELATIONS_SHUFFLE:
-            case SINGLE_LITERAL:
-            case MUTUALLY_EXCLUSIVE_SORT:
-            case MUTUALLY_EXCLUSIVE_SHUFFLE:
-                List<List<Tuple>> tupleListList =  mainFQMGR.generateRelationListPair(myThreadID);
-                trueTupleList.addAll(tupleListList.get(0));
-                falseTupleList.addAll(tupleListList.get(1));
+        if (mainParallelConfig.getFormulaGeneration() == ParallelSolverConfiguration.FormulaGeneration.IN_SOLVER) {
+            switch (mainParallelConfig.getFormulaItemType()){
+                case CO_RELATION_FORMULAS:
+                case RF_RELATION_FORMULAS:
+                    List<List<Tuple>> tupleListList =  mainFQMGR.generateRelationListPair(myThreadID);
+                    trueTupleList.addAll(tupleListList.get(0));
+                    falseTupleList.addAll(tupleListList.get(1));
 
-                break;
-            case EMPTY:
-                break;
-            case EVENTS:
-            case MUTUALLY_EXCLUSIVE_EVENTS:
-                List<List<Event>> eventListList =  mainFQMGR.generateEventListPair(myThreadID);
-                trueEventList.addAll(eventListList.get(0));
-                falseEventList.addAll(eventListList.get(1));
-
+                    break;
+                case TAUTOLOGY_FORMULAS:
+                    break;
+                case EVENT_FORMULAS:
+                    List<List<Event>> eventListList =  mainFQMGR.generateEventListPair(myThreadID);
+                    trueEventList.addAll(eventListList.get(0));
+                    falseEventList.addAll(eventListList.get(1));
+                    break;
+                default:
+                    throw(new InvalidConfigurationException("FormulaItemType " + mainParallelConfig.getFormulaItemType().name() + " is not a supported by ParallelRefinementThreadSolver"));
+            }
         }
+
         //----------------------------------------
 
         Context baselineContext;
@@ -200,24 +203,47 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
 
 
         //------------myformula-Generation------------
-        BooleanFormula myFormula  = myCTX.getFormulaManager().getBooleanFormulaManager().makeTrue();
-        switch (queueType){
-            case RELATIONS_SORT:
-            case RELATIONS_SHUFFLE:
-            case SINGLE_LITERAL:
-            case MUTUALLY_EXCLUSIVE_SORT:
-            case MUTUALLY_EXCLUSIVE_SHUFFLE:
-                myFormula = generateTupleFormula();
+        BooleanFormula myFormula;
+        switch(mainParallelConfig.getFormulaGeneration()){
+            case IN_SOLVER:
+                switch (mainParallelConfig.getFormulaItemType()){
+                    case RF_RELATION_FORMULAS:
+                    case CO_RELATION_FORMULAS:
+                        myFormula = generateTupleFormula();
+                        break;
+                    case EVENT_FORMULAS:
+                        myFormula = generateEventFormula();
+                        break;
+                    case TAUTOLOGY_FORMULAS:
+                        throw(new InvalidConfigurationException("Unreachable Code reached. TAUTOLOGY_FORMULAS can only be combined with IN_MANAGER. Check ParallelSolverConfiguration Constructor."));
+
+                    default:
+                        throw(new InvalidConfigurationException(mainParallelConfig.getFormulaItemType() + "is not supported in myFormulaGeneration in ParallelRefinementThreadSolver."));
+                }
+                break;
+            case IN_MANAGER:
+                switch (mainParallelConfig.getFormulaItemType()){
+                    case RF_RELATION_FORMULAS:
+                    case CO_RELATION_FORMULAS:
+                        myFormula = mainFQMGR.generateRelationFormula(myCTX, context, mainTask, myThreadID);
+                        break;
+                    case TAUTOLOGY_FORMULAS:
+                        myFormula = mainFQMGR.generateEmptyFormula(myCTX, myThreadID);
+                        break;
+                    case EVENT_FORMULAS:
+                        myFormula = mainFQMGR.generateEventFormula(myCTX, context, myThreadID);
+                        break;
+                    default:
+                        throw(new InvalidConfigurationException(mainParallelConfig.getFormulaItemType() + "is not supported in myFormulaGeneration in ParallelRefinementThreadSolver."));
+                }
 
                 break;
-            case EMPTY:
-                myFormula = mainFQMGR.generateEmptyFormula(myCTX, myThreadID);
-                break;
-            case EVENTS:
-            case MUTUALLY_EXCLUSIVE_EVENTS:
-                myFormula = generateEventFormula();
+            default:
+                throw(new InvalidConfigurationException(mainParallelConfig.getFormulaGeneration().name() + " is not supported Formula Generation Method in ParallelRefinementThread Solver."));
 
         }
+
+
         myProver.addConstraint(myFormula);
         //----------------------------------------
 
@@ -637,3 +663,24 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
 
     }
 }
+
+ /*   //------------myformula-Generation------------
+    QueueType queueType = mainFQMGR.getQueueType();
+    BooleanFormula myFormula  = myCTX.getFormulaManager().getBooleanFormulaManager().makeTrue();
+        switch (queueType){
+                case RELATIONS_SORT:
+                case RELATIONS_SHUFFLE:
+                case SINGLE_LITERAL:
+
+                case MUTUALLY_EXCLUSIVE_SORT:
+                case MUTUALLY_EXCLUSIVE_SHUFFLE:
+                case EMPTY:
+                myFormula = mainFQMGR.generateRelationFormula(myCTX, context, mainTask, myThreadID);
+                break;
+                case EVENTS:
+                case MUTUALLY_EXCLUSIVE_EVENTS:
+                myFormula = mainFQMGR.generateEventFormula(myCTX, context, myThreadID);
+
+                }
+                myProver.addConstraint(myFormula);
+//----------------------------------------*/

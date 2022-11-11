@@ -47,21 +47,25 @@ public class ParallelAssumeSolver extends ModelChecker{
     private final ShutdownManager sdm;
     private final SolverContextFactory.Solvers solver;
     private final Configuration solverConfig;
+    private final ParallelSolverConfiguration parallelConfig;
 
-    private ParallelAssumeSolver(SolverContext ctx, ProverEnvironment prover, VerificationTask task, ShutdownManager sdm, SolverContextFactory.Solvers solver, Configuration solverConfig) {
+    private ParallelAssumeSolver(SolverContext ctx, ProverEnvironment prover, VerificationTask task, ShutdownManager sdm, SolverContextFactory.Solvers solver, Configuration solverConfig, ParallelSolverConfiguration parallelConfig)
+        throws InvalidConfigurationException{
         mainCTX = ctx;
         mainProver = prover;
         mainTask = task;
         this.sdm = sdm;
-        this.fqmgr = new FormulaQueueManager();
+        this.fqmgr = new FormulaQueueManager(parallelConfig);
         this.solver = solver;
         this.solverConfig = solverConfig;
+        this.parallelConfig = parallelConfig;
     }
 
     public static ParallelAssumeSolver run(SolverContext mainCTX, ProverEnvironment prover, VerificationTask task, SolverContextFactory.Solvers solver, Configuration solverConfig,
-                                   QueueType queueTypeSetting, int queueSettingInt1, int queueSettingInt2, int maxNumberOfThreads, ShutdownManager sdm)
+                                   QueueType queueTypeSetting, int queueSettingInt1, int queueSettingInt2, int maxNumberOfThreads, ShutdownManager sdm,
+                                           ParallelSolverConfiguration parallelConfig)
             throws InterruptedException, SolverException, InvalidConfigurationException{
-        ParallelAssumeSolver parallelAssumeSolver = new ParallelAssumeSolver(mainCTX, prover, task, sdm, solver, solverConfig);
+        ParallelAssumeSolver parallelAssumeSolver = new ParallelAssumeSolver(mainCTX, prover, task, sdm, solver, solverConfig, parallelConfig);
         parallelAssumeSolver.run(queueTypeSetting, queueSettingInt1, queueSettingInt2, maxNumberOfThreads);
         return parallelAssumeSolver;
     }
@@ -69,7 +73,6 @@ public class ParallelAssumeSolver extends ModelChecker{
 
     private void run(QueueType queueTypeSetting, int queueTypeSettingInt1, int queueTypeSettingInt2, int maxNumberOfThreads)
             throws InterruptedException, SolverException, InvalidConfigurationException {
-        fqmgr.populateFormulaQueue(queueTypeSetting, queueTypeSettingInt1, queueTypeSettingInt2);
 
         resultCollector = new ParallelResultCollector(PASS, 0,maxNumberOfThreads, fqmgr.getQueueSize());
 
