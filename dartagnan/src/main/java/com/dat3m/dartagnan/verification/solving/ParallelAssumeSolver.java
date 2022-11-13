@@ -1,15 +1,10 @@
 package com.dat3m.dartagnan.verification.solving;
 
 import com.dat3m.dartagnan.encoding.*;
-import com.dat3m.dartagnan.program.Program;
-import com.dat3m.dartagnan.program.analysis.BranchEquivalence;
-import com.dat3m.dartagnan.program.event.core.Event;
-import com.dat3m.dartagnan.utils.Result;
 import com.dat3m.dartagnan.verification.Context;
 import com.dat3m.dartagnan.verification.VerificationTask;
 import com.dat3m.dartagnan.wmm.Wmm;
 import com.dat3m.dartagnan.wmm.analysis.RelationAnalysis;
-import com.dat3m.dartagnan.wmm.axiom.Axiom;
 import com.dat3m.dartagnan.wmm.Relation;
 import com.dat3m.dartagnan.wmm.relation.RelationNameRepository;
 import com.dat3m.dartagnan.wmm.utils.Tuple;
@@ -19,16 +14,12 @@ import org.apache.logging.log4j.Logger;
 import org.sosy_lab.common.ShutdownManager;
 import org.sosy_lab.common.configuration.Configuration;
 import org.sosy_lab.common.configuration.InvalidConfigurationException;
-import org.sosy_lab.common.log.BasicLogManager;
 import org.sosy_lab.java_smt.SolverContextFactory;
 import org.sosy_lab.java_smt.api.*;
 
 import java.util.*;
 
 import static com.dat3m.dartagnan.utils.Result.*;
-import static java.util.Collections.singletonList;
-
-
 
 
 public class ParallelAssumeSolver extends ModelChecker{
@@ -62,19 +53,18 @@ public class ParallelAssumeSolver extends ModelChecker{
     }
 
     public static ParallelAssumeSolver run(SolverContext mainCTX, ProverEnvironment prover, VerificationTask task, SolverContextFactory.Solvers solver, Configuration solverConfig,
-                                   QueueType queueTypeSetting, int queueSettingInt1, int queueSettingInt2, int maxNumberOfThreads, ShutdownManager sdm,
-                                           ParallelSolverConfiguration parallelConfig)
+                                   ShutdownManager sdm, ParallelSolverConfiguration parallelConfig)
             throws InterruptedException, SolverException, InvalidConfigurationException{
         ParallelAssumeSolver parallelAssumeSolver = new ParallelAssumeSolver(mainCTX, prover, task, sdm, solver, solverConfig, parallelConfig);
-        parallelAssumeSolver.run(queueTypeSetting, queueSettingInt1, queueSettingInt2, maxNumberOfThreads);
+        parallelAssumeSolver.run();
         return parallelAssumeSolver;
     }
 
 
-    private void run(QueueType queueTypeSetting, int queueTypeSettingInt1, int queueTypeSettingInt2, int maxNumberOfThreads)
+    private void run()
             throws InterruptedException, SolverException, InvalidConfigurationException {
 
-        resultCollector = new ParallelResultCollector(PASS, 0,maxNumberOfThreads, fqmgr.getQueueSize());
+        resultCollector = new ParallelResultCollector(PASS, parallelConfig);
 
         Wmm memoryModel = mainTask.getMemoryModel();
         Context analysisContext = Context.create();
@@ -99,24 +89,43 @@ public class ParallelAssumeSolver extends ModelChecker{
         List<Thread> threads = new ArrayList<Thread>(totalThreadnumber);
 
 
-        switch(queueTypeSetting){
-            case EMPTY:
-            case SINGLE_LITERAL:
-                System.out.println("EMPTY AND SINGLE_LITERAL are not implemented"); //TODO implement :)
-            case RELATIONS_SORT:
-            case RELATIONS_SHUFFLE:
-            case MUTUALLY_EXCLUSIVE_SHUFFLE:
-            case MUTUALLY_EXCLUSIVE_SORT:
-            case EVENTS:
-            case MUTUALLY_EXCLUSIVE_EVENTS:
-                String relationName = RelationNameRepository.RF;
-                fqmgr.setRelationName(relationName);
-                Relation relation = mainTask.getMemoryModel().getRelation(relationName);
-                RelationAnalysis relationAnalysis = context.getAnalysisContext().get(RelationAnalysis.class);
-                RelationAnalysis.Knowledge knowledge = relationAnalysis.getKnowledge(relation);
+        //------------------------QueueManager-gets-QObjects----------
+        switch (parallelConfig.getFormulaItemType()){
+            case CO_RELATION_FORMULAS:
+                String relationCOName = RelationNameRepository.CO;
+                fqmgr.setRelationName(relationCOName);
+                Relation relationCO = mainTask.getMemoryModel().getRelation(relationCOName);
+                RelationAnalysis relationAnalysisCO = context.getAnalysisContext().get(RelationAnalysis.class);
+                RelationAnalysis.Knowledge knowledgeCO = relationAnalysisCO.getKnowledge(relationCO);
+                TupleSet coEncodeSet = knowledgeCO.getMaySet();
+                List<Tuple> tupleListCO = new ArrayList<>(coEncodeSet);
+                fqmgr.setTupleList(tupleListCO);
+                fqmgr.orderTuples();
+                break;
+            case RF_RELATION_FORMULAS:
+                String relationRFName = RelationNameRepository.RF;
+                fqmgr.setRelationName(relationRFName);
+                Relation relationRF = mainTask.getMemoryModel().getRelation(relationRFName);
+                RelationAnalysis relationAnalysisRF = context.getAnalysisContext().get(RelationAnalysis.class);
+                RelationAnalysis.Knowledge knowledge = relationAnalysisRF.getKnowledge(relationRF);
                 TupleSet rfEncodeSet = knowledge.getMaySet();
-                List<Tuple> tupleList = new ArrayList<>(rfEncodeSet);
-                fqmgr.setTupleList(tupleList);
+                List<Tuple> tupleListRF = new ArrayList<>(rfEncodeSet);
+                fqmgr.setTupleList(tupleListRF);
+                fqmgr.orderTuples();
+                break;
+
+
+            case TAUTOLOGY_FORMULAS:
+                break;
+            case EVENT_FORMULAS:
+                /*BranchEquivalence branchEquivalence = context.getAnalysisContext().get(BranchEquivalence.class);
+                Set<Event> initialClass = branchEquivalence.getInitialClass();
+                List<Event> eventList = branchEquivalence.getAllEquivalenceClasses().stream().filter(c -> c!=initialClass).map(c -> c.getRepresentative()).collect(Collectors.toList());
+                fqmgr.setEventList(eventList);
+                fqmgr.orderEvents();
+                break;*/
+            default:
+                throw(new InvalidConfigurationException("Formula Type " + parallelConfig.getFormulaQueueStyle().name() +" is not supported in ParallelRefinement."));
         }
 
         logger.info("Starting Thread creation.");

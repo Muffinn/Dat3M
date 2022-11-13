@@ -65,6 +65,8 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
     private final SolverContext myCTX;
     private final ProverEnvironment myProver;
     private final VerificationTask mainTask;
+    private final Set<Relation> mainCutRelations;
+
 
     private final ParallelResultCollector mainResultCollector;
     private final FormulaQueueManager mainFQMGR;
@@ -73,12 +75,13 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
     private final int myThreadID;
     private final int refreshInterval;
 
+
     private final List<Event> trueEventList;
     private final List<Event> falseEventList;
     private final List<Tuple> trueTupleList;
     private final List<Tuple> falseTupleList;
 
-    private LinkedList<DNF<CoreLiteral>> myReasonsQueue;
+    private final LinkedList<DNF<CoreLiteral>> myReasonsQueue;
 
     // =========================== Configurables ===========================
 
@@ -93,7 +96,7 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
     public ParallelRefinementThreadSolver(VerificationTask mainTask, FormulaQueueManager mainFQMGR, ShutdownManager sdm,
                                            ParallelResultCollector mainResultCollector, ParallelRefinementCollector mainRefinementCollector,
                                           SolverContextFactory.Solvers solver, Configuration solverConfig, int threadID,
-                                          ParallelSolverConfiguration parallelConfig)
+                                          ParallelSolverConfiguration parallelConfig, Set<Relation> cutRelations)
             throws InvalidConfigurationException{
         myCTX = SolverContextFactory.createSolverContext(
                 solverConfig,
@@ -110,7 +113,7 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
         this.refreshInterval = 5;
         this.myReasonsQueue = new LinkedList<DNF<CoreLiteral>>();
 
-
+        this.mainCutRelations = cutRelations;
 
         this.trueEventList = new ArrayList<Event>();
         this.falseEventList = new ArrayList<Event>();
@@ -157,7 +160,7 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
         VerificationTask baselineTask;
         Wmm memoryModel;
         Context analysisContext;
-        Set<Relation> cutRelations;
+        //Set<Relation> cutRelations;
 
         synchronized (mainTask){
             Program program = mainTask.getProgram();
@@ -172,9 +175,9 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
             //preprocessMemoryModel(mainTask);
             // We cut the rhs of differences to get a semi-positive model, if possible.
             // This call modifies the baseline model!
-            cutRelations = cutRelationDifferences(memoryModel, baselineModel); //note nur einmal im main
-            memoryModel.configureAll(config);       //note nur einmal im main
-            baselineModel.configureAll(config); // Configure after cutting! //note nur einmal im main
+            //cutRelations = cutRelationDifferences(memoryModel, baselineModel); //note nur einmal im main
+            //memoryModel.configureAll(config);       nur einmal im main
+            //baselineModel.configureAll(config); // Configure after cutting! //nur einmal im main
 
             performStaticProgramAnalyses(mainTask, analysisContext, config);
             baselineContext = Context.createCopyFrom(analysisContext);
@@ -197,7 +200,7 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
         BooleanFormulaManager bmgr = myCTX.getFormulaManager().getBooleanFormulaManager();
         BooleanFormula globalRefinement = bmgr.makeTrue();
 
-        WMMSolver solver = WMMSolver.withContext(context, cutRelations, mainTask, analysisContext);
+        WMMSolver solver = WMMSolver.withContext(context, mainCutRelations, mainTask, analysisContext);
         Refiner refiner = new Refiner(analysisContext);
         CAATSolver.Status status = INCONSISTENT;
 

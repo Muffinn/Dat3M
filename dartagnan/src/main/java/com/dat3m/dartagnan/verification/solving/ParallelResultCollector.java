@@ -6,25 +6,19 @@ public class ParallelResultCollector {
 
     private int numberOfFinishedThreads;
     private Result aggregatedResult;
-    private int maxConcurrentThreads;
+    private final int maxConcurrentThreads;
     private int currentlyRunningThreads;
     private long[] finishTimeCollector;
+    private final ParallelSolverConfiguration parallelConfig;
 
-    ParallelResultCollector(){
+
+    ParallelResultCollector(Result result, ParallelSolverConfiguration parallelConfig){
         this.numberOfFinishedThreads = 0;
-        this.aggregatedResult = Result.PASS;
-        this.currentlyRunningThreads = 0;
-        this.maxConcurrentThreads = 0;
-    }
-
-
-
-    ParallelResultCollector(Result result, int numberOfFinishedThreads, int maxConcurrentThreads, int totalThreadAmount){
-        this.numberOfFinishedThreads = numberOfFinishedThreads;
         this.aggregatedResult = result;
         this.currentlyRunningThreads = 0;
-        this.maxConcurrentThreads = maxConcurrentThreads;
-        this.finishTimeCollector = new long[totalThreadAmount];
+        this.parallelConfig = parallelConfig;
+        this.maxConcurrentThreads = this.parallelConfig.getMaxNumberOfConcurrentThreads();
+        this.finishTimeCollector = new long[parallelConfig.getNumberOfSplits()];
     }
 
 
@@ -63,12 +57,8 @@ public class ParallelResultCollector {
             int printTime = (int)finishTimeCollector[i] / 1000;
             System.out.println("Thread " + i + " took " + printTime + " seconds.");
         }
-
     }
 
-    public void setMaxConcurrentThreads(int maxConcurrentThreads){
-        this.maxConcurrentThreads = maxConcurrentThreads;
-    }
 }
 
 

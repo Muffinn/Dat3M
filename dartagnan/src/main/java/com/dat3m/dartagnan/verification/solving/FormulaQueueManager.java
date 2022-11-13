@@ -1,7 +1,9 @@
 package com.dat3m.dartagnan.verification.solving;
 
 import com.dat3m.dartagnan.encoding.EncodingContext;
+import com.dat3m.dartagnan.program.analysis.ExecutionAnalysis;
 import com.dat3m.dartagnan.program.event.core.Event;
+import com.dat3m.dartagnan.verification.Context;
 import com.dat3m.dartagnan.verification.VerificationTask;
 import com.dat3m.dartagnan.wmm.utils.Tuple;
 import org.apache.logging.log4j.LogManager;
@@ -11,10 +13,7 @@ import org.sosy_lab.java_smt.api.BooleanFormula;
 import org.sosy_lab.java_smt.api.BooleanFormulaManager;
 import org.sosy_lab.java_smt.api.SolverContext;
 
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class FormulaQueueManager {
@@ -160,43 +159,91 @@ public class FormulaQueueManager {
             case NO_ORDER:
                 break;
 
+            case INDEX_ORDER:
+                sortEventsByID();
+                break;
+
             case RANDOM_ORDER:
+            case SEEDED_RANDOM_ORDER:
+                sortEventsByID();
+                Collections.shuffle(eventList, parallelConfig.getShuffleRandom());
+                logger.info("Random Shuffle Seed: " + parallelConfig.getRandomSeed() + " .");
+                break;
+
             default:
                 throw(new InvalidConfigurationException("Formula Order " + parallelConfig.getFormulaItemOrder().name() + " is not supported in ParallelRefinement."));
         }
     }
-    public void orderRelations()
+    public void orderTuples()
             throws InvalidConfigurationException {
         switch (parallelConfig.getFormulaItemOrder()){
             case NO_ORDER:
                 break;
 
+            case INDEX_ORDER:
+                sortTuplesByID();
+                break;
+
             case RANDOM_ORDER:
+            case SEEDED_RANDOM_ORDER:
+                sortTuplesByID();
+                Collections.shuffle(tupleList, parallelConfig.getShuffleRandom());
+                logger.info("Random Shuffle Seed: " + parallelConfig.getRandomSeed() + " .");
+                break;
+
             default:
                 throw(new InvalidConfigurationException("Formula Order " + parallelConfig.getFormulaItemOrder().name() + " is not supported in ParallelRefinement."));
         }
 
     }
 
+    public void filterEvents(Context analysisContext)
+            throws InvalidConfigurationException {
+        switch (parallelConfig.getFormulaItemFilter()){
+            case NO_FILTER:
+                break;
 
-    /*private void recursiveTrueFalseBitQueue(BitSet currentBitSet, int currentLength, int maxLength, int currentTrue, int maxTrue){
-        currentBitSet.set(currentLength);
-        if(!(currentTrue + 1 == maxTrue || currentLength + 1 == maxLength)){
-            recursiveTrueFalseBitQueue(currentBitSet, currentLength + 1, maxLength, currentTrue + 1, maxTrue);
-        } else {
-            addBitSet((BitSet)currentBitSet.clone());
-            System.out.println("Added BitSet: " + currentBitSet);
+            case IMPLIES_FILTER:
+                filterImpliedEvents(analysisContext);
+                break;
+
+            case MUTUALLY_EXCLUSIVE_FILTER:
+                filterMEEvents(analysisContext);
+                break;
+
+            case IMP_AND_ME_FILTER:
+                filterImpliedAndMEEvents(analysisContext);
+                break;
+
+            default:
+                throw(new InvalidConfigurationException("Formula Order " + parallelConfig.getFormulaItemFilter().name() + " is not supported in ParallelRefinement."));
         }
+    }
 
-        currentBitSet.clear(currentLength);
+    public void filterTuples(Context analysisContext)
+            throws InvalidConfigurationException {
+        switch (parallelConfig.getFormulaItemFilter()){
+            case NO_FILTER:
+                break;
 
-        if(!(currentTrue + 1 == maxTrue || currentLength + 1 == maxLength)){
-            recursiveTrueFalseBitQueue(currentBitSet, currentLength + 1, maxLength,currentTrue, maxTrue);
-        } else {
-            addBitSet((BitSet)currentBitSet.clone());
-            System.out.println("Added BitSet: " + currentBitSet);
+            case IMPLIES_FILTER:
+                filterImpliedTuples();
+                break;
+
+            case MUTUALLY_EXCLUSIVE_FILTER:
+                filterMETuples(analysisContext);
+                break;
+
+            case IMP_AND_ME_FILTER:
+                filterImpliedAndMETuples();
+                break;
+
+            default:
+                throw(new InvalidConfigurationException("Formula Order " + parallelConfig.getFormulaItemFilter().name() + " is not supported in ParallelRefinement."));
         }
-    }*/
+    }
+
+
 
     public BooleanFormula generateRelationFormula(SolverContext ctx, EncodingContext encodingCTX, VerificationTask mainTask, int threadID){
         BitSet[] myBitSets = getNextBitSet();
@@ -302,8 +349,180 @@ public class FormulaQueueManager {
     }
 
 
+    private void sortEventsByID(){
+        eventList.sort(new Comparator<Event>() {
+            @Override
+            public int compare(Event e1, Event e2) {
+                return Integer.compare(e1.getCId(), e2.getCId());
+            }
+        });
+    }
+
+    private void sortTuplesByID(){
+        tupleList.sort(new Comparator<Tuple>() {
+            @Override
+            public int compare(Tuple t1, Tuple t2) {
+                return Integer.compare(t1.getFirst().getCId(), t2.getFirst().getCId());
+            }
+        });
+    }
+
+    private void filterMEEvents(Context analysisContext){
+        int formulaLength = parallelConfig.getFormulaLength();
+        int foundItems = 1;
+        ArrayList<Event> filteredEvents = new ArrayList<Event>();
+        int i = 1;
+        while (foundItems < formulaLength && i < eventList.size()){
+            boolean isME = false;
+            for (int j = 0; (j < i) && (!isME); j++){
+                isME = areEventsMutuallyExclusive(eventList.get(i), eventList.get(j), analysisContext);
+            }
+            if(isME){
+               filteredEvents.add(this.eventList.get(i));
+            }else{
+                foundItems++;
+            }
+
+            i++;
+        }
+
+        if(foundItems < formulaLength){
+            logger.warn("Warning: Chosen Filter filtered to many Events. Not alle filtered Event will be removed.");
+            while (foundItems < formulaLength){
+                filteredEvents.remove(filteredEvents.get(0));
+                foundItems++;
+            }
+        }
+        eventList.removeAll(filteredEvents);
+        logger.info("Filtered Events: " + filteredEvents);
+    }
 
 
+
+    private void filterImpliedEvents(Context analysisContext){
+        int formulaLength = parallelConfig.getFormulaLength();
+        int foundItems = 1;
+        ArrayList<Event> filteredEvents = new ArrayList<Event>();
+        int i = 1;
+        while (foundItems < formulaLength && i < eventList.size()){
+            boolean isImplied = false;
+            for (int j = 0; (j < i) && (!isImplied); j++){
+                isImplied = isEventImplied(eventList.get(j), eventList.get(i), analysisContext);
+            }
+            if(isImplied){
+                filteredEvents.add(this.eventList.get(i));
+            }else{
+                foundItems++;
+            }
+
+            i++;
+        }
+
+        if(foundItems < formulaLength){
+            logger.warn("Warning: Chosen Filter filtered to many Events. Not alle filtered Event will be removed.");
+            while (foundItems < formulaLength){
+                filteredEvents.remove(filteredEvents.get(0));
+                foundItems++;
+            }
+        }
+        eventList.removeAll(filteredEvents);
+        logger.info("Filtered Events: " + filteredEvents);
+    }
+
+    private void filterImpliedAndMEEvents(Context analysisContext){
+        int formulaLength = parallelConfig.getFormulaLength();
+        int foundItems = 1;
+        ArrayList<Event> filteredEvents = new ArrayList<Event>();
+        int i = 1;
+        while (foundItems < formulaLength && i < eventList.size()){
+            boolean isMEorImplied = false;
+            for (int j = 0; (j < i) && (!isMEorImplied); j++){
+                isMEorImplied = isEventImplied(eventList.get(j), eventList.get(i), analysisContext) || areEventsMutuallyExclusive(eventList.get(i), eventList.get(j), analysisContext);
+            }
+            if(isMEorImplied){
+                filteredEvents.add(this.eventList.get(i));
+            }else{
+                foundItems++;
+            }
+
+            i++;
+        }
+
+        if(foundItems < formulaLength){
+            logger.warn("Warning: Chosen Filter filtered to many Events. Not alle filtered Event will be removed.");
+            while (foundItems < formulaLength){
+                filteredEvents.remove(filteredEvents.get(0));
+                foundItems++;
+            }
+        }
+        eventList.removeAll(filteredEvents);
+        logger.info("Filtered Events: " + filteredEvents);
+
+    }
+
+    private boolean areEventsMutuallyExclusive(Event e1, Event e2, Context analysisContext){
+            ExecutionAnalysis exec = analysisContext.get(ExecutionAnalysis.class);
+
+            return exec.areMutuallyExclusive(e1, e2);
+    }
+
+    private boolean isEventImplied(Event start, Event implied, Context analysisContext){
+        ExecutionAnalysis exec = analysisContext.get(ExecutionAnalysis.class);
+
+        return exec.isImplied(start, implied);
+    }
+
+    private void filterMETuples(Context analysisContext){
+        int formulaLength = parallelConfig.getFormulaLength();
+        int foundItems = 1;
+        ArrayList<Tuple> filteredTuples = new ArrayList<Tuple>();
+        int i = 1;
+        while (foundItems < formulaLength && i < tupleList.size()){
+            boolean isME = false;
+            for (int j = 0; (j < i) && (!isME); j++){
+                isME = areTuplesMutuallyExclusive(tupleList.get(i), tupleList.get(j), analysisContext);
+            }
+            if(isME){
+                filteredTuples.add(this.tupleList.get(i));
+            }else{
+                foundItems++;
+            }
+
+            i++;
+        }
+
+        if(foundItems < formulaLength){
+            logger.warn("Warning: Chosen Filter filtered to many Tuples. Not alle filtered Event will be removed.");
+            while (foundItems < formulaLength){
+                filteredTuples.remove(filteredTuples.get(0));
+                foundItems++;
+            }
+        }
+        tupleList.removeAll(filteredTuples);
+        logger.info("Filtered Events: " + filteredTuples);
+    }
+
+    private void filterImpliedTuples(){
+        int formulaLength = parallelConfig.getFormulaLength();
+        logger.info("Filter does nothing");
+    }
+
+    private void filterImpliedAndMETuples(){
+        int formulaLength = parallelConfig.getFormulaLength();
+        logger.info("Filter does nothing");
+    }
+
+
+    private boolean areTuplesMutuallyExclusive(Tuple t1, Tuple t2, Context analysisContext){
+        return areEventsMutuallyExclusive(t1.getFirst(), t2.getFirst(), analysisContext)
+                || areEventsMutuallyExclusive(t1.getFirst(), t2.getSecond(), analysisContext)
+                || areEventsMutuallyExclusive(t1.getSecond(), t2.getFirst(), analysisContext)
+                || areEventsMutuallyExclusive(t1.getSecond(), t2.getSecond(), analysisContext);
+    }
+
+    private boolean isTupleImplied(Tuple impliedTuple, Tuple implyingTuple, Context analysisContext){
+        return false;
+    }
 
 
 

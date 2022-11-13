@@ -4,10 +4,9 @@ import com.dat3m.dartagnan.configuration.Baseline;
 import com.dat3m.dartagnan.encoding.*;
 import com.dat3m.dartagnan.program.Program;
 import com.dat3m.dartagnan.program.analysis.BranchEquivalence;
+import com.dat3m.dartagnan.program.analysis.ExecutionAnalysis;
 import com.dat3m.dartagnan.program.event.core.Event;
 import com.dat3m.dartagnan.program.filter.FilterAbstract;
-import com.dat3m.dartagnan.solver.caat.CAATSolver;
-import com.dat3m.dartagnan.solver.caat4wmm.Refiner;
 import com.dat3m.dartagnan.solver.caat4wmm.WMMSolver;
 import com.dat3m.dartagnan.solver.caat4wmm.coreReasoning.CoreLiteral;
 import com.dat3m.dartagnan.solver.caat4wmm.coreReasoning.RelLiteral;
@@ -42,10 +41,7 @@ import java.util.*;
 import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 
-import static com.dat3m.dartagnan.GlobalSettings.REFINEMENT_GENERATE_GRAPHVIZ_DEBUG_FILES;
 import static com.dat3m.dartagnan.configuration.OptionNames.BASELINE;
-import static com.dat3m.dartagnan.solver.caat.CAATSolver.Status.INCONCLUSIVE;
-import static com.dat3m.dartagnan.solver.caat.CAATSolver.Status.INCONSISTENT;
 import static com.dat3m.dartagnan.utils.Result.*;
 import static com.dat3m.dartagnan.utils.visualization.ExecutionGraphVisualizer.generateGraphvizFile;
 import static com.dat3m.dartagnan.wmm.relation.RelationNameRepository.*;
@@ -68,6 +64,8 @@ public class ParallelRefinementSolver extends ModelChecker {
     private final SolverContext mainCTX;
     private final ProverEnvironment mainProver;
     private final VerificationTask mainTask;
+
+    private Set<Relation> cutRelations;
 
     private ParallelResultCollector resultCollector;
     private final FormulaQueueManager fqmgr;
@@ -107,19 +105,19 @@ public class ParallelRefinementSolver extends ModelChecker {
     // constraints on hb, which is not encoded in Refinement.
     //TODO (2): Add possibility for Refinement to handle CAT-properties (it ignores them for now).
     public static ParallelRefinementSolver run(SolverContext ctx, ProverEnvironment prover, VerificationTask task, SolverContextFactory.Solvers solverType, Configuration solverConfig,
-                                               int maxNumberOfThreads, ShutdownManager sdm, ParallelSolverConfiguration parallelConfig)
+                                               ShutdownManager sdm, ParallelSolverConfiguration parallelConfig)
             throws InterruptedException, SolverException, InvalidConfigurationException {
         ParallelRefinementSolver s = new ParallelRefinementSolver(ctx, prover, task, sdm, solverType, solverConfig, parallelConfig);
         task.getConfig().inject(s);
         logger.info("{}: {}", BASELINE, s.baselines);
-        s.run(maxNumberOfThreads);
+        s.run();
         return s;
     }
 
-    private void run(int maxNumberOfThreads) throws InterruptedException, SolverException, InvalidConfigurationException {
+    private void run() throws InterruptedException, SolverException, InvalidConfigurationException {
 
 
-        resultCollector = new ParallelResultCollector(PASS, 0,maxNumberOfThreads, fqmgr.getQueueSize());
+        resultCollector = new ParallelResultCollector(PASS, parallelConfig);
 
         Program program = mainTask.getProgram();
         Wmm memoryModel = mainTask.getMemoryModel();
@@ -133,7 +131,7 @@ public class ParallelRefinementSolver extends ModelChecker {
         preprocessMemoryModel(mainTask);
         // We cut the rhs of differences to get a semi-positive model, if possible.
         // This call modifies the baseline model!
-        //Set<Relation> cutRelations = cutRelationDifferences(memoryModel, baselineModel);
+        cutRelations = cutRelationDifferences(memoryModel, baselineModel);
         memoryModel.configureAll(config);
         baselineModel.configureAll(config); // Configure after cutting!
 
@@ -165,6 +163,10 @@ public class ParallelRefinementSolver extends ModelChecker {
 
 
 
+
+
+
+
         int totalThreadnumber = fqmgr.getQueueSize();
         List<Thread> threads = new ArrayList<Thread>(totalThreadnumber);
 
@@ -179,7 +181,8 @@ public class ParallelRefinementSolver extends ModelChecker {
                 TupleSet coEncodeSet = knowledgeCO.getMaySet();
                 List<Tuple> tupleListCO = new ArrayList<>(coEncodeSet);
                 fqmgr.setTupleList(tupleListCO);
-                fqmgr.orderRelations();
+                fqmgr.orderTuples();
+                fqmgr.filterTuples(analysisContext);
                 break;
             case RF_RELATION_FORMULAS:
                 String relationRFName = RelationNameRepository.RF;
@@ -190,7 +193,8 @@ public class ParallelRefinementSolver extends ModelChecker {
                 TupleSet rfEncodeSet = knowledge.getMaySet();
                 List<Tuple> tupleListRF = new ArrayList<>(rfEncodeSet);
                 fqmgr.setTupleList(tupleListRF);
-                fqmgr.orderRelations();
+                fqmgr.orderTuples();
+                fqmgr.filterTuples(analysisContext);
                 break;
             case EVENT_FORMULAS:
                 BranchEquivalence branchEquivalence = context.getAnalysisContext().get(BranchEquivalence.class);
@@ -198,6 +202,7 @@ public class ParallelRefinementSolver extends ModelChecker {
                 List<Event> eventList = branchEquivalence.getAllEquivalenceClasses().stream().filter(c -> c!=initialClass).map(c -> c.getRepresentative()).collect(Collectors.toList());
                 fqmgr.setEventList(eventList);
                 fqmgr.orderEvents();
+                fqmgr.filterEvents(analysisContext);
                 break;
             case TAUTOLOGY_FORMULAS:
                 break;
@@ -251,6 +256,7 @@ public class ParallelRefinementSolver extends ModelChecker {
         logger.info("Starting Thread creation.");
 
         for(int i = 0; i < totalThreadnumber; i++) {
+            Thread.sleep(1);
             synchronized (resultCollector){
                 while(!resultCollector.canAddThread()){
                     if(resultCollector.getAggregatedResult().equals(FAIL)) {
@@ -324,7 +330,7 @@ public class ParallelRefinementSolver extends ModelChecker {
 
     private void runThread(int threadID)
             throws InterruptedException, SolverException, InvalidConfigurationException{
-        ParallelRefinementThreadSolver myThreadSolver = new ParallelRefinementThreadSolver(mainTask, fqmgr, sdm, resultCollector, refinementCollector, solverType, solverConfig, threadID, parallelConfig);
+        ParallelRefinementThreadSolver myThreadSolver = new ParallelRefinementThreadSolver(mainTask, fqmgr, sdm, resultCollector, refinementCollector, solverType, solverConfig, threadID, parallelConfig, cutRelations);
         myThreadSolver.run();
     }
 
@@ -515,6 +521,8 @@ public class ParallelRefinementSolver extends ModelChecker {
         }
         return baseline;
     }
+
+
 }
 
 /*Event e;
