@@ -65,8 +65,8 @@ public class LFDSTestLarge extends AbstractCTest {
         assertEquals(expected, s.getResult());
 	}
 
-	@Test
-	@CSVLogger.FileName("csv/refinement")
+	//@Test
+	//@CSVLogger.FileName("csv/refinement")
 	public void testRefinement() throws Exception {
         RefinementSolver s = RefinementSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get());
         assertEquals(expected, s.getResult());
@@ -75,35 +75,37 @@ public class LFDSTestLarge extends AbstractCTest {
 
     @Test
     @CSVLogger.FileName("csv/parallelRefinement")
-    public void testParallelRefinement() throws Exception {
+    public void testParallelRefinementNoFilter() throws Exception {
         ParallelSolverConfiguration parallelConfig = new ParallelSolverConfiguration(ParallelSolverConfiguration.FormulaItemType.EVENT_FORMULAS,
-                ParallelSolverConfiguration.FormulaItemFilter.MUTUALLY_EXCLUSIVE_FILTER,
-                ParallelSolverConfiguration.FormulaItemOrder.RANDOM_ORDER,
+                ParallelSolverConfiguration.FormulaItemFilter.NO_FILTER,
+                ParallelSolverConfiguration.FormulaItemOrder.SEEDED_RANDOM_ORDER,
                 ParallelSolverConfiguration.FormulaQueueStyle.TREE_SHAPED_FORMULA_QUEUE,
                 ParallelSolverConfiguration.FormulaGeneration.IN_SOLVER,
                 ParallelSolverConfiguration.ClauseSharingFilter.NO_FILTER,
-                2,
-                2,
-                4);
+                8,
+                0,
+                4,
+                -861449674903621944L);
         ParallelRefinementSolver s = ParallelRefinementSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3,
                 Configuration.defaultConfiguration(), shutdownManagerProvider.get(),
-                //parallelConfig);
-                SeedLeaderboard.Dglm3TsoLeaderboard(1));
+                parallelConfig);
+                //SeedLeaderboard.Dglm3TsoLeaderboard(1));
         assertEquals(expected, s.getResult());
     }
 
     @Test
     @CSVLogger.FileName("csv/parallelRefinement")
-    public void testParallelRefinement1() throws Exception {
+    public void testParallelRefinementMEFilter() throws Exception {
         ParallelSolverConfiguration parallelConfig = new ParallelSolverConfiguration(ParallelSolverConfiguration.FormulaItemType.EVENT_FORMULAS,
                 ParallelSolverConfiguration.FormulaItemFilter.MUTUALLY_EXCLUSIVE_FILTER,
-                ParallelSolverConfiguration.FormulaItemOrder.RANDOM_ORDER,
+                ParallelSolverConfiguration.FormulaItemOrder.SEEDED_RANDOM_ORDER,
                 ParallelSolverConfiguration.FormulaQueueStyle.TREE_SHAPED_FORMULA_QUEUE,
                 ParallelSolverConfiguration.FormulaGeneration.IN_SOLVER,
                 ParallelSolverConfiguration.ClauseSharingFilter.NO_FILTER,
-                2,
-                2,
-                4);
+                8,
+                0,
+                4,
+                -861449674903621944L);
         ParallelRefinementSolver s = ParallelRefinementSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3,
                 Configuration.defaultConfiguration(), shutdownManagerProvider.get(),
                 parallelConfig);
@@ -114,16 +116,17 @@ public class LFDSTestLarge extends AbstractCTest {
 
     @Test
     @CSVLogger.FileName("csv/parallelRefinement")
-    public void testParallelRefinement2() throws Exception {
+    public void testParallelRefinementIMPFILTER() throws Exception {
         ParallelSolverConfiguration parallelConfig = new ParallelSolverConfiguration(ParallelSolverConfiguration.FormulaItemType.EVENT_FORMULAS,
-                ParallelSolverConfiguration.FormulaItemFilter.MUTUALLY_EXCLUSIVE_FILTER,
-                ParallelSolverConfiguration.FormulaItemOrder.RANDOM_ORDER,
+                ParallelSolverConfiguration.FormulaItemFilter.IMPLIES_FILTER,
+                ParallelSolverConfiguration.FormulaItemOrder.SEEDED_RANDOM_ORDER,
                 ParallelSolverConfiguration.FormulaQueueStyle.TREE_SHAPED_FORMULA_QUEUE,
                 ParallelSolverConfiguration.FormulaGeneration.IN_SOLVER,
                 ParallelSolverConfiguration.ClauseSharingFilter.NO_FILTER,
-                2,
-                2,
-                4);
+                8,
+                0,
+                4,
+                -861449674903621944L);
         ParallelRefinementSolver s = ParallelRefinementSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3,
                 Configuration.defaultConfiguration(), shutdownManagerProvider.get(),
                 parallelConfig);
@@ -133,16 +136,17 @@ public class LFDSTestLarge extends AbstractCTest {
 
     @Test
     @CSVLogger.FileName("csv/parallelRefinement")
-    public void testParallelRefinement3() throws Exception {
+    public void testParallelRefinementIMPMEFILTER() throws Exception {
         ParallelSolverConfiguration parallelConfig = new ParallelSolverConfiguration(ParallelSolverConfiguration.FormulaItemType.EVENT_FORMULAS,
-                ParallelSolverConfiguration.FormulaItemFilter.MUTUALLY_EXCLUSIVE_FILTER,
-                ParallelSolverConfiguration.FormulaItemOrder.RANDOM_ORDER,
+                ParallelSolverConfiguration.FormulaItemFilter.IMP_AND_ME_FILTER,
+                ParallelSolverConfiguration.FormulaItemOrder.SEEDED_RANDOM_ORDER,
                 ParallelSolverConfiguration.FormulaQueueStyle.TREE_SHAPED_FORMULA_QUEUE,
                 ParallelSolverConfiguration.FormulaGeneration.IN_SOLVER,
                 ParallelSolverConfiguration.ClauseSharingFilter.NO_FILTER,
-                2,
-                2,
-                4);
+                8,
+                0,
+                4,
+                -861449674903621944L);
         ParallelRefinementSolver s = ParallelRefinementSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3,
                 Configuration.defaultConfiguration(), shutdownManagerProvider.get(),
                 parallelConfig);
