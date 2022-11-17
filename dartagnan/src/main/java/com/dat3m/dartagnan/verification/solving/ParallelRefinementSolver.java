@@ -95,7 +95,7 @@ public class ParallelRefinementSolver extends ModelChecker {
         mainTask = t;
         this.sdm = sdm;
         this.fqmgr = new FormulaQueueManager(parallelConfig);
-        this.refinementCollector = new ParallelRefinementCollector(0);
+        this.refinementCollector = new ParallelRefinementCollector(0, parallelConfig);
         this.solverType = solverType;
         this.solverConfig = solverConfig;
         this.parallelConfig = parallelConfig;

@@ -12,6 +12,7 @@ public class ParallelSolverConfiguration {
     private final FormulaQueueStyle formulaQueueStyle;
     private final FormulaGeneration formulaGeneration;
     private final ClauseSharingFilter clauseSharingFilter;
+    private final ClauseReceivingFilter clauseReceivingFilter;
 
     private final int queueSettingInt1;
     private final int queueSettingInt2;
@@ -27,7 +28,7 @@ public class ParallelSolverConfiguration {
     }
 
     public enum FormulaItemFilter {
-        NO_FILTER, MUTUALLY_EXCLUSIVE_FILTER, IMPLIES_FILTER, IMP_AND_ME_FILTER;
+        NO_I_FILTER, MUTUALLY_EXCLUSIVE_I_FILTER, IMPLIES_I_FILTER, IMP_AND_ME_I_FILTER;
     }
 
     public enum FormulaItemOrder {
@@ -35,7 +36,7 @@ public class ParallelSolverConfiguration {
     }
 
     public enum FormulaQueueStyle {
-        TREE_SHAPED_FORMULA_QUEUE, TAUTOLOGY_FORMULA_STYLE;
+        TREE_SPLITTING_QUEUE, LINEAR_SPLITTING_QUEUE, TAUTOLOGY_FORMULA_STYLE;
     }
 
     public enum FormulaGeneration {
@@ -43,7 +44,11 @@ public class ParallelSolverConfiguration {
     }
 
     public enum ClauseSharingFilter {
-        NO_FILTER;
+        NO_CS_FILTER, DUPLICATE_CS_FILTER, IMPLIED_CS_FILTER, NO_CLAUSE_SHARING;
+    }
+
+    public enum ClauseReceivingFilter{
+        NO_CR_FILTER, MUTUALLY_EXCLUSIVE_CR_FILTER, IMPLIES_CR_FILTER, IMP_AND_ME_CR_FILTER;
     }
 
     /**
@@ -62,6 +67,7 @@ public class ParallelSolverConfiguration {
 
     public ParallelSolverConfiguration(FormulaItemType formulaItemType, FormulaItemFilter formulaItemFilter, FormulaItemOrder formulaItemOrder,
                                        FormulaQueueStyle formulaQueueStyle, FormulaGeneration formulaGeneration, ClauseSharingFilter clauseSharingFilter,
+                                       ClauseReceivingFilter clauseReceivingFilter,
                                        int queueSettingInt1, int queueSettingInt2, int maxNumberOfConcurrentThreads)
             throws InvalidConfigurationException {
 
@@ -76,12 +82,13 @@ public class ParallelSolverConfiguration {
             this.formulaGeneration = formulaGeneration;
         } else {
             this.formulaItemType = FormulaItemType.TAUTOLOGY_FORMULAS;
-            this.formulaItemFilter = FormulaItemFilter.NO_FILTER;
+            this.formulaItemFilter = FormulaItemFilter.NO_I_FILTER;
             this.formulaItemOrder = FormulaItemOrder.NO_ORDER;
             this.formulaQueueStyle = FormulaQueueStyle.TAUTOLOGY_FORMULA_STYLE;
             this.formulaGeneration = FormulaGeneration.IN_MANAGER;
         }
         this.clauseSharingFilter = clauseSharingFilter;
+        this.clauseReceivingFilter = clauseReceivingFilter;
         this.queueSettingInt1 =queueSettingInt1;
         this.queueSettingInt2 =queueSettingInt2;
         this.maxNumberOfConcurrentThreads = maxNumberOfConcurrentThreads;
@@ -113,6 +120,7 @@ public class ParallelSolverConfiguration {
      */
     public ParallelSolverConfiguration(FormulaItemType formulaItemType, FormulaItemFilter formulaItemFilter, FormulaItemOrder formulaItemOrder,
                                        FormulaQueueStyle formulaQueueStyle, FormulaGeneration formulaGeneration, ClauseSharingFilter clauseSharingFilter,
+                                       ClauseReceivingFilter clauseReceivingFilter,
                                        int queueSettingInt1, int queueSettingInt2, int maxNumberOfConcurrentThreads, long randomSeed)
             throws InvalidConfigurationException {
 
@@ -127,12 +135,13 @@ public class ParallelSolverConfiguration {
             this.formulaGeneration = formulaGeneration;
         } else {
             this.formulaItemType = FormulaItemType.TAUTOLOGY_FORMULAS;
-            this.formulaItemFilter = FormulaItemFilter.NO_FILTER;
+            this.formulaItemFilter = FormulaItemFilter.NO_I_FILTER;
             this.formulaItemOrder = FormulaItemOrder.NO_ORDER;
             this.formulaQueueStyle = FormulaQueueStyle.TAUTOLOGY_FORMULA_STYLE;
             this.formulaGeneration = FormulaGeneration.IN_MANAGER;
         }
         this.clauseSharingFilter = clauseSharingFilter;
+        this.clauseReceivingFilter = clauseReceivingFilter;
         this.queueSettingInt1 =queueSettingInt1;
         this.queueSettingInt2 =queueSettingInt2;
         this.maxNumberOfConcurrentThreads = maxNumberOfConcurrentThreads;
@@ -144,18 +153,19 @@ public class ParallelSolverConfiguration {
         } else {
             this.randomSeed = new Random().nextLong();
         }
-        this.shuffleRandom = new Random(randomSeed);
+        this.shuffleRandom = new Random(this.randomSeed);
     }
 
     public static ParallelSolverConfiguration defaultConfiguration()
             throws InvalidConfigurationException{
         return  (new ParallelSolverConfiguration(
                 FormulaItemType.EVENT_FORMULAS,
-                FormulaItemFilter.NO_FILTER,
+                FormulaItemFilter.NO_I_FILTER,
                 FormulaItemOrder.NO_ORDER,
-                FormulaQueueStyle.TREE_SHAPED_FORMULA_QUEUE,
+                FormulaQueueStyle.TREE_SPLITTING_QUEUE,
                 FormulaGeneration.IN_SOLVER,
-                ClauseSharingFilter.NO_FILTER,
+                ClauseSharingFilter.NO_CS_FILTER,
+                ClauseReceivingFilter.NO_CR_FILTER,
                 9,
                 0,
                 4
@@ -165,9 +175,11 @@ public class ParallelSolverConfiguration {
     private int calculateNrOfSplits() throws InvalidConfigurationException{
         switch(this.formulaQueueStyle){
             case TAUTOLOGY_FORMULA_STYLE:
+            case LINEAR_SPLITTING_QUEUE:
                 return queueSettingInt1;
-            case TREE_SHAPED_FORMULA_QUEUE:
+            case TREE_SPLITTING_QUEUE:
                 return queueSettingInt1 * (int) Math.pow(2, queueSettingInt2);
+
             default:
                 throw (new InvalidConfigurationException("Formula QueueStyle not supported by ParallelSolverConfiguration Constructor. Can't calculate number of Split."));
         }
@@ -177,8 +189,10 @@ public class ParallelSolverConfiguration {
         switch(this.formulaQueueStyle){
             case TAUTOLOGY_FORMULA_STYLE:
                 return 0;
-            case TREE_SHAPED_FORMULA_QUEUE:
-                return (queueSettingInt1 + queueSettingInt2);
+            case LINEAR_SPLITTING_QUEUE:
+                return (queueSettingInt1 - 1);
+            case TREE_SPLITTING_QUEUE:
+                return (queueSettingInt1 - 1 + queueSettingInt2);
             default:
                 throw (new InvalidConfigurationException("Formula QueueStyle not supported by ParallelSolverConfiguration Constructor. Can't Formula Length."));
         }
@@ -210,6 +224,10 @@ public class ParallelSolverConfiguration {
         return clauseSharingFilter;
     }
 
+    public ClauseReceivingFilter getClauseReceivingFilter() {
+        return clauseReceivingFilter;
+    }
+
     public int getQueueSettingInt1() {
         return queueSettingInt1;
     }
@@ -237,6 +255,8 @@ public class ParallelSolverConfiguration {
     public Random getShuffleRandom() {
         return shuffleRandom;
     }
+
+
 
 
 }

@@ -71,6 +71,37 @@ public class Refiner {
         return refinement;
     }
 
+
+    // This method computes a refinement clause from a literal.
+    // Furthermore, it computes symmetric violations if symmetry learning is enabled.
+    public BooleanFormula refineConjunction(Conjunction<CoreLiteral> reason, EncodingContext context) {
+        //TODO: A specialized algorithm that computes the orbit under permutation may be better,
+        // since most violations involve only few threads and hence the orbit is far smaller than the full
+        // set of permutations.
+        HashSet<BooleanFormula> addedFormulas = new HashSet<>(); // To avoid adding duplicates
+        BooleanFormulaManager bmgr = context.getBooleanFormulaManager();
+        BooleanFormula refinement = bmgr.makeTrue();
+        // For each symmetry permutation, we will create refinement clauses
+        for (Function<Event, Event> perm : symmPermutations) {
+            //for (Conjunction<CoreLiteral> reason : coreReasons.getCubes()) {
+                BooleanFormula permutedClause = bmgr.makeFalse();
+                for (CoreLiteral lit : reason.getLiterals()) {
+                    BooleanFormula litFormula = permuteAndConvert(lit, perm, context);
+                    if (bmgr.isFalse(litFormula)) {
+                        permutedClause = bmgr.makeTrue();
+                        break;
+                    } else {
+                        permutedClause = bmgr.or(permutedClause, bmgr.not(litFormula));
+                    }
+                }
+                if (addedFormulas.add(permutedClause)) {
+                    refinement = bmgr.and(refinement, permutedClause);
+                }
+            //}
+        }
+        return refinement;
+    }
+
     // Computes a list of permutations allowed by the program.
     // Depending on the <learningOption>, the set of computed permutations differs.
     // In particular, for the option NONE, only the identity permutation will be returned.

@@ -3,12 +3,15 @@ package com.dat3m.dartagnan.verification.solving;
 import com.dat3m.dartagnan.configuration.Baseline;
 import com.dat3m.dartagnan.encoding.*;
 import com.dat3m.dartagnan.program.Program;
+import com.dat3m.dartagnan.program.analysis.ExecutionAnalysis;
 import com.dat3m.dartagnan.program.event.core.Event;
 import com.dat3m.dartagnan.program.filter.FilterAbstract;
 import com.dat3m.dartagnan.solver.caat.CAATSolver;
+import com.dat3m.dartagnan.solver.caat.reasoning.EdgeLiteral;
 import com.dat3m.dartagnan.solver.caat4wmm.Refiner;
 import com.dat3m.dartagnan.solver.caat4wmm.WMMSolver;
 import com.dat3m.dartagnan.solver.caat4wmm.coreReasoning.CoreLiteral;
+import com.dat3m.dartagnan.solver.caat4wmm.coreReasoning.ExecLiteral;
 import com.dat3m.dartagnan.solver.caat4wmm.coreReasoning.RelLiteral;
 import com.dat3m.dartagnan.utils.logic.Conjunction;
 import com.dat3m.dartagnan.utils.logic.DNF;
@@ -81,7 +84,9 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
     private final List<Tuple> trueTupleList;
     private final List<Tuple> falseTupleList;
 
-    private final LinkedList<DNF<CoreLiteral>> myReasonsQueue;
+    private long totalTime= 0;
+
+    private final ConcurrentLinkedQueue<Conjunction<CoreLiteral>> myReasonsQueue;
 
     // =========================== Configurables ===========================
 
@@ -111,7 +116,7 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
         this.mainParallelConfig = parallelConfig;
         myThreadID = threadID;
         this.refreshInterval = 5;
-        this.myReasonsQueue = new LinkedList<DNF<CoreLiteral>>();
+        this.myReasonsQueue = new ConcurrentLinkedQueue<Conjunction<CoreLiteral>>();
 
         this.mainCutRelations = cutRelations;
 
@@ -316,7 +321,7 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
 
             if((iterationCount % refreshInterval) - 1 == 0){
                 //long newtime = System.currentTimeMillis();
-                addForeignReasons(refiner);
+                addForeignReasons(refiner, analysisContext.get(ExecutionAnalysis.class));
                 //long tookTime = System.currentTimeMillis() - newtime;
                 //logger.info("Thread " + myThreadID + ": " + tookTime + "tooktime");
             }
@@ -620,17 +625,149 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
 
 
 
-    private void addForeignReasons(Refiner refiner)
+    private void addForeignReasons(Refiner refiner, ExecutionAnalysis exec)
             throws InterruptedException{
-        synchronized (myReasonsQueue){
-            DNF<CoreLiteral> reason = myReasonsQueue.poll();
-            while (reason != null){
-                BooleanFormula refinement = refiner.refine(reason, context);
-                myProver.addConstraint(refinement);
-                reason = myReasonsQueue.poll();
+        long timenow = System.currentTimeMillis();
+
+        if(myReasonsQueue.isEmpty()){return;}
+        Conjunction<CoreLiteral> reason = myReasonsQueue.poll();
+        while (reason != null) {
+            switch (mainParallelConfig.getClauseReceivingFilter()) {
+                case NO_CR_FILTER:
+                    return;
+                case IMPLIES_CR_FILTER:
+                    if(imp_CR_filter(exec, reason)){
+                        myProver.addConstraint(refiner.refineConjunction(reason, context));
+                    }
+                    break;
+                case IMP_AND_ME_CR_FILTER:
+                    if(imp_me_CR_filter(exec, reason)){
+                        myProver.addConstraint(refiner.refineConjunction(reason, context));
+                    }
+                    break;
+                case MUTUALLY_EXCLUSIVE_CR_FILTER:
+                    if(me_CR_filter(exec, reason)){
+                        myProver.addConstraint(refiner.refineConjunction(reason, context));
+                    }
+                    break;
+                default:
+                    throw (new Error("unreachable code reached. not Implemented CR Filter."));
+            }
+            reason = myReasonsQueue.poll();
+        }
+        //logger.info("Thread " + myThreadID + ": " + total + " reasons");
+        //logger.info("Thread " + myThreadID + ": " + added + " added reasons");
+        //logger.info("Thread " + myThreadID + ": " + (total - added) + " filtered reasons");
+        //long tookTime = System.currentTimeMillis()-timenow;
+        //logger.info("Thread " + myThreadID + ": " + tookTime + " tooktime");
+        //totalTime += tookTime;
+        //logger.info("Thread " + myThreadID + ": " + totalTime + " totaltooktime");
+    }
+    private Boolean imp_me_CR_filter(ExecutionAnalysis exec, Conjunction<CoreLiteral> reason){
+        boolean add = true;
+        Set<Event> reasonEvents = new HashSet<Event>();
+        for (CoreLiteral lit : reason.getLiterals()){
+            if (lit instanceof ExecLiteral){
+                reasonEvents.add(((ExecLiteral) lit).getData());
+            }
+            if(lit instanceof RelLiteral){
+                reasonEvents.add(((RelLiteral) lit).getData().getFirst());
+                reasonEvents.add(((RelLiteral) lit).getData().getSecond());
             }
         }
+
+        for(Event reasonEvent:reasonEvents){
+            if(!add){break;}
+            for(Event trueEvent : trueEventList){
+                if(exec.areMutuallyExclusive(reasonEvent,trueEvent)){
+                    add = false;
+                    break;
+                }
+            }
+            for(Event falseEvent : falseEventList){
+                if(exec.isImplied(reasonEvent, falseEvent)){
+                    add = false;
+                    break;
+                }
+            }
+        }
+
+        for(Event reasonEvent:reasonEvents){
+            if(!add){break;}
+            for (Tuple trueTuple:trueTupleList){
+                if(exec.areMutuallyExclusive(reasonEvent, trueTuple.getFirst()) || exec.areMutuallyExclusive(reasonEvent, trueTuple.getSecond())){
+                    add = false;
+                    break;
+                }
+            }
+        }
+
+        return add;
     }
+
+    private Boolean me_CR_filter(ExecutionAnalysis exec, Conjunction<CoreLiteral> reason){
+        boolean add = true;
+        Set<Event> reasonEvents = new HashSet<Event>();
+        for (CoreLiteral lit : reason.getLiterals()){
+            if (lit instanceof ExecLiteral){
+                reasonEvents.add(((ExecLiteral) lit).getData());
+            }
+            if(lit instanceof RelLiteral){
+                reasonEvents.add(((RelLiteral) lit).getData().getFirst());
+                reasonEvents.add(((RelLiteral) lit).getData().getSecond());
+            }
+        }
+
+        for(Event reasonEvent:reasonEvents){
+            if(!add){break;}
+            for(Event trueEvent : trueEventList){
+                if(exec.areMutuallyExclusive(reasonEvent,trueEvent)){
+                    add = false;
+                    break;
+                }
+            }
+        }
+
+        for(Event reasonEvent:reasonEvents){
+            if(!add){break;}
+            for (Tuple trueTuple:trueTupleList){
+                if(exec.areMutuallyExclusive(reasonEvent, trueTuple.getFirst()) || exec.areMutuallyExclusive(reasonEvent, trueTuple.getSecond())){
+                    add = false;
+                    break;
+                }
+            }
+        }
+
+        return add;
+    }
+
+    private Boolean imp_CR_filter(ExecutionAnalysis exec, Conjunction<CoreLiteral> reason){
+        boolean add = true;
+        Set<Event> reasonEvents = new HashSet<Event>();
+        for (CoreLiteral lit : reason.getLiterals()){
+            if (lit instanceof ExecLiteral){
+                reasonEvents.add(((ExecLiteral) lit).getData());
+            }
+            if(lit instanceof RelLiteral){
+                reasonEvents.add(((RelLiteral) lit).getData().getFirst());
+                reasonEvents.add(((RelLiteral) lit).getData().getSecond());
+            }
+        }
+
+        for(Event reasonEvent:reasonEvents){
+            if(!add){break;}
+            for(Event falseEvent : falseEventList){
+                if(exec.isImplied(reasonEvent, falseEvent)){
+                    add = false;
+                    break;
+                }
+            }
+        }
+        return add;
+    }
+
+
+
 
     private BooleanFormula generateTupleFormula(){
         BooleanFormulaManager bmgr = myCTX.getFormulaManager().getBooleanFormulaManager();

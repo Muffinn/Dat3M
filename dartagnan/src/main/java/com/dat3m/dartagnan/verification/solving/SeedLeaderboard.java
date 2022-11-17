@@ -1,7 +1,5 @@
 package com.dat3m.dartagnan.verification.solving;
 
-import org.sosy_lab.common.configuration.InvalidConfigurationException;
-
 public class SeedLeaderboard {
 
     public static ParallelSolverConfiguration Dglm3TsoLeaderboard(int rank){
@@ -13,11 +11,12 @@ public class SeedLeaderboard {
                 //20.418 Seconds
                 //689 41 442
                 parallelConfig = new ParallelSolverConfiguration(ParallelSolverConfiguration.FormulaItemType.EVENT_FORMULAS,
-                        ParallelSolverConfiguration.FormulaItemFilter.MUTUALLY_EXCLUSIVE_FILTER,
+                        ParallelSolverConfiguration.FormulaItemFilter.MUTUALLY_EXCLUSIVE_I_FILTER,
                         ParallelSolverConfiguration.FormulaItemOrder.SEEDED_RANDOM_ORDER,
-                        ParallelSolverConfiguration.FormulaQueueStyle.TREE_SHAPED_FORMULA_QUEUE,
+                        ParallelSolverConfiguration.FormulaQueueStyle.TREE_SPLITTING_QUEUE,
                         ParallelSolverConfiguration.FormulaGeneration.IN_SOLVER,
-                        ParallelSolverConfiguration.ClauseSharingFilter.NO_FILTER,
+                        ParallelSolverConfiguration.ClauseSharingFilter.NO_CS_FILTER,
+                        ParallelSolverConfiguration.ClauseReceivingFilter.NO_CR_FILTER,
                         2,
                         2,
                         4,
@@ -27,11 +26,12 @@ public class SeedLeaderboard {
                 //22.836 Seconds, 23.376 Seconds, 23.346 Seconds
                 //602 20 437
                 parallelConfig = new ParallelSolverConfiguration(ParallelSolverConfiguration.FormulaItemType.EVENT_FORMULAS,
-                        ParallelSolverConfiguration.FormulaItemFilter.MUTUALLY_EXCLUSIVE_FILTER,
+                        ParallelSolverConfiguration.FormulaItemFilter.MUTUALLY_EXCLUSIVE_I_FILTER,
                         ParallelSolverConfiguration.FormulaItemOrder.SEEDED_RANDOM_ORDER,
-                        ParallelSolverConfiguration.FormulaQueueStyle.TREE_SHAPED_FORMULA_QUEUE,
+                        ParallelSolverConfiguration.FormulaQueueStyle.TREE_SPLITTING_QUEUE,
                         ParallelSolverConfiguration.FormulaGeneration.IN_SOLVER,
-                        ParallelSolverConfiguration.ClauseSharingFilter.NO_FILTER,
+                        ParallelSolverConfiguration.ClauseSharingFilter.NO_CS_FILTER,
+                        ParallelSolverConfiguration.ClauseReceivingFilter.NO_CR_FILTER,
                         2,
                         2,
                         4,
@@ -41,11 +41,12 @@ public class SeedLeaderboard {
                 //24.138 Seconds
                 //443 673 324
                 parallelConfig = new ParallelSolverConfiguration(ParallelSolverConfiguration.FormulaItemType.EVENT_FORMULAS,
-                        ParallelSolverConfiguration.FormulaItemFilter.MUTUALLY_EXCLUSIVE_FILTER,
+                        ParallelSolverConfiguration.FormulaItemFilter.MUTUALLY_EXCLUSIVE_I_FILTER,
                         ParallelSolverConfiguration.FormulaItemOrder.SEEDED_RANDOM_ORDER,
-                        ParallelSolverConfiguration.FormulaQueueStyle.TREE_SHAPED_FORMULA_QUEUE,
+                        ParallelSolverConfiguration.FormulaQueueStyle.TREE_SPLITTING_QUEUE,
                         ParallelSolverConfiguration.FormulaGeneration.IN_SOLVER,
-                        ParallelSolverConfiguration.ClauseSharingFilter.NO_FILTER,
+                        ParallelSolverConfiguration.ClauseSharingFilter.NO_CS_FILTER,
+                        ParallelSolverConfiguration.ClauseReceivingFilter.NO_CR_FILTER,
                         2,
                         2,
                         4,
@@ -67,11 +68,12 @@ public class SeedLeaderboard {
                 //19.106, 20.477 Seconds, 21.569 Seconds
                 //700 47 451
                 parallelConfig = new ParallelSolverConfiguration(ParallelSolverConfiguration.FormulaItemType.EVENT_FORMULAS,
-                        ParallelSolverConfiguration.FormulaItemFilter.MUTUALLY_EXCLUSIVE_FILTER,
+                        ParallelSolverConfiguration.FormulaItemFilter.MUTUALLY_EXCLUSIVE_I_FILTER,
                         ParallelSolverConfiguration.FormulaItemOrder.SEEDED_RANDOM_ORDER,
-                        ParallelSolverConfiguration.FormulaQueueStyle.TREE_SHAPED_FORMULA_QUEUE,
+                        ParallelSolverConfiguration.FormulaQueueStyle.TREE_SPLITTING_QUEUE,
                         ParallelSolverConfiguration.FormulaGeneration.IN_SOLVER,
-                        ParallelSolverConfiguration.ClauseSharingFilter.NO_FILTER,
+                        ParallelSolverConfiguration.ClauseSharingFilter.NO_CS_FILTER,
+                        ParallelSolverConfiguration.ClauseReceivingFilter.NO_CR_FILTER,
                         2,
                         2,
                         4,
@@ -93,11 +95,12 @@ public class SeedLeaderboard {
                 //40.804 Seconds, 42.214 Seconds
                 //118 747 355
                 parallelConfig = new ParallelSolverConfiguration(ParallelSolverConfiguration.FormulaItemType.EVENT_FORMULAS,
-                        ParallelSolverConfiguration.FormulaItemFilter.MUTUALLY_EXCLUSIVE_FILTER,
+                        ParallelSolverConfiguration.FormulaItemFilter.MUTUALLY_EXCLUSIVE_I_FILTER,
                         ParallelSolverConfiguration.FormulaItemOrder.SEEDED_RANDOM_ORDER,
-                        ParallelSolverConfiguration.FormulaQueueStyle.TREE_SHAPED_FORMULA_QUEUE,
+                        ParallelSolverConfiguration.FormulaQueueStyle.TREE_SPLITTING_QUEUE,
                         ParallelSolverConfiguration.FormulaGeneration.IN_SOLVER,
-                        ParallelSolverConfiguration.ClauseSharingFilter.NO_FILTER,
+                        ParallelSolverConfiguration.ClauseSharingFilter.NO_CS_FILTER,
+                        ParallelSolverConfiguration.ClauseReceivingFilter.NO_CR_FILTER,
                         2,
                         2,
                         4,
@@ -118,11 +121,12 @@ public class SeedLeaderboard {
                 //36.949 Seconds
                 //701 773 128
                 parallelConfig = new ParallelSolverConfiguration(ParallelSolverConfiguration.FormulaItemType.EVENT_FORMULAS,
-                        ParallelSolverConfiguration.FormulaItemFilter.MUTUALLY_EXCLUSIVE_FILTER,
+                        ParallelSolverConfiguration.FormulaItemFilter.MUTUALLY_EXCLUSIVE_I_FILTER,
                         ParallelSolverConfiguration.FormulaItemOrder.SEEDED_RANDOM_ORDER,
-                        ParallelSolverConfiguration.FormulaQueueStyle.TREE_SHAPED_FORMULA_QUEUE,
+                        ParallelSolverConfiguration.FormulaQueueStyle.TREE_SPLITTING_QUEUE,
                         ParallelSolverConfiguration.FormulaGeneration.IN_SOLVER,
-                        ParallelSolverConfiguration.ClauseSharingFilter.NO_FILTER,
+                        ParallelSolverConfiguration.ClauseSharingFilter.NO_CS_FILTER,
+                        ParallelSolverConfiguration.ClauseReceivingFilter.NO_CR_FILTER,
                         2,
                         2,
                         4,

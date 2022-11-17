@@ -76,8 +76,11 @@ public class FormulaQueueManager {
             case TAUTOLOGY_FORMULA_STYLE:
                 createEmptyBitSetQueue(parallelConfig.getQueueSettingInt1());
                 break;
-            case TREE_SHAPED_FORMULA_QUEUE:
+            case TREE_SPLITTING_QUEUE:
                 createTreeStyleBitSetQueue(parallelConfig.getQueueSettingInt1(), parallelConfig.getQueueSettingInt2());
+                break;
+            case LINEAR_SPLITTING_QUEUE:
+                createTreeStyleBitSetQueue(parallelConfig.getQueueSettingInt1(), 0);
                 break;
             default:
                 throw(new InvalidConfigurationException(parallelConfig.getFormulaQueueStyle().name() + "is not supported by populateFormulaQueue."));
@@ -200,18 +203,18 @@ public class FormulaQueueManager {
     public void filterEvents(Context analysisContext)
             throws InvalidConfigurationException {
         switch (parallelConfig.getFormulaItemFilter()){
-            case NO_FILTER:
+            case NO_I_FILTER:
                 break;
 
-            case IMPLIES_FILTER:
+            case IMPLIES_I_FILTER:
                 filterImpliedEvents(analysisContext);
                 break;
 
-            case MUTUALLY_EXCLUSIVE_FILTER:
+            case MUTUALLY_EXCLUSIVE_I_FILTER:
                 filterMEEvents(analysisContext);
                 break;
 
-            case IMP_AND_ME_FILTER:
+            case IMP_AND_ME_I_FILTER:
                 filterImpliedAndMEEvents(analysisContext);
                 break;
 
@@ -223,18 +226,18 @@ public class FormulaQueueManager {
     public void filterTuples(Context analysisContext)
             throws InvalidConfigurationException {
         switch (parallelConfig.getFormulaItemFilter()){
-            case NO_FILTER:
+            case NO_I_FILTER:
                 break;
 
-            case IMPLIES_FILTER:
+            case IMPLIES_I_FILTER:
                 filterImpliedTuples();
                 break;
 
-            case MUTUALLY_EXCLUSIVE_FILTER:
+            case MUTUALLY_EXCLUSIVE_I_FILTER:
                 filterMETuples(analysisContext);
                 break;
 
-            case IMP_AND_ME_FILTER:
+            case IMP_AND_ME_I_FILTER:
                 filterImpliedAndMETuples();
                 break;
 
