@@ -634,7 +634,8 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
         while (reason != null) {
             switch (mainParallelConfig.getClauseReceivingFilter()) {
                 case NO_CR_FILTER:
-                    return;
+                    myProver.addConstraint(refiner.refineConjunction(reason, context));
+                    break;
                 case IMPLIES_CR_FILTER:
                     if(imp_CR_filter(exec, reason)){
                         myProver.addConstraint(refiner.refineConjunction(reason, context));

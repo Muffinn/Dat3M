@@ -83,14 +83,14 @@ public class LFDSTestLarge extends AbstractCTest {
                 ParallelSolverConfiguration.FormulaGeneration.IN_SOLVER,
                 ParallelSolverConfiguration.ClauseSharingFilter.NO_CS_FILTER,
                 ParallelSolverConfiguration.ClauseReceivingFilter.NO_CR_FILTER,
-                3,
-                2,
-                99,
-                5033013254976810838L);
+                8,
+                0,
+                4,
+                -861449674903621944L);
         ParallelRefinementSolver s = ParallelRefinementSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3,
                 Configuration.defaultConfiguration(), shutdownManagerProvider.get(),
-                //parallelConfig);
-                SeedLeaderboard.Dglm3TsoLeaderboard(1));
+                parallelConfig);
+                //SeedLeaderboard.Dglm3TsoLeaderboard(1));
         assertEquals(expected, s.getResult());
     }
 
