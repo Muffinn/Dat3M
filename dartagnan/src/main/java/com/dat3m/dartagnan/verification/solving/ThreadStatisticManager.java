@@ -5,7 +5,7 @@ import org.sosy_lab.java_smt.api.BooleanFormula;
 
 public class ThreadStatisticManager {
     private final int threadID;
-    private final double startTime;
+    private double startTime;
     private double endTime = -1;
     private BooleanFormula  myFormula;
     private Result myResult;
@@ -13,7 +13,6 @@ public class ThreadStatisticManager {
 
     public ThreadStatisticManager(int threadID){
         this.threadID = threadID;
-        startTime = System.currentTimeMillis();
 
     }
 
@@ -24,6 +23,10 @@ public class ThreadStatisticManager {
     public void reportResult(Result myResult){
         endTime = System.currentTimeMillis();
         this.myResult = myResult;
+    }
+
+    public void reportStart(){
+        this.startTime = System.currentTimeMillis();
     }
 
     public void setMyFormula(BooleanFormula myFormula){

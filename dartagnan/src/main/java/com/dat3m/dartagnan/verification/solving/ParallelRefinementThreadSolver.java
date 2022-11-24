@@ -103,7 +103,7 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
     public ParallelRefinementThreadSolver(VerificationTask mainTask, FormulaQueueManager mainFQMGR, ShutdownManager sdm,
                                            ParallelResultCollector mainResultCollector, ParallelRefinementCollector mainRefinementCollector,
                                           SolverContextFactory.Solvers solver, Configuration solverConfig, int threadID,
-                                          ParallelSolverConfiguration parallelConfig, Set<Relation> cutRelations)
+                                          ParallelSolverConfiguration parallelConfig, Set<Relation> cutRelations, ThreadStatisticManager myStatisticManager)
             throws InvalidConfigurationException{
         myCTX = SolverContextFactory.createSolverContext(
                 solverConfig,
@@ -119,7 +119,7 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
         myThreadID = threadID;
         this.refreshInterval = 5;
         this.myReasonsQueue = new ConcurrentLinkedQueue<Conjunction<CoreLiteral>>();
-        this.myStatisticManager = new ThreadStatisticManager(myThreadID);
+        this.myStatisticManager = myStatisticManager;
 
         this.mainCutRelations = cutRelations;
 
@@ -134,7 +134,7 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
 
     public void run() throws InterruptedException, SolverException, InvalidConfigurationException {
 
-        long startTime = System.currentTimeMillis();
+        myStatisticManager.reportStart();
         logger.info("Thread " + myThreadID + ": " + "ThreadSolver Run starts");
 
         mainRefinementCollector.registerReasonQueue(myReasonsQueue);
