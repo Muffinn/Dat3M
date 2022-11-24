@@ -73,13 +73,13 @@ public class FormulaQueueManager {
     public void populateFormulaQueue()
             throws InvalidConfigurationException{
         switch(parallelConfig.getFormulaQueueStyle()){
-            case TAUTOLOGY_FORMULA_STYLE:
+            case NO_SPLITTING_STYLE:
                 createEmptyBitSetQueue(parallelConfig.getQueueSettingInt1());
                 break;
-            case TREE_SPLITTING_QUEUE:
+            case LINEAR_AND_BINARY_SPLITTING_STYLE:
                 createTreeStyleBitSetQueue(parallelConfig.getQueueSettingInt1(), parallelConfig.getQueueSettingInt2());
                 break;
-            case LINEAR_SPLITTING_QUEUE:
+            case LINEAR_SPLITTING_STYLE:
                 createTreeStyleBitSetQueue(parallelConfig.getQueueSettingInt1(), 0);
                 break;
             default:
@@ -159,15 +159,15 @@ public class FormulaQueueManager {
     public void orderEvents()
             throws InvalidConfigurationException {
         switch (parallelConfig.getFormulaItemOrder()){
-            case NO_ORDER:
+            case NO_SELECTION:
                 break;
 
-            case INDEX_ORDER:
+            case INDEX_SELECTION:
                 sortEventsByID();
                 break;
 
-            case RANDOM_ORDER:
-            case SEEDED_RANDOM_ORDER:
+            case RANDOM_SELECTION:
+            case SEEDED_RANDOM_SELECTION:
                 sortEventsByID();
                 Collections.shuffle(eventList, parallelConfig.getShuffleRandom());
                 logger.info("Random Shuffle Seed: " + parallelConfig.getRandomSeed() + " .");
@@ -180,15 +180,15 @@ public class FormulaQueueManager {
     public void orderTuples()
             throws InvalidConfigurationException {
         switch (parallelConfig.getFormulaItemOrder()){
-            case NO_ORDER:
+            case NO_SELECTION:
                 break;
 
-            case INDEX_ORDER:
+            case INDEX_SELECTION:
                 sortTuplesByID();
                 break;
 
-            case RANDOM_ORDER:
-            case SEEDED_RANDOM_ORDER:
+            case RANDOM_SELECTION:
+            case SEEDED_RANDOM_SELECTION:
                 sortTuplesByID();
                 Collections.shuffle(tupleList, parallelConfig.getShuffleRandom());
                 logger.info("Random Shuffle Seed: " + parallelConfig.getRandomSeed() + " .");
@@ -203,18 +203,18 @@ public class FormulaQueueManager {
     public void filterEvents(Context analysisContext)
             throws InvalidConfigurationException {
         switch (parallelConfig.getFormulaItemFilter()){
-            case NO_I_FILTER:
+            case NO_SO_FILTER:
                 break;
 
-            case IMPLIES_I_FILTER:
+            case IMPLIES_SO_FILTER:
                 filterImpliedEvents(analysisContext);
                 break;
 
-            case MUTUALLY_EXCLUSIVE_I_FILTER:
+            case MUTUALLY_EXCLUSIVE_SO_FILTER:
                 filterMEEvents(analysisContext);
                 break;
 
-            case IMP_AND_ME_I_FILTER:
+            case IMP_AND_ME_SO_FILTER:
                 filterImpliedAndMEEvents(analysisContext);
                 break;
 
@@ -226,18 +226,18 @@ public class FormulaQueueManager {
     public void filterTuples(Context analysisContext)
             throws InvalidConfigurationException {
         switch (parallelConfig.getFormulaItemFilter()){
-            case NO_I_FILTER:
+            case NO_SO_FILTER:
                 break;
 
-            case IMPLIES_I_FILTER:
+            case IMPLIES_SO_FILTER:
                 filterImpliedTuples();
                 break;
 
-            case MUTUALLY_EXCLUSIVE_I_FILTER:
+            case MUTUALLY_EXCLUSIVE_SO_FILTER:
                 filterMETuples(analysisContext);
                 break;
 
-            case IMP_AND_ME_I_FILTER:
+            case IMP_AND_ME_SO_FILTER:
                 filterImpliedAndMETuples();
                 break;
 

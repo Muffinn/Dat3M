@@ -17,8 +17,10 @@ public class ParallelRefinementCollector {
     public void registerReasonQueue(ConcurrentLinkedQueue<Conjunction<CoreLiteral>> reasonQueue){
         synchronized (reasonQueueList){
             reasonQueueList.add(reasonQueue);
-            for (Conjunction<CoreLiteral> reason: fullReasonsList){
-                reasonQueue.add(reason);
+            synchronized(fullReasonsList){
+                for (Conjunction<CoreLiteral> reason: fullReasonsList){
+                    reasonQueue.add(reason);
+                }
             }
         }
     }
@@ -31,22 +33,22 @@ public class ParallelRefinementCollector {
 
 
 
-    public synchronized List<Conjunction<CoreLiteral>> getReasonList() {
+    /*public synchronized List<Conjunction<CoreLiteral>> getReasonList() {
         List<Conjunction<CoreLiteral>> newList = new ArrayList<>(fullReasonsList);
         return newList;
-    }
+    }*/
 
     private void addReasonToFullList(Conjunction<CoreLiteral> reason){
-        //synchronized (fullReasonsList){
+        synchronized (fullReasonsList){
             fullReasonsList.add(reason);
-        //}
+        }
     }
 
-    private void removeReasonFromFullList(Conjunction<CoreLiteral> reason){
+    /*private void removeReasonFromFullList(Conjunction<CoreLiteral> reason){
         //synchronized (fullReasonsList){
             fullReasonsList.remove(reason);
         //}
-    }
+    }*/
 
 
 
@@ -80,7 +82,7 @@ public class ParallelRefinementCollector {
             case NO_CLAUSE_SHARING:
                 return true;
             case DUPLICATE_CS_FILTER:
-                return subClauseFilter(cube, myQueue);
+                return duplicateClauseFilter(cube, myQueue);
             case IMPLIED_CS_FILTER:
                 return impliedFilter(cube, myQueue);
             default:
@@ -89,7 +91,7 @@ public class ParallelRefinementCollector {
 
     }
 
-    private Boolean subClauseFilter(Conjunction<CoreLiteral> cube, ConcurrentLinkedQueue<Conjunction<CoreLiteral>> myQueue){
+    private Boolean duplicateClauseFilter(Conjunction<CoreLiteral> cube, ConcurrentLinkedQueue<Conjunction<CoreLiteral>> myQueue){
         //synchronized(myQueue){
             for(Conjunction<CoreLiteral> foundCube: myQueue){
                 if (cube.equals(foundCube) ) {

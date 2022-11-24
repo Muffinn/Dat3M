@@ -3,7 +3,7 @@ package com.dat3m.dartagnan.configuration;
 import java.util.Arrays;
 
 public enum Method implements OptionInterface {
-	ASSUME, INCREMENTAL, TWO, CAAT, PARALLELASSUME;
+	ASSUME, INCREMENTAL, TWO, CAAT, PARALLEL_ASSUME, PARALLEL_CAAT;
 	
 	// Used for options in the console
 	@Override
@@ -17,8 +17,10 @@ public enum Method implements OptionInterface {
         		return "assume";
 			case CAAT:
 				return "caat";
-			case PARALLELASSUME:
+			case PARALLEL_ASSUME:
 				return "parallelassume";
+			case PARALLEL_CAAT:
+				return "parallelcaat";
         }
         throw new UnsupportedOperationException("Unrecognized analysis " + this);
 	}
@@ -35,19 +37,21 @@ public enum Method implements OptionInterface {
             	return "Solver with Assumption";
             case CAAT:
             	return "CAAT Solver";
-			case PARALLELASSUME:
+			case PARALLEL_ASSUME:
 				return "Parallel Solver with Assumption";
+			case PARALLEL_CAAT:
+				return "Parallel Caat Solver";
         }
         throw new UnsupportedOperationException("Unrecognized analysis " + this);
 	}
 
 	public static Method getDefault() {
-		return CAAT;
+		return PARALLEL_CAAT;
 	}
 	
 	// Used to decide the order shown by the selector in the UI
 	public static Method[] orderedValues() {
-		Method[] order = { INCREMENTAL, ASSUME, TWO, CAAT, PARALLELASSUME};
+		Method[] order = { INCREMENTAL, ASSUME, TWO, CAAT, PARALLEL_ASSUME, PARALLEL_CAAT};
 		// Be sure no element is missing
 		assert(Arrays.asList(order).containsAll(Arrays.asList(values())));
 		return order;

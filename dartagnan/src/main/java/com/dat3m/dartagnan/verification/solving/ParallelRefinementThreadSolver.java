@@ -4,10 +4,11 @@ import com.dat3m.dartagnan.configuration.Baseline;
 import com.dat3m.dartagnan.encoding.*;
 import com.dat3m.dartagnan.program.Program;
 import com.dat3m.dartagnan.program.analysis.ExecutionAnalysis;
+import com.dat3m.dartagnan.program.event.Tag;
 import com.dat3m.dartagnan.program.event.core.Event;
 import com.dat3m.dartagnan.program.filter.FilterAbstract;
+import com.dat3m.dartagnan.program.filter.FilterBasic;
 import com.dat3m.dartagnan.solver.caat.CAATSolver;
-import com.dat3m.dartagnan.solver.caat.reasoning.EdgeLiteral;
 import com.dat3m.dartagnan.solver.caat4wmm.Refiner;
 import com.dat3m.dartagnan.solver.caat4wmm.WMMSolver;
 import com.dat3m.dartagnan.solver.caat4wmm.coreReasoning.CoreLiteral;
@@ -87,6 +88,7 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
     private long totalTime= 0;
 
     private final ConcurrentLinkedQueue<Conjunction<CoreLiteral>> myReasonsQueue;
+    private final ThreadStatisticManager myStatisticManager;
 
     // =========================== Configurables ===========================
 
@@ -117,6 +119,7 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
         myThreadID = threadID;
         this.refreshInterval = 5;
         this.myReasonsQueue = new ConcurrentLinkedQueue<Conjunction<CoreLiteral>>();
+        this.myStatisticManager = new ThreadStatisticManager(myThreadID);
 
         this.mainCutRelations = cutRelations;
 
@@ -136,20 +139,19 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
 
         mainRefinementCollector.registerReasonQueue(myReasonsQueue);
 
-
         //------------------------
-        if (mainParallelConfig.getFormulaGeneration() == ParallelSolverConfiguration.FormulaGeneration.IN_SOLVER) {
+        if (mainParallelConfig.getFormulaGeneration() == ParallelSolverConfiguration.FormulaGenerator.IN_SOLVER) {
             switch (mainParallelConfig.getFormulaItemType()){
-                case CO_RELATION_FORMULAS:
-                case RF_RELATION_FORMULAS:
+                case CO_RELATION_SPLITTING_OBJECTS:
+                case RF_RELATION_SPLITTING_OBJECTS:
                     List<List<Tuple>> tupleListList =  mainFQMGR.generateRelationListPair(myThreadID);
                     trueTupleList.addAll(tupleListList.get(0));
                     falseTupleList.addAll(tupleListList.get(1));
 
                     break;
-                case TAUTOLOGY_FORMULAS:
+                case NO_SPLITTING_OBJECTS:
                     break;
-                case EVENT_FORMULAS:
+                case EVENT_SPLITTING_OBJECTS:
                     List<List<Event>> eventListList =  mainFQMGR.generateEventListPair(myThreadID);
                     trueEventList.addAll(eventListList.get(0));
                     falseEventList.addAll(eventListList.get(1));
@@ -166,6 +168,7 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
         Wmm memoryModel;
         Context analysisContext;
         //Set<Relation> cutRelations;
+
 
         synchronized (mainTask){
             Program program = mainTask.getProgram();
@@ -205,6 +208,8 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
         BooleanFormulaManager bmgr = myCTX.getFormulaManager().getBooleanFormulaManager();
         BooleanFormula globalRefinement = bmgr.makeTrue();
 
+
+
         WMMSolver solver = WMMSolver.withContext(context, mainCutRelations, mainTask, analysisContext);
         Refiner refiner = new Refiner(analysisContext);
         CAATSolver.Status status = INCONSISTENT;
@@ -215,14 +220,14 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
         switch(mainParallelConfig.getFormulaGeneration()){
             case IN_SOLVER:
                 switch (mainParallelConfig.getFormulaItemType()){
-                    case RF_RELATION_FORMULAS:
-                    case CO_RELATION_FORMULAS:
+                    case RF_RELATION_SPLITTING_OBJECTS:
+                    case CO_RELATION_SPLITTING_OBJECTS:
                         myFormula = generateTupleFormula();
                         break;
-                    case EVENT_FORMULAS:
+                    case EVENT_SPLITTING_OBJECTS:
                         myFormula = generateEventFormula();
                         break;
-                    case TAUTOLOGY_FORMULAS:
+                    case NO_SPLITTING_OBJECTS:
                         throw(new InvalidConfigurationException("Unreachable Code reached. TAUTOLOGY_FORMULAS can only be combined with IN_MANAGER. Check ParallelSolverConfiguration Constructor."));
 
                     default:
@@ -231,14 +236,14 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
                 break;
             case IN_MANAGER:
                 switch (mainParallelConfig.getFormulaItemType()){
-                    case RF_RELATION_FORMULAS:
-                    case CO_RELATION_FORMULAS:
+                    case RF_RELATION_SPLITTING_OBJECTS:
+                    case CO_RELATION_SPLITTING_OBJECTS:
                         myFormula = mainFQMGR.generateRelationFormula(myCTX, context, mainTask, myThreadID);
                         break;
-                    case TAUTOLOGY_FORMULAS:
+                    case NO_SPLITTING_OBJECTS:
                         myFormula = mainFQMGR.generateEmptyFormula(myCTX, myThreadID);
                         break;
-                    case EVENT_FORMULAS:
+                    case EVENT_SPLITTING_OBJECTS:
                         myFormula = mainFQMGR.generateEventFormula(myCTX, context, myThreadID);
                         break;
                     default:
@@ -251,7 +256,7 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
 
         }
 
-
+        myStatisticManager.setMyFormula(myFormula);
         myProver.addConstraint(myFormula);
         //----------------------------------------
 
@@ -261,9 +266,10 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
             logger.info("Verification finished: property trivially holds");
             res = PASS;
             synchronized(mainResultCollector){
-                mainResultCollector.updateResult(res, myThreadID, startTime);
+                mainResultCollector.updateResult(res, myThreadID, myStatisticManager);
                 mainResultCollector.notify();
             }
+            myStatisticManager.reportResult(res);
             mainRefinementCollector.deregisterReasonQueue(myReasonsQueue);
        	    return;
         }
@@ -390,9 +396,10 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
             // CAATSolver got no result (should not be able to happen), so we cannot proceed further.
             res = UNKNOWN;
             synchronized(mainResultCollector){
-                mainResultCollector.updateResult(res, myThreadID, startTime);
+                mainResultCollector.updateResult(res, myThreadID, myStatisticManager);
                 mainResultCollector.notify();
             }
+            myStatisticManager.reportResult(res);
             mainRefinementCollector.deregisterReasonQueue(myReasonsQueue);
             return;
         }
@@ -430,9 +437,10 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
         synchronized(mainTask){res = mainTask.getProgram().getAss().getInvert() ? res.invert() : res;}
 
         synchronized(mainResultCollector){
-            mainResultCollector.updateResult(res, myThreadID, startTime);
+            mainResultCollector.updateResult(res, myThreadID, myStatisticManager);
             mainResultCollector.notify();
         }
+        myStatisticManager.reportResult(res);
         mainRefinementCollector.deregisterReasonQueue(myReasonsQueue);
 
 
@@ -665,7 +673,7 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
         //logger.info("Thread " + myThreadID + ": " + totalTime + " totaltooktime");
     }
     private Boolean imp_me_CR_filter(ExecutionAnalysis exec, Conjunction<CoreLiteral> reason){
-        boolean add = true;
+
         Set<Event> reasonEvents = new HashSet<Event>();
         for (CoreLiteral lit : reason.getLiterals()){
             if (lit instanceof ExecLiteral){
@@ -678,36 +686,31 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
         }
 
         for(Event reasonEvent:reasonEvents){
-            if(!add){break;}
+            reasonEvent.getThread().getCache().getEvents(FilterBasic.get(Tag.VISIBLE));
             for(Event trueEvent : trueEventList){
                 if(exec.areMutuallyExclusive(reasonEvent,trueEvent)){
-                    add = false;
-                    break;
+                    return false;
                 }
             }
             for(Event falseEvent : falseEventList){
                 if(exec.isImplied(reasonEvent, falseEvent)){
-                    add = false;
-                    break;
+                    return false;
                 }
             }
         }
 
         for(Event reasonEvent:reasonEvents){
-            if(!add){break;}
             for (Tuple trueTuple:trueTupleList){
                 if(exec.areMutuallyExclusive(reasonEvent, trueTuple.getFirst()) || exec.areMutuallyExclusive(reasonEvent, trueTuple.getSecond())){
-                    add = false;
-                    break;
+                    return false;
                 }
             }
         }
 
-        return add;
+        return true;
     }
 
     private Boolean me_CR_filter(ExecutionAnalysis exec, Conjunction<CoreLiteral> reason){
-        boolean add = true;
         Set<Event> reasonEvents = new HashSet<Event>();
         for (CoreLiteral lit : reason.getLiterals()){
             if (lit instanceof ExecLiteral){
@@ -720,30 +723,25 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
         }
 
         for(Event reasonEvent:reasonEvents){
-            if(!add){break;}
             for(Event trueEvent : trueEventList){
                 if(exec.areMutuallyExclusive(reasonEvent,trueEvent)){
-                    add = false;
-                    break;
+                    return false;
                 }
             }
         }
 
         for(Event reasonEvent:reasonEvents){
-            if(!add){break;}
             for (Tuple trueTuple:trueTupleList){
                 if(exec.areMutuallyExclusive(reasonEvent, trueTuple.getFirst()) || exec.areMutuallyExclusive(reasonEvent, trueTuple.getSecond())){
-                    add = false;
-                    break;
+                    return false;
                 }
             }
         }
 
-        return add;
+        return true;
     }
 
     private Boolean imp_CR_filter(ExecutionAnalysis exec, Conjunction<CoreLiteral> reason){
-        boolean add = true;
         Set<Event> reasonEvents = new HashSet<Event>();
         for (CoreLiteral lit : reason.getLiterals()){
             if (lit instanceof ExecLiteral){
@@ -756,15 +754,13 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
         }
 
         for(Event reasonEvent:reasonEvents){
-            if(!add){break;}
             for(Event falseEvent : falseEventList){
                 if(exec.isImplied(reasonEvent, falseEvent)){
-                    add = false;
-                    break;
+                    return false;
                 }
             }
         }
-        return add;
+        return true;
     }
 
 

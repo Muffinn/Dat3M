@@ -89,7 +89,7 @@ public class Printer {
                     idSb.append("[").append(event.getUId()).append("]");
                     break;
                 case COMPILED:
-                    idSb.append(event.getCId()).append(":");
+                    idSb.append(event.getCId()).append(" ").append(event.getCLine()).append(":");
                     break;
                 default:
                 	throw new RuntimeException("Unrecognized event id type " + idType);
@@ -98,7 +98,7 @@ public class Printer {
             if(!(event instanceof Label)) {
             	result.append("   ");
             }
-            result.append(padding, idSb.length(), padding.length());
+            //result.append(padding, idSb.length(), padding.length());
             result.append(event).append("\n");
         }
     }

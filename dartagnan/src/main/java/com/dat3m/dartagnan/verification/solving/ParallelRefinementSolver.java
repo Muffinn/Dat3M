@@ -4,7 +4,6 @@ import com.dat3m.dartagnan.configuration.Baseline;
 import com.dat3m.dartagnan.encoding.*;
 import com.dat3m.dartagnan.program.Program;
 import com.dat3m.dartagnan.program.analysis.BranchEquivalence;
-import com.dat3m.dartagnan.program.analysis.ExecutionAnalysis;
 import com.dat3m.dartagnan.program.event.core.Event;
 import com.dat3m.dartagnan.program.filter.FilterAbstract;
 import com.dat3m.dartagnan.solver.caat4wmm.WMMSolver;
@@ -107,6 +106,7 @@ public class ParallelRefinementSolver extends ModelChecker {
     public static ParallelRefinementSolver run(SolverContext ctx, ProverEnvironment prover, VerificationTask task, SolverContextFactory.Solvers solverType, Configuration solverConfig,
                                                ShutdownManager sdm, ParallelSolverConfiguration parallelConfig)
             throws InterruptedException, SolverException, InvalidConfigurationException {
+        task.getConfig().inject(parallelConfig);
         ParallelRefinementSolver s = new ParallelRefinementSolver(ctx, prover, task, sdm, solverType, solverConfig, parallelConfig);
         task.getConfig().inject(s);
         logger.info("{}: {}", BASELINE, s.baselines);
@@ -172,7 +172,7 @@ public class ParallelRefinementSolver extends ModelChecker {
 
         //------------------------QueueManager-gets-QObjects----------
         switch (parallelConfig.getFormulaItemType()){
-            case CO_RELATION_FORMULAS:
+            case CO_RELATION_SPLITTING_OBJECTS:
                 String relationCOName = RelationNameRepository.CO;
                 fqmgr.setRelationName(relationCOName);
                 Relation relationCO = baselineTask.getMemoryModel().getRelation(relationCOName);
@@ -184,7 +184,7 @@ public class ParallelRefinementSolver extends ModelChecker {
                 fqmgr.orderTuples();
                 fqmgr.filterTuples(analysisContext);
                 break;
-            case RF_RELATION_FORMULAS:
+            case RF_RELATION_SPLITTING_OBJECTS:
                 String relationRFName = RelationNameRepository.RF;
                 fqmgr.setRelationName(relationRFName);
                 Relation relationRF = baselineTask.getMemoryModel().getRelation(relationRFName);
@@ -196,7 +196,7 @@ public class ParallelRefinementSolver extends ModelChecker {
                 fqmgr.orderTuples();
                 fqmgr.filterTuples(analysisContext);
                 break;
-            case EVENT_FORMULAS:
+            case EVENT_SPLITTING_OBJECTS:
                 BranchEquivalence branchEquivalence = context.getAnalysisContext().get(BranchEquivalence.class);
                 Set<Event> initialClass = branchEquivalence.getInitialClass();
                 List<Event> eventList = branchEquivalence.getAllEquivalenceClasses().stream().filter(c -> c!=initialClass).map(c -> c.getRepresentative()).collect(Collectors.toList());
@@ -204,7 +204,7 @@ public class ParallelRefinementSolver extends ModelChecker {
                 fqmgr.orderEvents();
                 fqmgr.filterEvents(analysisContext);
                 break;
-            case TAUTOLOGY_FORMULAS:
+            case NO_SPLITTING_OBJECTS:
                 break;
 
             default:

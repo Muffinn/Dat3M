@@ -91,7 +91,7 @@ public class ParallelAssumeSolver extends ModelChecker{
 
         //------------------------QueueManager-gets-QObjects----------
         switch (parallelConfig.getFormulaItemType()){
-            case CO_RELATION_FORMULAS:
+            case CO_RELATION_SPLITTING_OBJECTS:
                 String relationCOName = RelationNameRepository.CO;
                 fqmgr.setRelationName(relationCOName);
                 Relation relationCO = mainTask.getMemoryModel().getRelation(relationCOName);
@@ -102,7 +102,7 @@ public class ParallelAssumeSolver extends ModelChecker{
                 fqmgr.setTupleList(tupleListCO);
                 fqmgr.orderTuples();
                 break;
-            case RF_RELATION_FORMULAS:
+            case RF_RELATION_SPLITTING_OBJECTS:
                 String relationRFName = RelationNameRepository.RF;
                 fqmgr.setRelationName(relationRFName);
                 Relation relationRF = mainTask.getMemoryModel().getRelation(relationRFName);
@@ -115,9 +115,9 @@ public class ParallelAssumeSolver extends ModelChecker{
                 break;
 
 
-            case TAUTOLOGY_FORMULAS:
+            case NO_SPLITTING_OBJECTS:
                 break;
-            case EVENT_FORMULAS:
+            case EVENT_SPLITTING_OBJECTS:
                 /*BranchEquivalence branchEquivalence = context.getAnalysisContext().get(BranchEquivalence.class);
                 Set<Event> initialClass = branchEquivalence.getInitialClass();
                 List<Event> eventList = branchEquivalence.getAllEquivalenceClasses().stream().filter(c -> c!=initialClass).map(c -> c.getRepresentative()).collect(Collectors.toList());

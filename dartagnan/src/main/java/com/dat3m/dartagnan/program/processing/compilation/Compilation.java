@@ -32,7 +32,7 @@ public class Compilation implements ProgramProcessor {
     @Option(name = PRINT_PROGRAM_AFTER_COMPILATION,
             description = "Prints the program after compilation.",
             secure = true)
-    private boolean print = false;
+    private boolean print = true;
 
     @Option(name = TARGET,
             description = "The target architecture to which the program shall be compiled to.",

@@ -8,7 +8,7 @@ public class ParallelResultCollector {
     private Result aggregatedResult;
     private final int maxConcurrentThreads;
     private int currentlyRunningThreads;
-    private long[] finishTimeCollector;
+    private ThreadStatisticManager[] statisticManagers;
     private final ParallelSolverConfiguration parallelConfig;
 
 
@@ -18,14 +18,14 @@ public class ParallelResultCollector {
         this.currentlyRunningThreads = 0;
         this.parallelConfig = parallelConfig;
         this.maxConcurrentThreads = this.parallelConfig.getMaxNumberOfConcurrentThreads();
-        this.finishTimeCollector = new long[parallelConfig.getNumberOfSplits()];
+        this.statisticManagers = new ThreadStatisticManager[parallelConfig.getNumberOfSplits()];
     }
 
 
-    public synchronized void updateResult(Result result,int threadID, long startTime){
+    public synchronized void updateResult(Result result, int threadID, ThreadStatisticManager statisticManager){
+        statisticManagers[threadID] = statisticManager;
         numberOfFinishedThreads++;
         currentlyRunningThreads--;
-        finishTimeCollector[threadID] = System.currentTimeMillis() - startTime;
         if(result == Result.UNKNOWN){
             if(aggregatedResult == Result.PASS){
                 aggregatedResult = Result.UNKNOWN;
@@ -53,9 +53,8 @@ public class ParallelResultCollector {
     }
 
     public void printTimes(){
-        for(int i = 0; i < finishTimeCollector.length; i++){
-            int printTime = (int)finishTimeCollector[i] / 1000;
-            System.out.println("Thread " + i + " took " + printTime + " seconds.");
+        for(ThreadStatisticManager tSM: statisticManagers){
+            tSM.print();
         }
     }
 

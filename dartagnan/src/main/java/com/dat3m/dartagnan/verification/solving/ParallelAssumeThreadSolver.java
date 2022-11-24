@@ -41,6 +41,8 @@ public class ParallelAssumeThreadSolver extends ModelChecker{
     private final Context mainAnalysisContext;
     private final int myThreadID;
 
+    private final ThreadStatisticManager myStatisticManager;
+
     public ParallelAssumeThreadSolver(VerificationTask task, FormulaQueueManager mainFQMGR, ShutdownManager sdm,
                                        ParallelResultCollector mainResultCollector, SolverContextFactory.Solvers solver, Configuration solverConfig, Context mainAnalysisContext, int threadID)
             throws InterruptedException, SolverException, InvalidConfigurationException{
@@ -56,6 +58,7 @@ public class ParallelAssumeThreadSolver extends ModelChecker{
         this.mainResultCollector = mainResultCollector;
         this.mainAnalysisContext = mainAnalysisContext;
         myThreadID = threadID;
+        myStatisticManager = new ThreadStatisticManager(myThreadID);
     }
 
 
@@ -145,9 +148,10 @@ public class ParallelAssumeThreadSolver extends ModelChecker{
         res = mainTask.getProgram().getAss().getInvert() ? res.invert() : res;
 
         synchronized(mainResultCollector){
-            mainResultCollector.updateResult(res, myThreadID, startTime);
+            mainResultCollector.updateResult(res, myThreadID, myStatisticManager);
             mainResultCollector.notify();
         }
+        myStatisticManager.reportResult(res);
         logger.info("Thread " + myThreadID + ": " +  "Verification finished with result " + res);
 
 
