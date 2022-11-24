@@ -9,12 +9,12 @@ import java.util.List;
 public class MainStatisticManager {
     private final ThreadStatisticManager[] threadStatisticManagers;
     private final ParallelSolverConfiguration parallelConfig;
-    private final FormulaQueueManager fqmgr;
+    private final SplittingManager fqmgr;
 
-    public MainStatisticManager(int numberOfSplits, ParallelSolverConfiguration parallelConfig, FormulaQueueManager formulaQueueManager){
+    public MainStatisticManager(int numberOfSplits, ParallelSolverConfiguration parallelConfig, SplittingManager splittingManager){
         threadStatisticManagers = new ThreadStatisticManager[numberOfSplits];
         this.parallelConfig = parallelConfig;
-        this.fqmgr = formulaQueueManager;
+        this.fqmgr = splittingManager;
 
         for (int i = 0; i < numberOfSplits; i++){
             threadStatisticManagers[i] = new ThreadStatisticManager(i);

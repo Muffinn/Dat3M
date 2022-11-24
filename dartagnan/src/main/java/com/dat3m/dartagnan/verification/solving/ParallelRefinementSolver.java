@@ -67,7 +67,7 @@ public class ParallelRefinementSolver extends ModelChecker {
     private Set<Relation> cutRelations;
 
     private ParallelResultCollector resultCollector;
-    private final FormulaQueueManager fqmgr;
+    private final SplittingManager spmgr;
     private final ParallelRefinementCollector refinementCollector;
     private final ShutdownManager sdm;
     private final SolverContextFactory.Solvers solverType;
@@ -95,12 +95,12 @@ public class ParallelRefinementSolver extends ModelChecker {
         mainProver = p;
         mainTask = t;
         this.sdm = sdm;
-        this.fqmgr = new FormulaQueueManager(parallelConfig);
+        this.spmgr = new SplittingManager(parallelConfig);
         this.refinementCollector = new ParallelRefinementCollector(0, parallelConfig);
         this.solverType = solverType;
         this.solverConfig = solverConfig;
         this.parallelConfig = parallelConfig;
-        this.statisticManager = new MainStatisticManager(parallelConfig.getNumberOfSplits(), parallelConfig, fqmgr);
+        this.statisticManager = new MainStatisticManager(parallelConfig.getNumberOfSplits(), parallelConfig, spmgr);
     }
 
     //TODO: We do not yet use Witness information. The problem is that WitnessGraph.encode() generates
@@ -170,42 +170,42 @@ public class ParallelRefinementSolver extends ModelChecker {
 
 
 
-        int totalThreadnumber = fqmgr.getQueueSize();
+        int totalThreadnumber = spmgr.getQueueSize();
         List<Thread> threads = new ArrayList<Thread>(totalThreadnumber);
 
         //------------------------QueueManager-gets-QObjects----------
         switch (parallelConfig.getSplittingObjectType()){
             case CO_RELATION_SPLITTING_OBJECTS:
                 String relationCOName = RelationNameRepository.CO;
-                fqmgr.setRelationName(relationCOName);
+                spmgr.setRelationName(relationCOName);
                 Relation relationCO = baselineTask.getMemoryModel().getRelation(relationCOName);
                 RelationAnalysis relationAnalysisCO = context.getAnalysisContext().get(RelationAnalysis.class);
                 RelationAnalysis.Knowledge knowledgeCO = relationAnalysisCO.getKnowledge(relationCO);
                 TupleSet coEncodeSet = knowledgeCO.getMaySet();
                 List<Tuple> tupleListCO = new ArrayList<>(coEncodeSet);
-                fqmgr.setTupleList(tupleListCO);
-                fqmgr.orderTuples();
-                fqmgr.filterTuples(analysisContext);
+                spmgr.setTupleList(tupleListCO);
+                spmgr.orderTuples();
+                spmgr.filterTuples(analysisContext);
                 break;
             case RF_RELATION_SPLITTING_OBJECTS:
                 String relationRFName = RelationNameRepository.RF;
-                fqmgr.setRelationName(relationRFName);
+                spmgr.setRelationName(relationRFName);
                 Relation relationRF = baselineTask.getMemoryModel().getRelation(relationRFName);
                 RelationAnalysis relationAnalysisRF = context.getAnalysisContext().get(RelationAnalysis.class);
                 RelationAnalysis.Knowledge knowledge = relationAnalysisRF.getKnowledge(relationRF);
                 TupleSet rfEncodeSet = knowledge.getMaySet();
                 List<Tuple> tupleListRF = new ArrayList<>(rfEncodeSet);
-                fqmgr.setTupleList(tupleListRF);
-                fqmgr.orderTuples();
-                fqmgr.filterTuples(analysisContext);
+                spmgr.setTupleList(tupleListRF);
+                spmgr.orderTuples();
+                spmgr.filterTuples(analysisContext);
                 break;
             case EVENT_SPLITTING_OBJECTS:
                 BranchEquivalence branchEquivalence = context.getAnalysisContext().get(BranchEquivalence.class);
                 Set<Event> initialClass = branchEquivalence.getInitialClass();
                 List<Event> eventList = branchEquivalence.getAllEquivalenceClasses().stream().filter(c -> c!=initialClass).map(c -> c.getRepresentative()).collect(Collectors.toList());
-                fqmgr.setEventList(eventList);
-                fqmgr.orderEvents();
-                fqmgr.filterEvents(analysisContext);
+                spmgr.setEventList(eventList);
+                spmgr.orderEvents();
+                spmgr.filterEvents(analysisContext);
                 break;
             case NO_SPLITTING_OBJECTS:
                 break;
@@ -333,7 +333,7 @@ public class ParallelRefinementSolver extends ModelChecker {
 
     private void runThread(int threadID)
             throws InterruptedException, SolverException, InvalidConfigurationException{
-        ParallelRefinementThreadSolver myThreadSolver = new ParallelRefinementThreadSolver(mainTask, fqmgr, sdm, resultCollector,
+        ParallelRefinementThreadSolver myThreadSolver = new ParallelRefinementThreadSolver(mainTask, spmgr, sdm, resultCollector,
                 refinementCollector, solverType, solverConfig, threadID, parallelConfig, cutRelations, statisticManager.getThreadStatisticManager(threadID));
         myThreadSolver.run();
     }

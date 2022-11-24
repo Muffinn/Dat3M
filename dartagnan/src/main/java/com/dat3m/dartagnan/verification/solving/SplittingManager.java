@@ -16,7 +16,7 @@ import org.sosy_lab.java_smt.api.SolverContext;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class FormulaQueueManager {
+public class SplittingManager {
 
     private static final Logger logger = LogManager.getLogger(AssumeSolver.class);
 
@@ -33,7 +33,7 @@ public class FormulaQueueManager {
     private String relationName;
     private final ParallelSolverConfiguration parallelConfig;
 
-    public FormulaQueueManager(ParallelSolverConfiguration parallelConfig)
+    public SplittingManager(ParallelSolverConfiguration parallelConfig)
             throws InvalidConfigurationException{
         this.bitsetQueue = new ConcurrentLinkedQueue<BitSet[]>();
         this.parallelConfig = parallelConfig;
@@ -79,13 +79,13 @@ public class FormulaQueueManager {
                 createEmptyBitSetQueue(parallelConfig.getQueueSettingIntN());
                 break;
             case LINEAR_AND_BINARY_SPLITTING_STYLE:
-                createTreeStyleBitSetQueue(parallelConfig.getQueueSettingIntN(), parallelConfig.getQueueSettingIntM());
+                createLinearAndBinarySplitting(parallelConfig.getQueueSettingIntN(), parallelConfig.getQueueSettingIntM());
                 break;
             case LINEAR_SPLITTING_STYLE:
-                createTreeStyleBitSetQueue(parallelConfig.getQueueSettingIntN(), 0);
+                createLinearAndBinarySplitting(parallelConfig.getQueueSettingIntN(), 0);
                 break;
             case BINARY_SPLITTING_STYLE:
-                createTreeStyleBitSetQueue(0, parallelConfig.getQueueSettingIntN());
+                createLinearAndBinarySplitting(0, parallelConfig.getQueueSettingIntN());
                 break;
             default:
                 throw(new InvalidConfigurationException(parallelConfig.getSplittingStyle().name() + "is not supported by populateFormulaQueue."));
@@ -107,7 +107,7 @@ public class FormulaQueueManager {
     }
 
 
-    private void createTreeStyleBitSetQueue(int nrOfTrees, int treeDepth) throws InvalidConfigurationException{
+    private void createLinearAndBinarySplitting(int nrOfTrees, int treeDepth) throws InvalidConfigurationException{
         if(nrOfTrees < 1){
             throw new InvalidConfigurationException("TreeStyleBitSetQueue creation failed. There must be at least one Tree.");
         }
@@ -121,15 +121,15 @@ public class FormulaQueueManager {
         int i = 0;
         while (i + 1 < nrOfTrees){
             varBitSet.set(i);
-            createTreeBitSet(treeDepth, varBitSet, notVarBitSet, i + 1);
+            createBinarySplitting(treeDepth, varBitSet, notVarBitSet, i + 1);
             varBitSet.clear(i);
             notVarBitSet.set(i);
             i++;
         }
-        createTreeBitSet(treeDepth, varBitSet, notVarBitSet, i);
+        createBinarySplitting(treeDepth, varBitSet, notVarBitSet, i);
     }
 
-    private void createTreeBitSet(int treeDepth, BitSet varBitSet, BitSet notVarBitSet, int startPoint){
+    private void createBinarySplitting(int treeDepth, BitSet varBitSet, BitSet notVarBitSet, int startPoint){
 
         if(treeDepth == 0){
             BitSet[] newBitSetPair = new BitSet[2];
@@ -153,10 +153,10 @@ public class FormulaQueueManager {
             addBitSet(newBitSetPair);
             notVarBitSet.clear(startPoint);
         } else {
-            createTreeBitSet(treeDepth - 1, varBitSet, notVarBitSet, startPoint + 1);
+            createBinarySplitting(treeDepth - 1, varBitSet, notVarBitSet, startPoint + 1);
             varBitSet.clear(startPoint);
             notVarBitSet.set(startPoint);
-            createTreeBitSet(treeDepth - 1, varBitSet, notVarBitSet, startPoint + 1);
+            createBinarySplitting(treeDepth - 1, varBitSet, notVarBitSet, startPoint + 1);
             notVarBitSet.clear(startPoint);
         }
     }

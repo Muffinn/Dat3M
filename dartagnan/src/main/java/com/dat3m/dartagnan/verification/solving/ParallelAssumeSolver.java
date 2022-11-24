@@ -34,7 +34,7 @@ public class ParallelAssumeSolver extends ModelChecker{
     private final VerificationTask mainTask;
 
     private ParallelResultCollector resultCollector;
-    private final FormulaQueueManager fqmgr;
+    private final SplittingManager fqmgr;
     private final ShutdownManager sdm;
     private final SolverContextFactory.Solvers solver;
     private final Configuration solverConfig;
@@ -46,7 +46,7 @@ public class ParallelAssumeSolver extends ModelChecker{
         mainProver = prover;
         mainTask = task;
         this.sdm = sdm;
-        this.fqmgr = new FormulaQueueManager(parallelConfig);
+        this.fqmgr = new SplittingManager(parallelConfig);
         this.solver = solver;
         this.solverConfig = solverConfig;
         this.parallelConfig = parallelConfig;

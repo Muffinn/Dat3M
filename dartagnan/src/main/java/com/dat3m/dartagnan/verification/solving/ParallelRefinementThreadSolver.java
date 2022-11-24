@@ -73,7 +73,7 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
 
 
     private final ParallelResultCollector mainResultCollector;
-    private final FormulaQueueManager mainFQMGR;
+    private final SplittingManager mainSPMGR;
     private final ParallelRefinementCollector mainRefinementCollector;
     private final ParallelSolverConfiguration mainParallelConfig;
     private final int myThreadID;
@@ -100,8 +100,8 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
 
     // ======================================================================
 
-    public ParallelRefinementThreadSolver(VerificationTask mainTask, FormulaQueueManager mainFQMGR, ShutdownManager sdm,
-                                           ParallelResultCollector mainResultCollector, ParallelRefinementCollector mainRefinementCollector,
+    public ParallelRefinementThreadSolver(VerificationTask mainTask, SplittingManager mainSPMGR, ShutdownManager sdm,
+                                          ParallelResultCollector mainResultCollector, ParallelRefinementCollector mainRefinementCollector,
                                           SolverContextFactory.Solvers solver, Configuration solverConfig, int threadID,
                                           ParallelSolverConfiguration parallelConfig, Set<Relation> cutRelations, ThreadStatisticManager myStatisticManager)
             throws InvalidConfigurationException{
@@ -112,7 +112,7 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
                 solver);
         myProver = myCTX.newProverEnvironment(SolverContext.ProverOptions.GENERATE_MODELS);
         this.mainTask = mainTask;
-        this.mainFQMGR = mainFQMGR;
+        this.mainSPMGR = mainSPMGR;
         this.mainRefinementCollector = mainRefinementCollector;
         this.mainResultCollector = mainResultCollector;
         this.mainParallelConfig = parallelConfig;
@@ -144,7 +144,7 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
             switch (mainParallelConfig.getSplittingObjectType()){
                 case CO_RELATION_SPLITTING_OBJECTS:
                 case RF_RELATION_SPLITTING_OBJECTS:
-                    List<List<Tuple>> tupleListList =  mainFQMGR.generateRelationListPair(myThreadID, myStatisticManager);
+                    List<List<Tuple>> tupleListList =  mainSPMGR.generateRelationListPair(myThreadID, myStatisticManager);
                     trueTupleList.addAll(tupleListList.get(0));
                     falseTupleList.addAll(tupleListList.get(1));
 
@@ -152,7 +152,7 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
                 case NO_SPLITTING_OBJECTS:
                     break;
                 case EVENT_SPLITTING_OBJECTS:
-                    List<List<Event>> eventListList =  mainFQMGR.generateEventListPair(myThreadID, myStatisticManager);
+                    List<List<Event>> eventListList =  mainSPMGR.generateEventListPair(myThreadID, myStatisticManager);
                     trueEventList.addAll(eventListList.get(0));
                     falseEventList.addAll(eventListList.get(1));
                     break;
@@ -238,13 +238,13 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
                 switch (mainParallelConfig.getSplittingObjectType()){
                     case RF_RELATION_SPLITTING_OBJECTS:
                     case CO_RELATION_SPLITTING_OBJECTS:
-                        myFormula = mainFQMGR.generateRelationFormula(myCTX, context, mainTask, myThreadID, myStatisticManager);
+                        myFormula = mainSPMGR.generateRelationFormula(myCTX, context, mainTask, myThreadID, myStatisticManager);
                         break;
                     case NO_SPLITTING_OBJECTS:
-                        myFormula = mainFQMGR.generateEmptyFormula(myCTX, myThreadID);
+                        myFormula = mainSPMGR.generateEmptyFormula(myCTX, myThreadID);
                         break;
                     case EVENT_SPLITTING_OBJECTS:
-                        myFormula = mainFQMGR.generateEventFormula(myCTX, context, myThreadID, myStatisticManager);
+                        myFormula = mainSPMGR.generateEventFormula(myCTX, context, myThreadID, myStatisticManager);
                         break;
                     default:
                         throw(new InvalidConfigurationException(mainParallelConfig.getSplittingObjectType() + "is not supported in myFormulaGeneration in ParallelRefinementThreadSolver."));
@@ -770,11 +770,11 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
         BooleanFormulaManager bmgr = myCTX.getFormulaManager().getBooleanFormulaManager();
         BooleanFormula myFormula = bmgr.makeTrue();
         for (Tuple trueTuple : trueTupleList){
-            BooleanFormula var = mainTask.getMemoryModel().getRelation(mainFQMGR.getRelationName()).getSMTVar(trueTuple, context);
+            BooleanFormula var = mainTask.getMemoryModel().getRelation(mainSPMGR.getRelationName()).getSMTVar(trueTuple, context);
             myFormula = bmgr.and(myFormula, var);
         }
         for (Tuple falseTuple : falseTupleList){
-            BooleanFormula notVar = bmgr.not(mainTask.getMemoryModel().getRelation(mainFQMGR.getRelationName()).getSMTVar(falseTuple, context));
+            BooleanFormula notVar = bmgr.not(mainTask.getMemoryModel().getRelation(mainSPMGR.getRelationName()).getSMTVar(falseTuple, context));
             myFormula = bmgr.and(myFormula, notVar);
         }
         logger.info("Thread " + myThreadID + ": generated Formula " + myFormula);

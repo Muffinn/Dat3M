@@ -1,12 +1,9 @@
 package com.dat3m.dartagnan.verification.solving;
 
 import com.dat3m.dartagnan.encoding.*;
-import com.dat3m.dartagnan.program.Program;
-import com.dat3m.dartagnan.program.event.core.Event;
 import com.dat3m.dartagnan.utils.Result;
 import com.dat3m.dartagnan.verification.Context;
 import com.dat3m.dartagnan.verification.VerificationTask;
-import com.dat3m.dartagnan.wmm.axiom.Axiom;
 import com.dat3m.dartagnan.wmm.utils.Tuple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -36,15 +33,15 @@ public class ParallelAssumeThreadSolver extends ModelChecker{
     private final VerificationTask mainTask;
 
     private final ParallelResultCollector mainResultCollector;
-    private final FormulaQueueManager mainFQMGR;
+    private final SplittingManager mainFQMGR;
     private final ShutdownManager sdm;
     private final Context mainAnalysisContext;
     private final int myThreadID;
 
     private final ThreadStatisticManager myStatisticManager;
 
-    public ParallelAssumeThreadSolver(VerificationTask task, FormulaQueueManager mainFQMGR, ShutdownManager sdm,
-                                       ParallelResultCollector mainResultCollector, SolverContextFactory.Solvers solver, Configuration solverConfig, Context mainAnalysisContext, int threadID)
+    public ParallelAssumeThreadSolver(VerificationTask task, SplittingManager mainFQMGR, ShutdownManager sdm,
+                                      ParallelResultCollector mainResultCollector, SolverContextFactory.Solvers solver, Configuration solverConfig, Context mainAnalysisContext, int threadID)
             throws InterruptedException, SolverException, InvalidConfigurationException{
         myCTX = SolverContextFactory.createSolverContext(
                 solverConfig,
