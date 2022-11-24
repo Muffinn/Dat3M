@@ -3,12 +3,19 @@ package com.dat3m.dartagnan.verification.solving;
 import com.dat3m.dartagnan.utils.Result;
 import org.sosy_lab.java_smt.api.BooleanFormula;
 
+import java.util.BitSet;
+
 public class ThreadStatisticManager {
     private final int threadID;
     private double startTime;
     private double endTime = -1;
     private BooleanFormula  myFormula;
     private Result myResult;
+    private BitSet[] bitSetPair;
+
+
+
+
 
 
     public ThreadStatisticManager(int threadID){
@@ -16,8 +23,8 @@ public class ThreadStatisticManager {
 
     }
 
-    public int calculateTotalTime(){
-        return (int)((endTime-startTime)/1000);
+    public double calculateTotalTime(){
+        return endTime-startTime;
     }
 
     public void reportResult(Result myResult){
@@ -38,10 +45,22 @@ public class ThreadStatisticManager {
         System.out.println("Thread " + threadID + " report:");
 
         if(endTime != (-1)){
-            System.out.println("TotalTime: " + calculateTotalTime() + " seconds");
+            System.out.println("TotalTime: " + (int)(calculateTotalTime()/1000) + " seconds");
         }
         System.out.println("Formula: " + myFormula);
         System.out.println("\n");
+    }
+
+    public void setBitSetPair(BitSet[] bitSetPair){
+        this.bitSetPair = bitSetPair;
+    }
+
+    public BitSet[] getBitSetPair(){
+        return bitSetPair;
+    }
+
+    public double getTotalTime(){
+        return calculateTotalTime();
     }
 
 

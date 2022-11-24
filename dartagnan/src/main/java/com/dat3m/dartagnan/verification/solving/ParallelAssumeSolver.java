@@ -90,7 +90,7 @@ public class ParallelAssumeSolver extends ModelChecker{
 
 
         //------------------------QueueManager-gets-QObjects----------
-        switch (parallelConfig.getFormulaItemType()){
+        switch (parallelConfig.getSplittingObjectType()){
             case CO_RELATION_SPLITTING_OBJECTS:
                 String relationCOName = RelationNameRepository.CO;
                 fqmgr.setRelationName(relationCOName);
@@ -125,7 +125,7 @@ public class ParallelAssumeSolver extends ModelChecker{
                 fqmgr.orderEvents();
                 break;*/
             default:
-                throw(new InvalidConfigurationException("Formula Type " + parallelConfig.getFormulaQueueStyle().name() +" is not supported in ParallelRefinement."));
+                throw(new InvalidConfigurationException("Formula Type " + parallelConfig.getSplittingStyle().name() +" is not supported in ParallelRefinement."));
         }
 
         logger.info("Starting Thread creation.");

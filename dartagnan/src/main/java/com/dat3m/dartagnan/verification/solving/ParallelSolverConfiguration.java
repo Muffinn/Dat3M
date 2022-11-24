@@ -31,10 +31,10 @@ public class ParallelSolverConfiguration {
     private ClauseReceivingFilter clauseReceivingFilter;
 
     @Option(description = "The type of Filter used in the Formulas", name = "queueSettingInt1", secure = true)
-    private int queueSettingInt1;
+    private int queueSettingIntN;
 
     @Option(description = "The type of Filter used in the Formulas", name = "queueSettingInt2", secure = true)
-    private int queueSettingInt2;
+    private int queueSettingIntM;
 
     @Option(description = "The type of Filter used in the Formulas", name = "maxConcurrentThreads", secure = true)
     private int maxNumberOfConcurrentThreads;
@@ -84,8 +84,8 @@ public class ParallelSolverConfiguration {
      * @param splittingStyle Tautology or Splits
      * @param formulaGenerator generate Formula in Solver or in the FormulaQueueManager
      * @param clauseSharingFilter filter which clauses are filtered
-     * @param queueSettingInt1 Int value used to generate the formulas
-     * @param queueSettingInt2 Int value used to generate the formulas
+     * @param queueSettingIntN Int value used to generate the formulas
+     * @param queueSettingIntM Int value used to generate the formulas
      * @param maxNumberOfConcurrentThreads amount of threads that can run concurrent
      * @throws InvalidConfigurationException some configurations are not supported in combination with other configuration
      */
@@ -93,7 +93,7 @@ public class ParallelSolverConfiguration {
     public ParallelSolverConfiguration(SplittingStyle splittingStyle, SplittingObjectType splittingObjectType, SplittingObjectFilter splittingObjectFilter,
                                        SplittingObjectSelection splittingObjectSelection, FormulaGenerator formulaGenerator, ClauseSharingFilter clauseSharingFilter,
                                        ClauseReceivingFilter clauseReceivingFilter,
-                                       int queueSettingInt1, int queueSettingInt2, int maxNumberOfConcurrentThreads)
+                                       int queueSettingIntN, int queueSettingIntM, int maxNumberOfConcurrentThreads)
             throws InvalidConfigurationException {
 
         if (splittingObjectType != SplittingObjectType.NO_SPLITTING_OBJECTS) {
@@ -114,8 +114,8 @@ public class ParallelSolverConfiguration {
         }
         this.clauseSharingFilter = clauseSharingFilter;
         this.clauseReceivingFilter = clauseReceivingFilter;
-        this.queueSettingInt1 =queueSettingInt1;
-        this.queueSettingInt2 =queueSettingInt2;
+        this.queueSettingIntN = queueSettingIntN;
+        this.queueSettingIntM = queueSettingIntM;
         this.maxNumberOfConcurrentThreads = maxNumberOfConcurrentThreads;
         this.numberOfSplits = calculateNrOfSplits();
         this.formulaLength = calculateFormulaLength();
@@ -137,8 +137,8 @@ public class ParallelSolverConfiguration {
      * @param splittingStyle Tautology or Splits
      * @param formulaGenerator generate Formula in Solver or in the FormulaQueueManager
      * @param clauseSharingFilter filter which clauses are filtered
-     * @param queueSettingInt1 Int value used to generate the formulas
-     * @param queueSettingInt2 Int value used to generate the formulas
+     * @param queueSettingIntN Int value used to generate the formulas
+     * @param queueSettingIntM Int value used to generate the formulas
      * @param maxNumberOfConcurrentThreads amount of threads that can run concurrent
      * @param randomSeed fixed random seed. used if SEEDED_RANDOM_ORDER is enabled
      * @throws InvalidConfigurationException some configurations are not supported in combination with other configuration
@@ -146,7 +146,7 @@ public class ParallelSolverConfiguration {
     public ParallelSolverConfiguration(SplittingStyle splittingStyle, SplittingObjectType splittingObjectType, SplittingObjectFilter splittingObjectFilter,
                                        SplittingObjectSelection splittingObjectSelection, FormulaGenerator formulaGenerator, ClauseSharingFilter clauseSharingFilter,
                                        ClauseReceivingFilter clauseReceivingFilter,
-                                       int queueSettingInt1, int queueSettingInt2, int maxNumberOfConcurrentThreads, long randomSeed)
+                                       int queueSettingIntN, int queueSettingIntM, int maxNumberOfConcurrentThreads, long randomSeed)
             throws InvalidConfigurationException {
 
         if (splittingObjectType != SplittingObjectType.NO_SPLITTING_OBJECTS) {
@@ -167,8 +167,8 @@ public class ParallelSolverConfiguration {
         }
         this.clauseSharingFilter = clauseSharingFilter;
         this.clauseReceivingFilter = clauseReceivingFilter;
-        this.queueSettingInt1 =queueSettingInt1;
-        this.queueSettingInt2 =queueSettingInt2;
+        this.queueSettingIntN = queueSettingIntN;
+        this.queueSettingIntM = queueSettingIntM;
         this.maxNumberOfConcurrentThreads = maxNumberOfConcurrentThreads;
         this.numberOfSplits = calculateNrOfSplits();
         this.formulaLength = calculateFormulaLength();
@@ -202,9 +202,11 @@ public class ParallelSolverConfiguration {
         switch(this.splittingStyle){
             case NO_SPLITTING_STYLE:
             case LINEAR_SPLITTING_STYLE:
-                return queueSettingInt1;
+                return queueSettingIntN;
+            case BINARY_SPLITTING_STYLE:
+                return (int) Math.pow(2, queueSettingIntN);
             case LINEAR_AND_BINARY_SPLITTING_STYLE:
-                return queueSettingInt1 * (int) Math.pow(2, queueSettingInt2);
+                return queueSettingIntN * (int) Math.pow(2, queueSettingIntM);
 
             default:
                 throw (new InvalidConfigurationException("Formula QueueStyle not supported by ParallelSolverConfiguration Constructor. Can't calculate number of Split."));
@@ -216,9 +218,11 @@ public class ParallelSolverConfiguration {
             case NO_SPLITTING_STYLE:
                 return 0;
             case LINEAR_SPLITTING_STYLE:
-                return (queueSettingInt1 - 1);
+                return (queueSettingIntN - 1);
+            case BINARY_SPLITTING_STYLE:
+                return queueSettingIntN;
             case LINEAR_AND_BINARY_SPLITTING_STYLE:
-                return (queueSettingInt1 - 1 + queueSettingInt2);
+                return (queueSettingIntN - 1 + queueSettingIntM);
             default:
                 throw (new InvalidConfigurationException("Formula QueueStyle not supported by ParallelSolverConfiguration Constructor. Can't Formula Length."));
         }
@@ -226,23 +230,23 @@ public class ParallelSolverConfiguration {
 
     //----------------------------------GETTER--------------------------------
 
-    public SplittingObjectType getFormulaItemType() {
+    public SplittingObjectType getSplittingObjectType() {
         return splittingObjectType;
     }
 
-    public SplittingObjectFilter getFormulaItemFilter() {
+    public SplittingObjectFilter getSplittingObjectFilter() {
         return splittingObjectFilter;
     }
 
-    public SplittingObjectSelection getFormulaItemOrder() {
+    public SplittingObjectSelection getSplittingObjectSelection() {
         return splittingObjectSelection;
     }
 
-    public SplittingStyle getFormulaQueueStyle() {
+    public SplittingStyle getSplittingStyle() {
         return splittingStyle;
     }
 
-    public FormulaGenerator getFormulaGeneration() {
+    public FormulaGenerator getFormulaGenerator() {
         return formulaGenerator;
     }
 
@@ -254,12 +258,12 @@ public class ParallelSolverConfiguration {
         return clauseReceivingFilter;
     }
 
-    public int getQueueSettingInt1() {
-        return queueSettingInt1;
+    public int getQueueSettingIntN() {
+        return queueSettingIntN;
     }
 
-    public int getQueueSettingInt2() {
-        return queueSettingInt2;
+    public int getQueueSettingIntM() {
+        return queueSettingIntM;
     }
 
     public int getMaxNumberOfConcurrentThreads() {

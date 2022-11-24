@@ -124,7 +124,7 @@ public class ParallelAssumeThreadSolver extends ModelChecker{
 
 
         }*/
-        BooleanFormula myFormula = mainFQMGR.generateRelationFormula(myCTX, context, mainTask, myThreadID);
+        BooleanFormula myFormula = mainFQMGR.generateRelationFormula(myCTX, context, mainTask, myThreadID, myStatisticManager);
         myProver.addConstraint(myFormula);
         //----------------------------------------
 

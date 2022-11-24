@@ -26,7 +26,6 @@ import com.dat3m.dartagnan.wmm.definition.*;
 import com.dat3m.dartagnan.wmm.relation.RelationNameRepository;
 import com.dat3m.dartagnan.wmm.utils.Tuple;
 import com.dat3m.dartagnan.wmm.utils.TupleSet;
-import com.sun.tools.javac.Main;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.sosy_lab.common.ShutdownManager;
@@ -101,7 +100,7 @@ public class ParallelRefinementSolver extends ModelChecker {
         this.solverType = solverType;
         this.solverConfig = solverConfig;
         this.parallelConfig = parallelConfig;
-        this.statisticManager = new MainStatisticManager(parallelConfig.getNumberOfSplits());
+        this.statisticManager = new MainStatisticManager(parallelConfig.getNumberOfSplits(), parallelConfig, fqmgr);
     }
 
     //TODO: We do not yet use Witness information. The problem is that WitnessGraph.encode() generates
@@ -175,7 +174,7 @@ public class ParallelRefinementSolver extends ModelChecker {
         List<Thread> threads = new ArrayList<Thread>(totalThreadnumber);
 
         //------------------------QueueManager-gets-QObjects----------
-        switch (parallelConfig.getFormulaItemType()){
+        switch (parallelConfig.getSplittingObjectType()){
             case CO_RELATION_SPLITTING_OBJECTS:
                 String relationCOName = RelationNameRepository.CO;
                 fqmgr.setRelationName(relationCOName);
@@ -212,7 +211,7 @@ public class ParallelRefinementSolver extends ModelChecker {
                 break;
 
             default:
-                throw(new InvalidConfigurationException("Formula Type " + parallelConfig.getFormulaQueueStyle().name() +" is not supported in ParallelRefinement."));
+                throw(new InvalidConfigurationException("Formula Type " + parallelConfig.getSplittingStyle().name() +" is not supported in ParallelRefinement."));
         }
 
 
@@ -335,7 +334,7 @@ public class ParallelRefinementSolver extends ModelChecker {
     private void runThread(int threadID)
             throws InterruptedException, SolverException, InvalidConfigurationException{
         ParallelRefinementThreadSolver myThreadSolver = new ParallelRefinementThreadSolver(mainTask, fqmgr, sdm, resultCollector,
-                refinementCollector, solverType, solverConfig, threadID, parallelConfig, cutRelations, statisticManager.getStatisticManager(threadID));
+                refinementCollector, solverType, solverConfig, threadID, parallelConfig, cutRelations, statisticManager.getThreadStatisticManager(threadID));
         myThreadSolver.run();
     }
 

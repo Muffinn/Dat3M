@@ -140,11 +140,11 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
         mainRefinementCollector.registerReasonQueue(myReasonsQueue);
 
         //------------------------
-        if (mainParallelConfig.getFormulaGeneration() == ParallelSolverConfiguration.FormulaGenerator.IN_SOLVER) {
-            switch (mainParallelConfig.getFormulaItemType()){
+        if (mainParallelConfig.getFormulaGenerator() == ParallelSolverConfiguration.FormulaGenerator.IN_SOLVER) {
+            switch (mainParallelConfig.getSplittingObjectType()){
                 case CO_RELATION_SPLITTING_OBJECTS:
                 case RF_RELATION_SPLITTING_OBJECTS:
-                    List<List<Tuple>> tupleListList =  mainFQMGR.generateRelationListPair(myThreadID);
+                    List<List<Tuple>> tupleListList =  mainFQMGR.generateRelationListPair(myThreadID, myStatisticManager);
                     trueTupleList.addAll(tupleListList.get(0));
                     falseTupleList.addAll(tupleListList.get(1));
 
@@ -152,12 +152,12 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
                 case NO_SPLITTING_OBJECTS:
                     break;
                 case EVENT_SPLITTING_OBJECTS:
-                    List<List<Event>> eventListList =  mainFQMGR.generateEventListPair(myThreadID);
+                    List<List<Event>> eventListList =  mainFQMGR.generateEventListPair(myThreadID, myStatisticManager);
                     trueEventList.addAll(eventListList.get(0));
                     falseEventList.addAll(eventListList.get(1));
                     break;
                 default:
-                    throw(new InvalidConfigurationException("FormulaItemType " + mainParallelConfig.getFormulaItemType().name() + " is not a supported by ParallelRefinementThreadSolver"));
+                    throw(new InvalidConfigurationException("FormulaItemType " + mainParallelConfig.getSplittingObjectType().name() + " is not a supported by ParallelRefinementThreadSolver"));
             }
         }
 
@@ -217,9 +217,9 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
 
         //------------myformula-Generation------------
         BooleanFormula myFormula;
-        switch(mainParallelConfig.getFormulaGeneration()){
+        switch(mainParallelConfig.getFormulaGenerator()){
             case IN_SOLVER:
-                switch (mainParallelConfig.getFormulaItemType()){
+                switch (mainParallelConfig.getSplittingObjectType()){
                     case RF_RELATION_SPLITTING_OBJECTS:
                     case CO_RELATION_SPLITTING_OBJECTS:
                         myFormula = generateTupleFormula();
@@ -231,28 +231,28 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
                         throw(new InvalidConfigurationException("Unreachable Code reached. TAUTOLOGY_FORMULAS can only be combined with IN_MANAGER. Check ParallelSolverConfiguration Constructor."));
 
                     default:
-                        throw(new InvalidConfigurationException(mainParallelConfig.getFormulaItemType() + "is not supported in myFormulaGeneration in ParallelRefinementThreadSolver."));
+                        throw(new InvalidConfigurationException(mainParallelConfig.getSplittingObjectType() + "is not supported in myFormulaGeneration in ParallelRefinementThreadSolver."));
                 }
                 break;
             case IN_MANAGER:
-                switch (mainParallelConfig.getFormulaItemType()){
+                switch (mainParallelConfig.getSplittingObjectType()){
                     case RF_RELATION_SPLITTING_OBJECTS:
                     case CO_RELATION_SPLITTING_OBJECTS:
-                        myFormula = mainFQMGR.generateRelationFormula(myCTX, context, mainTask, myThreadID);
+                        myFormula = mainFQMGR.generateRelationFormula(myCTX, context, mainTask, myThreadID, myStatisticManager);
                         break;
                     case NO_SPLITTING_OBJECTS:
                         myFormula = mainFQMGR.generateEmptyFormula(myCTX, myThreadID);
                         break;
                     case EVENT_SPLITTING_OBJECTS:
-                        myFormula = mainFQMGR.generateEventFormula(myCTX, context, myThreadID);
+                        myFormula = mainFQMGR.generateEventFormula(myCTX, context, myThreadID, myStatisticManager);
                         break;
                     default:
-                        throw(new InvalidConfigurationException(mainParallelConfig.getFormulaItemType() + "is not supported in myFormulaGeneration in ParallelRefinementThreadSolver."));
+                        throw(new InvalidConfigurationException(mainParallelConfig.getSplittingObjectType() + "is not supported in myFormulaGeneration in ParallelRefinementThreadSolver."));
                 }
 
                 break;
             default:
-                throw(new InvalidConfigurationException(mainParallelConfig.getFormulaGeneration().name() + " is not supported Formula Generation Method in ParallelRefinementThread Solver."));
+                throw(new InvalidConfigurationException(mainParallelConfig.getFormulaGenerator().name() + " is not supported Formula Generation Method in ParallelRefinementThread Solver."));
 
         }
 

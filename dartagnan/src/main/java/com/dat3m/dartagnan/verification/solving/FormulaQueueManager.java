@@ -22,7 +22,7 @@ public class FormulaQueueManager {
 
 
     //private Queue<BooleanFormula> formulaQueue;
-    private Queue<BitSet[]> bitsetQueue;
+    private final Queue<BitSet[]> bitsetQueue;
     private List<Tuple> tupleList;
     private List<Event> eventList;
     //private SolverContext ctx;
@@ -68,22 +68,27 @@ public class FormulaQueueManager {
         this.eventList = tupleList;
     }
 
-    public synchronized List<Tuple> getTupleList(){return tupleList;}
+    public List<Tuple> getTupleList(){return tupleList;}
+
+    public List<Event> getEventList() {return eventList;}
 
     public void populateFormulaQueue()
             throws InvalidConfigurationException{
-        switch(parallelConfig.getFormulaQueueStyle()){
+        switch(parallelConfig.getSplittingStyle()){
             case NO_SPLITTING_STYLE:
-                createEmptyBitSetQueue(parallelConfig.getQueueSettingInt1());
+                createEmptyBitSetQueue(parallelConfig.getQueueSettingIntN());
                 break;
             case LINEAR_AND_BINARY_SPLITTING_STYLE:
-                createTreeStyleBitSetQueue(parallelConfig.getQueueSettingInt1(), parallelConfig.getQueueSettingInt2());
+                createTreeStyleBitSetQueue(parallelConfig.getQueueSettingIntN(), parallelConfig.getQueueSettingIntM());
                 break;
             case LINEAR_SPLITTING_STYLE:
-                createTreeStyleBitSetQueue(parallelConfig.getQueueSettingInt1(), 0);
+                createTreeStyleBitSetQueue(parallelConfig.getQueueSettingIntN(), 0);
+                break;
+            case BINARY_SPLITTING_STYLE:
+                createTreeStyleBitSetQueue(0, parallelConfig.getQueueSettingIntN());
                 break;
             default:
-                throw(new InvalidConfigurationException(parallelConfig.getFormulaQueueStyle().name() + "is not supported by populateFormulaQueue."));
+                throw(new InvalidConfigurationException(parallelConfig.getSplittingStyle().name() + "is not supported by populateFormulaQueue."));
         }
 
     }
@@ -158,7 +163,7 @@ public class FormulaQueueManager {
 
     public void orderEvents()
             throws InvalidConfigurationException {
-        switch (parallelConfig.getFormulaItemOrder()){
+        switch (parallelConfig.getSplittingObjectSelection()){
             case NO_SELECTION:
                 break;
 
@@ -174,12 +179,12 @@ public class FormulaQueueManager {
                 break;
 
             default:
-                throw(new InvalidConfigurationException("Formula Order " + parallelConfig.getFormulaItemOrder().name() + " is not supported in ParallelRefinement."));
+                throw(new InvalidConfigurationException("Formula Order " + parallelConfig.getSplittingObjectSelection().name() + " is not supported in ParallelRefinement."));
         }
     }
     public void orderTuples()
             throws InvalidConfigurationException {
-        switch (parallelConfig.getFormulaItemOrder()){
+        switch (parallelConfig.getSplittingObjectSelection()){
             case NO_SELECTION:
                 break;
 
@@ -195,14 +200,14 @@ public class FormulaQueueManager {
                 break;
 
             default:
-                throw(new InvalidConfigurationException("Formula Order " + parallelConfig.getFormulaItemOrder().name() + " is not supported in ParallelRefinement."));
+                throw(new InvalidConfigurationException("Formula Order " + parallelConfig.getSplittingObjectSelection().name() + " is not supported in ParallelRefinement."));
         }
 
     }
 
     public void filterEvents(Context analysisContext)
             throws InvalidConfigurationException {
-        switch (parallelConfig.getFormulaItemFilter()){
+        switch (parallelConfig.getSplittingObjectFilter()){
             case NO_SO_FILTER:
                 break;
 
@@ -219,13 +224,13 @@ public class FormulaQueueManager {
                 break;
 
             default:
-                throw(new InvalidConfigurationException("Formula Order " + parallelConfig.getFormulaItemFilter().name() + " is not supported in ParallelRefinement."));
+                throw(new InvalidConfigurationException("Formula Order " + parallelConfig.getSplittingObjectFilter().name() + " is not supported in ParallelRefinement."));
         }
     }
 
     public void filterTuples(Context analysisContext)
             throws InvalidConfigurationException {
-        switch (parallelConfig.getFormulaItemFilter()){
+        switch (parallelConfig.getSplittingObjectFilter()){
             case NO_SO_FILTER:
                 break;
 
@@ -242,14 +247,15 @@ public class FormulaQueueManager {
                 break;
 
             default:
-                throw(new InvalidConfigurationException("Formula Order " + parallelConfig.getFormulaItemFilter().name() + " is not supported in ParallelRefinement."));
+                throw(new InvalidConfigurationException("Formula Order " + parallelConfig.getSplittingObjectFilter().name() + " is not supported in ParallelRefinement."));
         }
     }
 
 
 
-    public BooleanFormula generateRelationFormula(SolverContext ctx, EncodingContext encodingCTX, VerificationTask mainTask, int threadID){
+    public BooleanFormula generateRelationFormula(SolverContext ctx, EncodingContext encodingCTX, VerificationTask mainTask, int threadID, ThreadStatisticManager myStatManager){
         BitSet[] myBitSets = getNextBitSet();
+        myStatManager.setBitSetPair(myBitSets);
         BooleanFormulaManager bmgr = ctx.getFormulaManager().getBooleanFormulaManager();
         BooleanFormula myFormula = bmgr.makeTrue();
         String relationName = getRelationName();
@@ -272,13 +278,14 @@ public class FormulaQueueManager {
     }
 
 
-    public List<List<Tuple>> generateRelationListPair(int threadID){
+    public List<List<Tuple>> generateRelationListPair(int threadID, ThreadStatisticManager myStatisticManager){
         List<List<Tuple>> relationListPair = new ArrayList<List<Tuple>>(2);
         relationListPair.add(new ArrayList<Tuple>());
         relationListPair.add(new ArrayList<Tuple>());
 
 
         BitSet[] myBitSets = getNextBitSet();
+        myStatisticManager.setBitSetPair(myBitSets);
         int i = 0;
         while(myBitSets[0].get(i) || myBitSets[1].get(i)){
             if (myBitSets[0].get(i)){
@@ -295,8 +302,9 @@ public class FormulaQueueManager {
         return relationListPair;
     }
 
-    public BooleanFormula generateEventFormula(SolverContext ctx, EncodingContext encodingCTX, int threadID){
+    public BooleanFormula generateEventFormula(SolverContext ctx, EncodingContext encodingCTX, int threadID, ThreadStatisticManager myStatisticManager){
         BitSet[] myBitSets = getNextBitSet();
+        myStatisticManager.setBitSetPair(myBitSets);
         BooleanFormulaManager bmgr = ctx.getFormulaManager().getBooleanFormulaManager();
         BooleanFormula myFormula = bmgr.makeTrue();
 
@@ -321,13 +329,14 @@ public class FormulaQueueManager {
         return myFormula;
     }
 
-    public List<List<Event>> generateEventListPair(int threadID){
+    public List<List<Event>> generateEventListPair(int threadID, ThreadStatisticManager myStatisticManager){
         List<List<Event>> eventListPair = new ArrayList<List<Event>>(2);
         eventListPair.add(new ArrayList<Event>());
         eventListPair.add(new ArrayList<Event>());
 
 
         BitSet[] myBitSets = getNextBitSet();
+        myStatisticManager.setBitSetPair(myBitSets);
         int i = 0;
         while(myBitSets[0].get(i) || myBitSets[1].get(i)){
             if (myBitSets[0].get(i)){
@@ -502,7 +511,7 @@ public class FormulaQueueManager {
             }
         }
         tupleList.removeAll(filteredTuples);
-        logger.info("Filtered Events: " + filteredTuples);
+        logger.info("Filtered Tuples: " + filteredTuples);
     }
 
     private void filterImpliedTuples(){
@@ -522,6 +531,8 @@ public class FormulaQueueManager {
                 || areEventsMutuallyExclusive(t1.getSecond(), t2.getFirst(), analysisContext)
                 || areEventsMutuallyExclusive(t1.getSecond(), t2.getSecond(), analysisContext);
     }
+
+
 
     private boolean isTupleImplied(Tuple impliedTuple, Tuple implyingTuple, Context analysisContext){
         return false;
