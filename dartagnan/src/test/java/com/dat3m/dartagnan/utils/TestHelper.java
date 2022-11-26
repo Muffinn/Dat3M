@@ -22,8 +22,8 @@ public class TestHelper {
         Configuration config = Configuration.builder()
                 .setOption(PHANTOM_REFERENCES, "true")
                 .build();
-        System.loadLibrary("libyices");
-        System.loadLibrary("libgmp-10");
+        //System.loadLibrary("libyices");
+        //System.loadLibrary("libgmp-10");
         return SolverContextFactory.createSolverContext(
                 config,
                 BasicLogManager.create(config),

@@ -187,7 +187,8 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
             //memoryModel.configureAll(config);       nur einmal im main
             //baselineModel.configureAll(config); // Configure after cutting! //nur einmal im main
 
-            performStaticProgramAnalyses(mainTask, analysisContext, config);
+            performStaticProgramAnalyses(mainTask, analysisContext, config); //note hiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiier
+            //performAlternativeStaticProgramAnalyses(mainTask, analysisContext, config, trueEventList, falseEventList);
             baselineContext = Context.createCopyFrom(analysisContext);
             performStaticWmmAnalyses(mainTask, analysisContext, config);
             performStaticWmmAnalyses(baselineTask, baselineContext, config);

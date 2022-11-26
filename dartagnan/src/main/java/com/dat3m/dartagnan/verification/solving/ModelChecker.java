@@ -96,10 +96,10 @@ public abstract class ModelChecker {
      * @exception InvalidConfigurationException Some user-defined option does not match the format.
      * @exception UnsatisfiedRequirementException Some static analysis is missing.
      */
-    public static void performAlternativeStaticProgramAnalyses(VerificationTask task, Context analysisContext, Configuration config) throws InvalidConfigurationException {
+    public static void performAlternativeStaticProgramAnalyses(VerificationTask task, Context analysisContext, Configuration config, List<Event> executedEvents, List<Event> notExecutedEvents) throws InvalidConfigurationException {
         Program program = task.getProgram();
         analysisContext.register(BranchEquivalence.class, BranchEquivalence.fromConfig(program, config));
-        analysisContext.register(ExecutionAnalysis.class, ExecutionAnalysis.fromConfig(program, analysisContext, config));
+        analysisContext.register(ExecutionAnalysis.class, ExecutionAnalysis.withAssumptions(program, analysisContext, config, executedEvents, notExecutedEvents));
         analysisContext.register(Dependency.class, Dependency.fromConfig(program, analysisContext, config));
         analysisContext.register(AliasAnalysis.class, AliasAnalysis.fromConfig(program, config));
         analysisContext.register(ThreadSymmetry.class, ThreadSymmetry.fromConfig(program, config));

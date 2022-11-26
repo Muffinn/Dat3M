@@ -47,13 +47,13 @@ public class LFDSTestLarge extends AbstractCTest {
             //{"safe_stack-3", ARM8, FAIL},
             //{"safe_stack-3", POWER, FAIL}, //Power ausschalten*/
             {"dglm-3", TSO, UNKNOWN},
-            {"dglm-3", ARM8, UNKNOWN},
+            //{"dglm-3", ARM8, UNKNOWN},
             //{"dglm-3", POWER, UNKNOWN},
-            {"ms-3", TSO, UNKNOWN},
-            {"ms-3", ARM8, UNKNOWN},
+            //{"ms-3", TSO, UNKNOWN},
+            //{"ms-3", ARM8, UNKNOWN},
             //{"ms-3", POWER, UNKNOWN},
-            {"treiber-3", TSO, UNKNOWN},
-            {"treiber-3", ARM8, UNKNOWN},
+            //{"treiber-3", TSO, UNKNOWN},
+            //{"treiber-3", ARM8, UNKNOWN},
             //{"treiber-3", POWER, UNKNOWN},
         });
     }
@@ -66,7 +66,7 @@ public class LFDSTestLarge extends AbstractCTest {
 	}
 
 	//@Test
-	@CSVLogger.FileName("csv/refinement")
+	//@CSVLogger.FileName("csv/refinement")
 	public void testRefinement() throws Exception {
         RefinementSolver s = RefinementSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get());
         assertEquals(expected, s.getResult());
@@ -77,10 +77,10 @@ public class LFDSTestLarge extends AbstractCTest {
     @CSVLogger.FileName("csv/parallelRefinement")
     public void testParallelRefinement0() throws Exception {
         ParallelSolverConfiguration parallelConfig = new ParallelSolverConfiguration(
-                ParallelSolverConfiguration.SplittingStyle.LINEAR_AND_BINARY_SPLITTING_STYLE,
+                ParallelSolverConfiguration.SplittingStyle.BINARY_SPLITTING_STYLE,
                 ParallelSolverConfiguration.SplittingObjectType.EVENT_SPLITTING_OBJECTS,
                 ParallelSolverConfiguration.SplittingObjectFilter.NO_SO_FILTER,
-                ParallelSolverConfiguration.SplittingObjectSelection.SEEDED_RANDOM_SELECTION,
+                ParallelSolverConfiguration.SplittingObjectSelection.CHOSEN_SELECTION,
                 ParallelSolverConfiguration.FormulaGenerator.IN_SOLVER,
                 ParallelSolverConfiguration.ClauseSharingFilter.NO_CS_FILTER,
                 ParallelSolverConfiguration.ClauseReceivingFilter.NO_CR_FILTER,
@@ -88,6 +88,8 @@ public class LFDSTestLarge extends AbstractCTest {
                 2,
                 4,
                 -861449674903621944L);
+        int[] chosenIDs = {442, 678};
+        parallelConfig.setChosenEvents(chosenIDs);
         ParallelRefinementSolver s = ParallelRefinementSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3,
                 Configuration.defaultConfiguration(), shutdownManagerProvider.get(),
                 parallelConfig);
@@ -95,14 +97,15 @@ public class LFDSTestLarge extends AbstractCTest {
         assertEquals(expected, s.getResult());
     }
 
+
     @Test
     @CSVLogger.FileName("csv/parallelRefinement")
-    public void testParallelRefinement01() throws Exception {
+    public void testParallelRefinement1() throws Exception {
         ParallelSolverConfiguration parallelConfig = new ParallelSolverConfiguration(
-                ParallelSolverConfiguration.SplittingStyle.LINEAR_AND_BINARY_SPLITTING_STYLE,
+                ParallelSolverConfiguration.SplittingStyle.BINARY_SPLITTING_STYLE,
                 ParallelSolverConfiguration.SplittingObjectType.EVENT_SPLITTING_OBJECTS,
                 ParallelSolverConfiguration.SplittingObjectFilter.NO_SO_FILTER,
-                ParallelSolverConfiguration.SplittingObjectSelection.SEEDED_RANDOM_SELECTION,
+                ParallelSolverConfiguration.SplittingObjectSelection.CHOSEN_SELECTION,
                 ParallelSolverConfiguration.FormulaGenerator.IN_SOLVER,
                 ParallelSolverConfiguration.ClauseSharingFilter.NO_CS_FILTER,
                 ParallelSolverConfiguration.ClauseReceivingFilter.NO_CR_FILTER,
@@ -110,28 +113,8 @@ public class LFDSTestLarge extends AbstractCTest {
                 2,
                 4,
                 -861449674903621944L);
-        ParallelRefinementSolver s = ParallelRefinementSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3,
-                Configuration.defaultConfiguration(), shutdownManagerProvider.get(),
-                parallelConfig);
-        //SeedLeaderboard.Dglm3TsoLeaderboard(1));
-        assertEquals(expected, s.getResult());
-    }
-
-    @Test
-    @CSVLogger.FileName("csv/parallelRefinement")
-    public void testParallelRefinement1() throws Exception {
-        ParallelSolverConfiguration parallelConfig = new ParallelSolverConfiguration(
-                ParallelSolverConfiguration.SplittingStyle.LINEAR_AND_BINARY_SPLITTING_STYLE,
-                ParallelSolverConfiguration.SplittingObjectType.EVENT_SPLITTING_OBJECTS,
-                ParallelSolverConfiguration.SplittingObjectFilter.NO_SO_FILTER,
-                ParallelSolverConfiguration.SplittingObjectSelection.SEEDED_RANDOM_SELECTION,
-                ParallelSolverConfiguration.FormulaGenerator.IN_SOLVER,
-                ParallelSolverConfiguration.ClauseSharingFilter.NO_CS_FILTER,
-                ParallelSolverConfiguration.ClauseReceivingFilter.MUTUALLY_EXCLUSIVE_CR_FILTER,
-                2,
-                2,
-                4,
-                -861449674903621944L);
+        int[] chosenIDs = {442, 678};
+        parallelConfig.setChosenEvents(chosenIDs);
         ParallelRefinementSolver s = ParallelRefinementSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3,
                 Configuration.defaultConfiguration(), shutdownManagerProvider.get(),
                 parallelConfig);
@@ -144,17 +127,19 @@ public class LFDSTestLarge extends AbstractCTest {
     @CSVLogger.FileName("csv/parallelRefinement")
     public void testParallelRefinement2() throws Exception {
         ParallelSolverConfiguration parallelConfig = new ParallelSolverConfiguration(
-                ParallelSolverConfiguration.SplittingStyle.LINEAR_AND_BINARY_SPLITTING_STYLE,
+                ParallelSolverConfiguration.SplittingStyle.BINARY_SPLITTING_STYLE,
                 ParallelSolverConfiguration.SplittingObjectType.EVENT_SPLITTING_OBJECTS,
                 ParallelSolverConfiguration.SplittingObjectFilter.NO_SO_FILTER,
-                ParallelSolverConfiguration.SplittingObjectSelection.SEEDED_RANDOM_SELECTION,
+                ParallelSolverConfiguration.SplittingObjectSelection.CHOSEN_SELECTION,
                 ParallelSolverConfiguration.FormulaGenerator.IN_SOLVER,
                 ParallelSolverConfiguration.ClauseSharingFilter.NO_CS_FILTER,
-                ParallelSolverConfiguration.ClauseReceivingFilter.IMPLIES_CR_FILTER,
+                ParallelSolverConfiguration.ClauseReceivingFilter.NO_CR_FILTER,
                 2,
                 2,
                 4,
                 -861449674903621944L);
+        int[] chosenIDs = {442, 689};
+        parallelConfig.setChosenEvents(chosenIDs);
         ParallelRefinementSolver s = ParallelRefinementSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3,
                 Configuration.defaultConfiguration(), shutdownManagerProvider.get(),
                 parallelConfig);
@@ -166,17 +151,19 @@ public class LFDSTestLarge extends AbstractCTest {
     @CSVLogger.FileName("csv/parallelRefinement")
     public void testParallelRefinement3() throws Exception {
         ParallelSolverConfiguration parallelConfig = new ParallelSolverConfiguration(
-                ParallelSolverConfiguration.SplittingStyle.LINEAR_AND_BINARY_SPLITTING_STYLE,
+                ParallelSolverConfiguration.SplittingStyle.BINARY_SPLITTING_STYLE,
                 ParallelSolverConfiguration.SplittingObjectType.EVENT_SPLITTING_OBJECTS,
                 ParallelSolverConfiguration.SplittingObjectFilter.NO_SO_FILTER,
-                ParallelSolverConfiguration.SplittingObjectSelection.SEEDED_RANDOM_SELECTION,
+                ParallelSolverConfiguration.SplittingObjectSelection.CHOSEN_SELECTION,
                 ParallelSolverConfiguration.FormulaGenerator.IN_SOLVER,
                 ParallelSolverConfiguration.ClauseSharingFilter.NO_CS_FILTER,
-                ParallelSolverConfiguration.ClauseReceivingFilter.IMP_AND_ME_CR_FILTER,
+                ParallelSolverConfiguration.ClauseReceivingFilter.NO_CR_FILTER,
                 2,
                 2,
                 4,
                 -861449674903621944L);
+        int[] chosenIDs = {689, 442};
+        parallelConfig.setChosenEvents(chosenIDs);
         ParallelRefinementSolver s = ParallelRefinementSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3,
                 Configuration.defaultConfiguration(), shutdownManagerProvider.get(),
                 parallelConfig);

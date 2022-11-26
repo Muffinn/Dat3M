@@ -85,7 +85,7 @@ public class SplittingManager {
                 createLinearAndBinarySplitting(parallelConfig.getQueueSettingIntN(), 0);
                 break;
             case BINARY_SPLITTING_STYLE:
-                createLinearAndBinarySplitting(0, parallelConfig.getQueueSettingIntN());
+                createLinearAndBinarySplitting(1, parallelConfig.getQueueSettingIntN());
                 break;
             default:
                 throw(new InvalidConfigurationException(parallelConfig.getSplittingStyle().name() + "is not supported by populateFormulaQueue."));
@@ -171,6 +171,13 @@ public class SplittingManager {
                 sortEventsByID();
                 break;
 
+            case CHOSEN_SELECTION:
+                sortEventsByID();
+                Collections.shuffle(eventList, parallelConfig.getShuffleRandom());
+                logger.info("Random Shuffle Seed: " + parallelConfig.getRandomSeed() + " .");
+                sortToFront(parallelConfig.getChosenEvents());
+                break;
+
             case RANDOM_SELECTION:
             case SEEDED_RANDOM_SELECTION:
                 sortEventsByID();
@@ -191,7 +198,6 @@ public class SplittingManager {
             case INDEX_SELECTION:
                 sortTuplesByID();
                 break;
-
             case RANDOM_SELECTION:
             case SEEDED_RANDOM_SELECTION:
                 sortTuplesByID();
@@ -368,6 +374,20 @@ public class SplittingManager {
                 return Integer.compare(e1.getCId(), e2.getCId());
             }
         });
+    }
+
+    private void sortToFront(int[] chosenIDs){
+        for (int i=0; i< chosenIDs.length; i++){
+            for(int j = 0; j < eventList.size(); j++){
+                if(eventList.get(j).getCId() == chosenIDs[i]){
+                    Event e = eventList.get(i);
+                    eventList.set(i, eventList.get(j));
+                    eventList.set(j, e);
+                    break;
+                }
+            }
+
+        }
     }
 
     private void sortTuplesByID(){

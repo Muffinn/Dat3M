@@ -45,6 +45,8 @@ public class ParallelSolverConfiguration {
     @Option(description = "The type of Filter used in the Formulas", name = "randomSeed", secure = true)
     private long randomSeed;
 
+    private int[] chosenEvents;
+
     private final Random shuffleRandom;
 
     public enum SplittingStyle {
@@ -60,7 +62,7 @@ public class ParallelSolverConfiguration {
     }
 
     public enum SplittingObjectSelection {
-        RANDOM_SELECTION, SEEDED_RANDOM_SELECTION, NO_SELECTION, INDEX_SELECTION;
+        RANDOM_SELECTION, SEEDED_RANDOM_SELECTION, NO_SELECTION, INDEX_SELECTION, CHOSEN_SELECTION;
     }
 
 
@@ -228,6 +230,56 @@ public class ParallelSolverConfiguration {
         }
     }
 
+    //----------------------------------SETTER--------------------------------
+
+    public void setChosenEvents(int[] chosenEventCIDs){
+        chosenEvents = chosenEventCIDs;
+    }
+
+    public void setSplittingStyle(SplittingStyle splittingStyle) {
+        this.splittingStyle = splittingStyle;
+    }
+
+    public void setSplittingObjectType(SplittingObjectType splittingObjectType) {
+        this.splittingObjectType = splittingObjectType;
+    }
+
+    public void setSplittingObjectFilter(SplittingObjectFilter splittingObjectFilter) {
+        this.splittingObjectFilter = splittingObjectFilter;
+    }
+
+    public void setSplittingObjectSelection(SplittingObjectSelection splittingObjectSelection) {
+        this.splittingObjectSelection = splittingObjectSelection;
+    }
+
+    public void setFormulaGenerator(FormulaGenerator formulaGenerator) {
+        this.formulaGenerator = formulaGenerator;
+    }
+
+    public void setClauseSharingFilter(ClauseSharingFilter clauseSharingFilter) {
+        this.clauseSharingFilter = clauseSharingFilter;
+    }
+
+    public void setClauseReceivingFilter(ClauseReceivingFilter clauseReceivingFilter) {
+        this.clauseReceivingFilter = clauseReceivingFilter;
+    }
+
+    public void setQueueSettingIntN(int queueSettingIntN) {
+        this.queueSettingIntN = queueSettingIntN;
+    }
+
+    public void setQueueSettingIntM(int queueSettingIntM) {
+        this.queueSettingIntM = queueSettingIntM;
+    }
+
+    public void setMaxNumberOfConcurrentThreads(int maxNumberOfConcurrentThreads) {
+        this.maxNumberOfConcurrentThreads = maxNumberOfConcurrentThreads;
+    }
+
+    public void setRandomSeed(long randomSeed) {
+        this.randomSeed = randomSeed;
+    }
+
     //----------------------------------GETTER--------------------------------
 
     public SplittingObjectType getSplittingObjectType() {
@@ -286,7 +338,5 @@ public class ParallelSolverConfiguration {
         return shuffleRandom;
     }
 
-
-
-
+    public int[] getChosenEvents() {return chosenEvents;}
 }

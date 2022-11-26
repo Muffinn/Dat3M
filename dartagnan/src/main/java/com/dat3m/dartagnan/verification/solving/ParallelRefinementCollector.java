@@ -62,15 +62,20 @@ public class ParallelRefinementCollector {
 
 
     public /*synchronized*/ void addReason(DNF<CoreLiteral> reason, ConcurrentLinkedQueue<Conjunction<CoreLiteral>> myQueue){
+        List<Queue<Conjunction<CoreLiteral>>> reasonQueueListLocal;
+        synchronized (reasonQueueList){
+            reasonQueueListLocal = List.copyOf(reasonQueueList);
+        }
         for(Conjunction<CoreLiteral> cube : reason.getCubes()){
-            //if(!isFiltered(cube, myQueue)){
-                for(Queue<Conjunction<CoreLiteral>> queue : reasonQueueList){
+            if(!isFiltered(cube, myQueue)){
+                addReasonToFullList(cube);
+                for(Queue<Conjunction<CoreLiteral>> queue : reasonQueueListLocal){
                     if (queue != myQueue){
                         queue.add(cube);
                     }
                 }
-                addReasonToFullList(cube);
-            //}
+
+            }
         }
 ;
     }
