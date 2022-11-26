@@ -161,8 +161,7 @@ public class SplittingManager {
         }
     }
 
-    public void orderEvents()
-            throws InvalidConfigurationException {
+    public void orderEvents() {
         switch (parallelConfig.getSplittingObjectSelection()){
             case NO_SELECTION:
                 break;
@@ -186,11 +185,10 @@ public class SplittingManager {
                 break;
 
             default:
-                throw(new InvalidConfigurationException("Formula Order " + parallelConfig.getSplittingObjectSelection().name() + " is not supported in ParallelRefinement."));
+                throw(new Error("Formula Order " + parallelConfig.getSplittingObjectSelection().name() + " is not supported in ParallelRefinement."));
         }
     }
-    public void orderTuples()
-            throws InvalidConfigurationException {
+    public void orderTuples() {
         switch (parallelConfig.getSplittingObjectSelection()){
             case NO_SELECTION:
                 break;
@@ -206,13 +204,12 @@ public class SplittingManager {
                 break;
 
             default:
-                throw(new InvalidConfigurationException("Formula Order " + parallelConfig.getSplittingObjectSelection().name() + " is not supported in ParallelRefinement."));
+                throw(new Error("Formula Order " + parallelConfig.getSplittingObjectSelection().name() + " is not supported in ParallelRefinement."));
         }
 
     }
 
-    public void filterEvents(Context analysisContext)
-            throws InvalidConfigurationException {
+    public void filterEvents(Context analysisContext) {
         switch (parallelConfig.getSplittingObjectFilter()){
             case NO_SO_FILTER:
                 break;
@@ -230,12 +227,11 @@ public class SplittingManager {
                 break;
 
             default:
-                throw(new InvalidConfigurationException("Formula Order " + parallelConfig.getSplittingObjectFilter().name() + " is not supported in ParallelRefinement."));
+                throw(new Error("Formula Order " + parallelConfig.getSplittingObjectFilter().name() + " is not supported in ParallelRefinement."));
         }
     }
 
-    public void filterTuples(Context analysisContext)
-            throws InvalidConfigurationException {
+    public void filterTuples(Context analysisContext) {
         switch (parallelConfig.getSplittingObjectFilter()){
             case NO_SO_FILTER:
                 break;
@@ -253,7 +249,7 @@ public class SplittingManager {
                 break;
 
             default:
-                throw(new InvalidConfigurationException("Formula Order " + parallelConfig.getSplittingObjectFilter().name() + " is not supported in ParallelRefinement."));
+                throw(new Error("Formula Order " + parallelConfig.getSplittingObjectFilter().name() + " is not supported in ParallelRefinement."));
         }
     }
 
