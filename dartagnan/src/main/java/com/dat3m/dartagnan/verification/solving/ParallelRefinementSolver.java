@@ -101,8 +101,6 @@ public class ParallelRefinementSolver extends ParallelSolver {
     protected void run() throws InterruptedException, SolverException, InvalidConfigurationException {
 
 
-        resultCollector = new ParallelResultCollector(PASS, parallelConfig);
-
         Program program = mainTask.getProgram();
         Wmm memoryModel = mainTask.getMemoryModel();
         Wmm baselineModel = createDefaultWmm();

@@ -73,7 +73,7 @@ public class LFDSTestLarge extends AbstractCTest {
 	}
 
 
-    @Test
+    //@Test
     @CSVLogger.FileName("csv/parallelRefinement")
     public void testParallelRefinement0() throws Exception {
         ParallelSolverConfiguration parallelConfig = new ParallelSolverConfiguration(
@@ -98,7 +98,7 @@ public class LFDSTestLarge extends AbstractCTest {
     }
 
 
-    @Test
+    //@Test
     @CSVLogger.FileName("csv/parallelRefinement")
     public void testParallelRefinement1() throws Exception {
         ParallelSolverConfiguration parallelConfig = new ParallelSolverConfiguration(
@@ -123,7 +123,7 @@ public class LFDSTestLarge extends AbstractCTest {
     }
 
 
-    @Test
+    //@Test
     @CSVLogger.FileName("csv/parallelRefinement")
     public void testParallelRefinement2() throws Exception {
         ParallelSolverConfiguration parallelConfig = new ParallelSolverConfiguration(
@@ -147,7 +147,7 @@ public class LFDSTestLarge extends AbstractCTest {
         assertEquals(expected, s.getResult());
     }
 
-    @Test
+    //@Test
     @CSVLogger.FileName("csv/parallelRefinement")
     public void testParallelRefinement3() throws Exception {
         ParallelSolverConfiguration parallelConfig = new ParallelSolverConfiguration(
@@ -171,18 +171,10 @@ public class LFDSTestLarge extends AbstractCTest {
         assertEquals(expected, s.getResult());
     }
 
-    //@Test
-    //@CSVLogger.FileName("csv/eventRefinement")
-    public void testParallelEventRefinement() throws Exception {
-
-        ParallelRefinementSolver s = ParallelRefinementSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3,
-                Configuration.defaultConfiguration(),shutdownManagerProvider.get(),
-                ParallelSolverConfiguration.defaultConfiguration());
-        assertEquals(expected, s.getResult());
-    }
 
 
-    //@Test
+
+    @Test
     //@CSVLogger.FileName("csv/assume")
     public void testParallelAssume() throws Exception {
 

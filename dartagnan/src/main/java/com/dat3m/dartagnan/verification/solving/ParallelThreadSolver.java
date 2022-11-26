@@ -166,7 +166,7 @@ public abstract class ParallelThreadSolver extends ModelChecker {
                         throw(new Error("Unreachable Code reached. TAUTOLOGY_FORMULAS can only be combined with IN_MANAGER. Check ParallelSolverConfiguration Constructor."));
 
                     default:
-                        throw(new Error(mainParallelConfig.getSplittingObjectType() + "is not supported in myFormulaGeneration in ParallelRefinementThreadSolver."));
+                        throw(new Error(mainParallelConfig.getSplittingObjectType() + "is not supported in generateMyFormula in ParallelThreadSolver."));
                 }
                 break;
             case IN_MANAGER:
@@ -182,12 +182,12 @@ public abstract class ParallelThreadSolver extends ModelChecker {
                         myFormula = mainSPMGR.generateEventFormula(myCTX, context, myThreadID, myStatisticManager);
                         break;
                     default:
-                        throw(new Error(mainParallelConfig.getSplittingObjectType() + "is not supported in myFormulaGeneration in ParallelRefinementThreadSolver."));
+                        throw(new Error(mainParallelConfig.getSplittingObjectType() + "is not supported in generateMyFormula in ParallelThreadSolver."));
                 }
 
                 break;
             default:
-                throw(new Error(mainParallelConfig.getFormulaGenerator().name() + " is not supported Formula Generation Method in ParallelRefinementThread Solver."));
+                throw(new Error(mainParallelConfig.getFormulaGenerator().name() + " is not supported in generateMyFormula in ParallelThreadSolver."));
 
         }
         myStatisticManager.setMyFormula(myFormula);

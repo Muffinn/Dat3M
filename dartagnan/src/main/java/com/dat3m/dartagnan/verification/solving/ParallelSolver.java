@@ -68,7 +68,7 @@ public abstract class ParallelSolver extends ModelChecker {
     protected final VerificationTask mainTask;
 
 
-    protected ParallelResultCollector resultCollector;
+    protected final ParallelResultCollector resultCollector;
     protected final SplittingManager spmgr;
     protected final ShutdownManager sdm;
     protected final SolverContextFactory.Solvers solverType;
@@ -88,6 +88,7 @@ public abstract class ParallelSolver extends ModelChecker {
         this.solverConfig = solverConfig;
         this.parallelConfig = parallelConfig;
         this.statisticManager = new MainStatisticManager(parallelConfig.getNumberOfSplits(), parallelConfig, spmgr);
+        this.resultCollector = new ParallelResultCollector(PASS, parallelConfig);
     }
 
 
@@ -105,12 +106,12 @@ public abstract class ParallelSolver extends ModelChecker {
     abstract protected void runThread(int threadID) throws InterruptedException, SolverException, InvalidConfigurationException;
 
 
-    protected void fillSplittingManager(Context analysisContext, VerificationTask baselineTask){
+    protected void fillSplittingManager(Context analysisContext, VerificationTask myTask){
         switch (parallelConfig.getSplittingObjectType()){
             case CO_RELATION_SPLITTING_OBJECTS:
                 String relationCOName = RelationNameRepository.CO;
                 spmgr.setRelationName(relationCOName);
-                Relation relationCO = baselineTask.getMemoryModel().getRelation(relationCOName);
+                Relation relationCO = myTask.getMemoryModel().getRelation(relationCOName);
                 RelationAnalysis relationAnalysisCO = context.getAnalysisContext().get(RelationAnalysis.class);
                 RelationAnalysis.Knowledge knowledgeCO = relationAnalysisCO.getKnowledge(relationCO);
                 TupleSet coEncodeSet = knowledgeCO.getMaySet();
@@ -122,7 +123,7 @@ public abstract class ParallelSolver extends ModelChecker {
             case RF_RELATION_SPLITTING_OBJECTS:
                 String relationRFName = RelationNameRepository.RF;
                 spmgr.setRelationName(relationRFName);
-                Relation relationRF = baselineTask.getMemoryModel().getRelation(relationRFName);
+                Relation relationRF = myTask.getMemoryModel().getRelation(relationRFName);
                 RelationAnalysis relationAnalysisRF = context.getAnalysisContext().get(RelationAnalysis.class);
                 RelationAnalysis.Knowledge knowledge = relationAnalysisRF.getKnowledge(relationRF);
                 TupleSet rfEncodeSet = knowledge.getMaySet();
@@ -143,7 +144,7 @@ public abstract class ParallelSolver extends ModelChecker {
                 break;
 
             default:
-                throw(new Error("Formula Type " + parallelConfig.getSplittingStyle().name() +" is not supported in ParallelRefinement."));
+                throw(new Error("Formula Type " + parallelConfig.getSplittingStyle().name() +" is not supported in fillSplittingManager."));
         }
     }
 

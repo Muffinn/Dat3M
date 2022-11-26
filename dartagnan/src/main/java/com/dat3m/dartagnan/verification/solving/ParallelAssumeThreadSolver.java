@@ -21,41 +21,31 @@ import static com.dat3m.dartagnan.utils.Result.PASS;
 import static java.util.Collections.singletonList;
 
 
-public class ParallelAssumeThreadSolver extends ModelChecker{
+public class ParallelAssumeThreadSolver extends ParallelThreadSolver{
 
 
 
 
     private static final Logger logger = LogManager.getLogger(ParallelRefinementThreadSolver.class);
 
-    private final SolverContext myCTX;
-    private final ProverEnvironment myProver;
-    private final VerificationTask mainTask;
 
-    private final ParallelResultCollector mainResultCollector;
-    private final SplittingManager mainFQMGR;
-    private final ShutdownManager sdm;
+
+
+
+
     private final Context mainAnalysisContext;
-    private final int myThreadID;
 
-    private final ThreadStatisticManager myStatisticManager;
 
-    public ParallelAssumeThreadSolver(VerificationTask task, SplittingManager mainFQMGR, ShutdownManager sdm,
-                                      ParallelResultCollector mainResultCollector, SolverContextFactory.Solvers solver, Configuration solverConfig, Context mainAnalysisContext, int threadID)
+    public ParallelAssumeThreadSolver(VerificationTask task, SplittingManager mainSPMGR, ShutdownManager sdm,
+                                      ParallelResultCollector mainResultCollector, SolverContextFactory.Solvers solver,
+                                      Configuration solverConfig, Context mainAnalysisContext, int threadID,
+                                      ParallelSolverConfiguration parallelConfig, ThreadStatisticManager myStatisticManager)
             throws InterruptedException, SolverException, InvalidConfigurationException{
-        myCTX = SolverContextFactory.createSolverContext(
-                solverConfig,
-                BasicLogManager.create(solverConfig),
-                sdm.getNotifier(),
-                solver);
-        myProver = myCTX.newProverEnvironment(SolverContext.ProverOptions.GENERATE_MODELS);
-        mainTask = task;
-        this.sdm = sdm;
-        this.mainFQMGR = mainFQMGR;
-        this.mainResultCollector = mainResultCollector;
+
+
+        super(task, mainSPMGR, sdm, mainResultCollector, solver, solverConfig, threadID, parallelConfig, myStatisticManager);
         this.mainAnalysisContext = mainAnalysisContext;
-        myThreadID = threadID;
-        myStatisticManager = new ThreadStatisticManager(myThreadID);
+
     }
 
 
@@ -64,10 +54,10 @@ public class ParallelAssumeThreadSolver extends ModelChecker{
     public void run()
             throws InterruptedException, SolverException, InvalidConfigurationException{
 
-        long startTime = System.currentTimeMillis();
-
+        myStatisticManager.reportStart();
         logger.info("Thread " + myThreadID + ": " + "ThreadSolver Run starts");
 
+        //--------------------Encoder------------------------
 
         ProgramEncoder programEncoder;
         PropertyEncoder propertyEncoder;
@@ -88,8 +78,7 @@ public class ParallelAssumeThreadSolver extends ModelChecker{
         propertyEncoding = propertyEncoder.encodeSpecification();}
 
 
-
-
+        //...........................Encoding.................................
         logger.info("Thread " + myThreadID + ": " +  "Starting encoding using " + myCTX.getVersion());
         myProver.addConstraint(programEncoder.encodeFullProgram());
         myProver.addConstraint(wmmEncoder.encodeFullMemoryModel());
@@ -100,32 +89,21 @@ public class ParallelAssumeThreadSolver extends ModelChecker{
 
         myProver.addConstraint(symmetryEncoder.encodeFullSymmetryBreaking());
 
-
         BooleanFormulaManager bmgr = myCTX.getFormulaManager().getBooleanFormulaManager();
         BooleanFormula assumptionLiteral = bmgr.makeVariable("DAT3M_spec_assumption");
         BooleanFormula assumedSpec = bmgr.implication(assumptionLiteral, propertyEncoding);
         myProver.addConstraint(assumedSpec);
 
         //------------myformula-Generation------------
-        /*QueueType queueType = mainFQMGR.getQueueType();
-        BooleanFormula myFormula  = myCTX.getFormulaManager().getBooleanFormulaManager().makeTrue();
-        switch (queueType){
-            case RELATIONS_SORT:
-            case RELATIONS_SHUFFLE:
-            case SINGLE_LITERAL:
-            case EVENTS:
-            case MUTUALLY_EXCLUSIVE_EVENTS:
-            case EMPTY:
-            case MUTUALLY_EXCLUSIVE_SORT:
-            case MUTUALLY_EXCLUSIVE_SHUFFLE:
 
-
-        }*/
-        BooleanFormula myFormula = mainFQMGR.generateRelationFormula(myCTX, context, mainTask, myThreadID, myStatisticManager);
+        fetchSplittingObjects();
+        BooleanFormula myFormula = generateMyFormula();
         myProver.addConstraint(myFormula);
-        //----------------------------------------
 
 
+
+
+        //-------------------Solver---------------------
         logger.info("Thread " + myThreadID + ": " +  "Starting first solver.check()");
         if(myProver.isUnsatWithAssumptions(singletonList(assumptionLiteral))) {
             myProver.addConstraint(propertyEncoder.encodeBoundEventExec());
@@ -160,7 +138,7 @@ public class ParallelAssumeThreadSolver extends ModelChecker{
         int positiveCount = 0;
         BooleanFormulaManager bmgr = myCTX.getFormulaManager().getBooleanFormulaManager();
         BooleanFormula myFormula = bmgr.makeTrue();
-        String relationName = mainFQMGR.getRelationName();
+        String relationName = mainSPMGR.getRelationName();
         for (int i = 0; i < queueInt1; i++){
             if(myBitSet.get(i)){
                 BooleanFormula var = mainTask.getMemoryModel().getRelation(relationName).getSMTVar(tupleList.get(i), myContext);

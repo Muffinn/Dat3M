@@ -22,34 +22,21 @@ import java.util.*;
 import static com.dat3m.dartagnan.utils.Result.*;
 
 
-public class ParallelAssumeSolver extends ModelChecker{
+public class ParallelAssumeSolver extends ParallelSolver{
 
 
 
 
     private static final Logger logger = LogManager.getLogger(AssumeSolver.class);
 
-    private final SolverContext mainCTX;
-    private final ProverEnvironment mainProver;
-    private final VerificationTask mainTask;
+    protected Context analysisContext;
 
-    private ParallelResultCollector resultCollector;
-    private final SplittingManager fqmgr;
-    private final ShutdownManager sdm;
-    private final SolverContextFactory.Solvers solver;
-    private final Configuration solverConfig;
-    private final ParallelSolverConfiguration parallelConfig;
 
-    private ParallelAssumeSolver(SolverContext ctx, ProverEnvironment prover, VerificationTask task, ShutdownManager sdm, SolverContextFactory.Solvers solver, Configuration solverConfig, ParallelSolverConfiguration parallelConfig)
-        throws InvalidConfigurationException{
-        mainCTX = ctx;
-        mainProver = prover;
-        mainTask = task;
-        this.sdm = sdm;
-        this.fqmgr = new SplittingManager(parallelConfig);
-        this.solver = solver;
-        this.solverConfig = solverConfig;
-        this.parallelConfig = parallelConfig;
+    public ParallelAssumeSolver(SolverContext ctx, ProverEnvironment prover, VerificationTask task, ShutdownManager sdm,
+                                SolverContextFactory.Solvers solver, Configuration solverConfig,
+                                ParallelSolverConfiguration parallelConfig)
+            throws InvalidConfigurationException{
+        super(ctx, prover, task, sdm, solver, solverConfig, parallelConfig);
     }
 
     public static ParallelAssumeSolver run(SolverContext mainCTX, ProverEnvironment prover, VerificationTask task, SolverContextFactory.Solvers solver, Configuration solverConfig,
@@ -61,13 +48,13 @@ public class ParallelAssumeSolver extends ModelChecker{
     }
 
 
-    private void run()
+    protected void run()
             throws InterruptedException, SolverException, InvalidConfigurationException {
 
-        resultCollector = new ParallelResultCollector(PASS, parallelConfig);
+
 
         Wmm memoryModel = mainTask.getMemoryModel();
-        Context analysisContext = Context.create();
+        analysisContext = Context.create();
         Configuration config = mainTask.getConfig();
 
         memoryModel.configureAll(config);
@@ -83,35 +70,37 @@ public class ParallelAssumeSolver extends ModelChecker{
         wmmEncoder.initializeEncoding(mainCTX);
 
 
-        int totalThreadnumber = fqmgr.getQueueSize();
 
 
-        List<Thread> threads = new ArrayList<Thread>(totalThreadnumber);
 
+
+
+
+        fillSplittingManager(analysisContext, mainTask);
 
         //------------------------QueueManager-gets-QObjects----------
-        switch (parallelConfig.getSplittingObjectType()){
+        /*switch (parallelConfig.getSplittingObjectType()){
             case CO_RELATION_SPLITTING_OBJECTS:
                 String relationCOName = RelationNameRepository.CO;
-                fqmgr.setRelationName(relationCOName);
+                spmgr.setRelationName(relationCOName);
                 Relation relationCO = mainTask.getMemoryModel().getRelation(relationCOName);
                 RelationAnalysis relationAnalysisCO = context.getAnalysisContext().get(RelationAnalysis.class);
                 RelationAnalysis.Knowledge knowledgeCO = relationAnalysisCO.getKnowledge(relationCO);
                 TupleSet coEncodeSet = knowledgeCO.getMaySet();
                 List<Tuple> tupleListCO = new ArrayList<>(coEncodeSet);
-                fqmgr.setTupleList(tupleListCO);
-                fqmgr.orderTuples();
+                spmgr.setTupleList(tupleListCO);
+                spmgr.orderTuples();
                 break;
             case RF_RELATION_SPLITTING_OBJECTS:
                 String relationRFName = RelationNameRepository.RF;
-                fqmgr.setRelationName(relationRFName);
+                spmgr.setRelationName(relationRFName);
                 Relation relationRF = mainTask.getMemoryModel().getRelation(relationRFName);
                 RelationAnalysis relationAnalysisRF = context.getAnalysisContext().get(RelationAnalysis.class);
                 RelationAnalysis.Knowledge knowledge = relationAnalysisRF.getKnowledge(relationRF);
                 TupleSet rfEncodeSet = knowledge.getMaySet();
                 List<Tuple> tupleListRF = new ArrayList<>(rfEncodeSet);
-                fqmgr.setTupleList(tupleListRF);
-                fqmgr.orderTuples();
+                spmgr.setTupleList(tupleListRF);
+                spmgr.orderTuples();
                 break;
 
 
@@ -123,14 +112,17 @@ public class ParallelAssumeSolver extends ModelChecker{
                 List<Event> eventList = branchEquivalence.getAllEquivalenceClasses().stream().filter(c -> c!=initialClass).map(c -> c.getRepresentative()).collect(Collectors.toList());
                 fqmgr.setEventList(eventList);
                 fqmgr.orderEvents();
-                break;*/
+                break;*//*
             default:
-                throw(new InvalidConfigurationException("Formula Type " + parallelConfig.getSplittingStyle().name() +" is not supported in ParallelRefinement."));
-        }
+                throw(new InvalidConfigurationException("Formula Type " + parallelConfig.getSplittingObjectType().name() +" is not supported in ParallelAssumeSolver  run."));
+        }*/
 
         logger.info("Starting Thread creation.");
 
-        for(int i = 0; i < totalThreadnumber; i++) {
+        startThreads();
+        resultWaitLoop();
+        /*List<Thread> threads = new ArrayList<Thread>(totalThreadNumber);
+        for(int i = 0; i < totalThreadNumber; i++) {
             synchronized (resultCollector){
                 while(!resultCollector.canAddThread()){
                     if(resultCollector.getAggregatedResult().equals(FAIL)) {
@@ -150,7 +142,7 @@ public class ParallelAssumeSolver extends ModelChecker{
             try{
                 threads.add(new Thread(()-> {
                     try {
-                        runThread(analysisContext, threadID);
+                        runThread(threadID);
                     } catch (InterruptedException e){
                         logger.warn("Timeout elapsed. The SMT solver was stopped");
                         System.out.println("TIMEOUT");
@@ -164,8 +156,9 @@ public class ParallelAssumeSolver extends ModelChecker{
                 logger.error(e.getMessage());
                 System.out.println("ERROR");
             }
-        }
+        }*/
 
+        /*
         int loopcount = 0;
         while (true){
 
@@ -178,31 +171,34 @@ public class ParallelAssumeSolver extends ModelChecker{
                     /*for(Thread t:threads){
                         logger.info("tried to interrupt");
                         t.interrupt();
-                    }*/
+                    }*//*
                     logger.info("Parallel calculations ended. Result: FAIL");
                     resultCollector.printTimes();
                     res = resultCollector.getAggregatedResult();
                     return;
                 } else {
 
-                    if (resultCollector.getNumberOfFinishedThreads() == totalThreadnumber) {//
+                    if (resultCollector.getNumberOfFinishedThreads() == totalThreadNumber) {//
                         logger.info("Parallel calculations ended. Result: UNKNOWN/PASS");
                         resultCollector.printTimes();
                         res = resultCollector.getAggregatedResult();
                         return;
                     }
-                    logger.info("Mainloop: numberOfResults: " + resultCollector.getNumberOfFinishedThreads() + " totalThreadNumber: " + totalThreadnumber);
+                    logger.info("Mainloop: numberOfResults: " + resultCollector.getNumberOfFinishedThreads() + " totalThreadNumber: " + totalThreadNumber);
 
                     //TODO : check if threads are still alive
                     resultCollector.wait();
                 }
             }
-        }
+        }*/
     }
 
-    private void runThread(Context analysisContext, int threadID)
+
+    protected void runThread(int threadID)
             throws InterruptedException, SolverException, InvalidConfigurationException{
-        ParallelAssumeThreadSolver myThreadSolver = new ParallelAssumeThreadSolver(mainTask, fqmgr, sdm, resultCollector, solver, solverConfig, analysisContext, threadID);
+        ParallelAssumeThreadSolver myThreadSolver = new ParallelAssumeThreadSolver(mainTask, spmgr, sdm, resultCollector,
+                solverType, solverConfig, analysisContext, threadID, parallelConfig,
+                statisticManager.getThreadStatisticManager(threadID));
         myThreadSolver.run();
     }
 
