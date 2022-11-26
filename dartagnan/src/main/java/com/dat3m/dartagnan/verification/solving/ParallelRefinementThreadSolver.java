@@ -85,7 +85,6 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
     private final List<Tuple> trueTupleList;
     private final List<Tuple> falseTupleList;
 
-    private long totalTime= 0;
 
     private final ConcurrentLinkedQueue<Conjunction<CoreLiteral>> myReasonsQueue;
     private final ThreadStatisticManager myStatisticManager;
