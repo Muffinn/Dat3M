@@ -62,32 +62,20 @@ import static com.dat3m.dartagnan.wmm.relation.RelationNameRepository.*;
           provided by the theory solver.
  */
 @Options
-public class ParallelRefinementThreadSolver extends ModelChecker {
+public class ParallelRefinementThreadSolver extends ParallelThreadSolver {
 
     private final static Logger logger = LogManager.getLogger(ParallelRefinementThreadSolver.class);
 
-    private final SolverContext myCTX;
-    private final ProverEnvironment myProver;
-    private final VerificationTask mainTask;
+
     private final Set<Relation> mainCutRelations;
-
-
-    private final ParallelResultCollector mainResultCollector;
-    private final SplittingManager mainSPMGR;
     private final ParallelRefinementCollector mainRefinementCollector;
-    private final ParallelSolverConfiguration mainParallelConfig;
-    private final int myThreadID;
+
+
     private final int refreshInterval;
 
 
-    private final List<Event> trueEventList;
-    private final List<Event> falseEventList;
-    private final List<Tuple> trueTupleList;
-    private final List<Tuple> falseTupleList;
-
-
     private final ConcurrentLinkedQueue<Conjunction<CoreLiteral>> myReasonsQueue;
-    private final ThreadStatisticManager myStatisticManager;
+
 
     // =========================== Configurables ===========================
 
@@ -104,28 +92,19 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
                                           SolverContextFactory.Solvers solver, Configuration solverConfig, int threadID,
                                           ParallelSolverConfiguration parallelConfig, Set<Relation> cutRelations, ThreadStatisticManager myStatisticManager)
             throws InvalidConfigurationException{
-        myCTX = SolverContextFactory.createSolverContext(
-                solverConfig,
-                BasicLogManager.create(solverConfig),
-                sdm.getNotifier(),
-                solver);
-        myProver = myCTX.newProverEnvironment(SolverContext.ProverOptions.GENERATE_MODELS);
-        this.mainTask = mainTask;
-        this.mainSPMGR = mainSPMGR;
+
+        super(mainTask, mainSPMGR, sdm, mainResultCollector, solver, solverConfig, threadID, parallelConfig, myStatisticManager);
+
+
         this.mainRefinementCollector = mainRefinementCollector;
-        this.mainResultCollector = mainResultCollector;
-        this.mainParallelConfig = parallelConfig;
-        myThreadID = threadID;
+
         this.refreshInterval = 5;
         this.myReasonsQueue = new ConcurrentLinkedQueue<Conjunction<CoreLiteral>>();
-        this.myStatisticManager = myStatisticManager;
 
         this.mainCutRelations = cutRelations;
 
-        this.trueEventList = new ArrayList<Event>();
-        this.falseEventList = new ArrayList<Event>();
-        this.trueTupleList = new ArrayList<Tuple>();
-        this.falseTupleList = new ArrayList<Tuple>();
+
+
 
     }
 
@@ -139,26 +118,7 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
         mainRefinementCollector.registerReasonQueue(myReasonsQueue);
 
         //------------------------
-        if (mainParallelConfig.getFormulaGenerator() == ParallelSolverConfiguration.FormulaGenerator.IN_SOLVER) {
-            switch (mainParallelConfig.getSplittingObjectType()){
-                case CO_RELATION_SPLITTING_OBJECTS:
-                case RF_RELATION_SPLITTING_OBJECTS:
-                    List<List<Tuple>> tupleListList =  mainSPMGR.generateRelationListPair(myThreadID, myStatisticManager);
-                    trueTupleList.addAll(tupleListList.get(0));
-                    falseTupleList.addAll(tupleListList.get(1));
-
-                    break;
-                case NO_SPLITTING_OBJECTS:
-                    break;
-                case EVENT_SPLITTING_OBJECTS:
-                    List<List<Event>> eventListList =  mainSPMGR.generateEventListPair(myThreadID, myStatisticManager);
-                    trueEventList.addAll(eventListList.get(0));
-                    falseEventList.addAll(eventListList.get(1));
-                    break;
-                default:
-                    throw(new InvalidConfigurationException("FormulaItemType " + mainParallelConfig.getSplittingObjectType().name() + " is not a supported by ParallelRefinementThreadSolver"));
-            }
-        }
+        fetchSplittingObjects();
 
         //----------------------------------------
 
@@ -215,48 +175,7 @@ public class ParallelRefinementThreadSolver extends ModelChecker {
         CAATSolver.Status status = INCONSISTENT;
 
 
-        //------------myformula-Generation------------
-        BooleanFormula myFormula;
-        switch(mainParallelConfig.getFormulaGenerator()){
-            case IN_SOLVER:
-                switch (mainParallelConfig.getSplittingObjectType()){
-                    case RF_RELATION_SPLITTING_OBJECTS:
-                    case CO_RELATION_SPLITTING_OBJECTS:
-                        myFormula = generateTupleFormula();
-                        break;
-                    case EVENT_SPLITTING_OBJECTS:
-                        myFormula = generateEventFormula();
-                        break;
-                    case NO_SPLITTING_OBJECTS:
-                        throw(new InvalidConfigurationException("Unreachable Code reached. TAUTOLOGY_FORMULAS can only be combined with IN_MANAGER. Check ParallelSolverConfiguration Constructor."));
-
-                    default:
-                        throw(new InvalidConfigurationException(mainParallelConfig.getSplittingObjectType() + "is not supported in myFormulaGeneration in ParallelRefinementThreadSolver."));
-                }
-                break;
-            case IN_MANAGER:
-                switch (mainParallelConfig.getSplittingObjectType()){
-                    case RF_RELATION_SPLITTING_OBJECTS:
-                    case CO_RELATION_SPLITTING_OBJECTS:
-                        myFormula = mainSPMGR.generateRelationFormula(myCTX, context, mainTask, myThreadID, myStatisticManager);
-                        break;
-                    case NO_SPLITTING_OBJECTS:
-                        myFormula = mainSPMGR.generateEmptyFormula(myCTX, myThreadID);
-                        break;
-                    case EVENT_SPLITTING_OBJECTS:
-                        myFormula = mainSPMGR.generateEventFormula(myCTX, context, myThreadID, myStatisticManager);
-                        break;
-                    default:
-                        throw(new InvalidConfigurationException(mainParallelConfig.getSplittingObjectType() + "is not supported in myFormulaGeneration in ParallelRefinementThreadSolver."));
-                }
-
-                break;
-            default:
-                throw(new InvalidConfigurationException(mainParallelConfig.getFormulaGenerator().name() + " is not supported Formula Generation Method in ParallelRefinementThread Solver."));
-
-        }
-
-        myStatisticManager.setMyFormula(myFormula);
+        BooleanFormula myFormula = generateMyFormula();
         myProver.addConstraint(myFormula);
         //----------------------------------------
 
