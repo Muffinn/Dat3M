@@ -23,18 +23,9 @@ import static java.util.Collections.singletonList;
 
 public class ParallelAssumeThreadSolver extends ParallelThreadSolver{
 
-
-
-
     private static final Logger logger = LogManager.getLogger(ParallelRefinementThreadSolver.class);
 
-
-
-
-
-
     private final Context mainAnalysisContext;
-
 
     public ParallelAssumeThreadSolver(VerificationTask task, SplittingManager mainSPMGR, ShutdownManager sdm,
                                       ParallelResultCollector mainResultCollector, SolverContextFactory.Solvers solver,
@@ -42,13 +33,10 @@ public class ParallelAssumeThreadSolver extends ParallelThreadSolver{
                                       ParallelSolverConfiguration parallelConfig, ThreadStatisticManager myStatisticManager)
             throws InterruptedException, SolverException, InvalidConfigurationException{
 
-
         super(task, mainSPMGR, sdm, mainResultCollector, solver, solverConfig, threadID, parallelConfig, myStatisticManager);
         this.mainAnalysisContext = mainAnalysisContext;
 
     }
-
-
 
 
     public void run()
@@ -101,8 +89,6 @@ public class ParallelAssumeThreadSolver extends ParallelThreadSolver{
         myProver.addConstraint(myFormula);
 
 
-
-
         //-------------------Solver---------------------
         logger.info("Thread " + myThreadID + ": " +  "Starting first solver.check()");
         if(myProver.isUnsatWithAssumptions(singletonList(assumptionLiteral))) {
@@ -128,74 +114,5 @@ public class ParallelAssumeThreadSolver extends ParallelThreadSolver{
         }
         myStatisticManager.reportResult(res);
         logger.info("Thread " + myThreadID + ": " +  "Verification finished with result " + res);
-
-
     }
-
-
-
-    private BooleanFormula generateRelationFormula(int queueInt1, int queueInt2, BitSet myBitSet, List<Tuple> tupleList, EncodingContext myContext){
-        int positiveCount = 0;
-        BooleanFormulaManager bmgr = myCTX.getFormulaManager().getBooleanFormulaManager();
-        BooleanFormula myFormula = bmgr.makeTrue();
-        String relationName = mainSPMGR.getRelationName();
-        for (int i = 0; i < queueInt1; i++){
-            if(myBitSet.get(i)){
-                BooleanFormula var = mainTask.getMemoryModel().getRelation(relationName).getSMTVar(tupleList.get(i), myContext);
-                myFormula = bmgr.and(var, myFormula);
-                positiveCount++;
-                if(positiveCount == queueInt2){
-                    logger.info("Thread " + myThreadID + ": " +  "generated Formula: " + myFormula);
-                    return myFormula;
-                }
-            }else{
-                BooleanFormula notVar = bmgr.not(mainTask.getMemoryModel().getRelation(relationName).getSMTVar(tupleList.get(i), myContext));
-                myFormula = bmgr.and(notVar, myFormula);
-            }
-        }
-        logger.info("Thread " + myThreadID + ": " +  "generated Formula: " + myFormula);
-        return myFormula;
-
-    }
-
-
-    /*static private void sort(List<Tuple> row, VerificationTask task) {
-        /*if (!breakBySyncDegree) {
-            // ===== Natural order =====
-            row.sort(Comparator.naturalOrder());
-            return;
-        }*//*
-
-        // ====== Sync-degree based order ======
-
-        // Setup of data structures
-        Set<Event> inEvents = new HashSet<>();
-        Set<Event> outEvents = new HashSet<>();
-        for (Tuple t : row) {
-            inEvents.add(t.getFirst());
-            outEvents.add(t.getSecond());
-        }
-
-        Map<Event, Integer> combInDegree = new HashMap<>(inEvents.size());
-        Map<Event, Integer> combOutDegree = new HashMap<>(outEvents.size());
-
-        List<Axiom> axioms = task.getMemoryModel().getAxioms();
-        for (Event e : inEvents) {
-            int syncDeg = axioms.stream()
-                    .mapToInt(ax -> ax.getRelation().getMinTupleSet().getBySecond(e).size() + 1).max().orElse(0);
-            combInDegree.put(e, syncDeg);
-        }
-        for (Event e : outEvents) {
-            int syncDec = axioms.stream()
-                    .mapToInt(ax -> ax.getRelation().getMinTupleSet().getByFirst(e).size() + 1).max().orElse(0);
-            combOutDegree.put(e, syncDec);
-        }
-
-        // Sort by sync degrees
-        row.sort(Comparator.<Tuple>comparingInt(t -> combInDegree.get(t.getFirst()) * combOutDegree.get(t.getSecond())).reversed());
-    }*/
-
-
-
-
 }
