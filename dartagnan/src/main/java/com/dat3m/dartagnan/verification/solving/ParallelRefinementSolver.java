@@ -136,144 +136,15 @@ public class ParallelRefinementSolver extends ParallelSolver {
         symmEncoder.initializeEncoding(mainCTX);
         baselineEncoder.initializeEncoding(mainCTX);
 
-        //BooleanFormulaManager bmgr = mainCTX.getFormulaManager().getBooleanFormulaManager();
-        //BooleanFormula globalRefinement = bmgr.makeTrue();
 
-        //WMMSolver solver = WMMSolver.withContext(context, cutRelations, mainTask, analysisContext);
-        //Refiner refiner = new Refiner(analysisContext);
-        //CAATSolver.Status status = INCONSISTENT;
-
-        //BooleanFormula propertyEncoding = propertyEncoder.encodeSpecification();
-
-
-
-
-
-
-
-        /*
-
-        //------------------------QueueManager-gets-QObjects----------
-        switch (parallelConfig.getSplittingObjectType()){
-            case CO_RELATION_SPLITTING_OBJECTS:
-                String relationCOName = RelationNameRepository.CO;
-                spmgr.setRelationName(relationCOName);
-                Relation relationCO = baselineTask.getMemoryModel().getRelation(relationCOName);
-                RelationAnalysis relationAnalysisCO = context.getAnalysisContext().get(RelationAnalysis.class);
-                RelationAnalysis.Knowledge knowledgeCO = relationAnalysisCO.getKnowledge(relationCO);
-                TupleSet coEncodeSet = knowledgeCO.getMaySet();
-                List<Tuple> tupleListCO = new ArrayList<>(coEncodeSet);
-                spmgr.setTupleList(tupleListCO);
-                spmgr.orderTuples();
-                spmgr.filterTuples(analysisContext);
-                break;
-            case RF_RELATION_SPLITTING_OBJECTS:
-                String relationRFName = RelationNameRepository.RF;
-                spmgr.setRelationName(relationRFName);
-                Relation relationRF = baselineTask.getMemoryModel().getRelation(relationRFName);
-                RelationAnalysis relationAnalysisRF = context.getAnalysisContext().get(RelationAnalysis.class);
-                RelationAnalysis.Knowledge knowledge = relationAnalysisRF.getKnowledge(relationRF);
-                TupleSet rfEncodeSet = knowledge.getMaySet();
-                List<Tuple> tupleListRF = new ArrayList<>(rfEncodeSet);
-                spmgr.setTupleList(tupleListRF);
-                spmgr.orderTuples();
-                spmgr.filterTuples(analysisContext);
-                break;
-            case EVENT_SPLITTING_OBJECTS:
-                BranchEquivalence branchEquivalence = context.getAnalysisContext().get(BranchEquivalence.class);
-                Set<Event> initialClass = branchEquivalence.getInitialClass();
-                List<Event> eventList = branchEquivalence.getAllEquivalenceClasses().stream().filter(c -> c!=initialClass).map(c -> c.getRepresentative()).collect(Collectors.toList());
-                spmgr.setEventList(eventList);
-                spmgr.orderEvents();
-                spmgr.filterEvents(analysisContext);
-                break;
-            case NO_SPLITTING_OBJECTS:
-                break;
-
-            default:
-                throw(new InvalidConfigurationException("Formula Type " + parallelConfig.getSplittingStyle().name() +" is not supported in ParallelRefinement."));
-        }
-        */
         fillSplittingManager(analysisContext, baselineTask);
 
+
         startThreads();
+
+
         resultWaitLoop();
-        /*
-        int totalThreadnumber = parallelConfig.getNumberOfSplits(); //spmgr.getQueueSize(); note: here error source?
-        List<Thread> threads = new ArrayList<Thread>(totalThreadnumber);
 
-
-        logger.info("Starting Thread creation.");
-
-        for(int i = 0; i < totalThreadnumber; i++) {
-            Thread.sleep(1);
-            synchronized (resultCollector){
-                while(!resultCollector.canAddThread()){
-                    if(resultCollector.getAggregatedResult().equals(FAIL)) {
-                        // TODO: kill all threads
-                        sdm.requestShutdown("Done");
-                        logger.info("Parallel calculations ended. Result: FAIL");
-                        statisticManager.printThreadStatistics();
-                        res = resultCollector.getAggregatedResult();
-                        return;
-                    }
-                    resultCollector.wait();
-                }
-            }
-            int threadID = i;
-
-            // Case 1: true
-            try{
-                threads.add(new Thread(()-> {
-                    try {
-                        runThread(threadID);
-                    } catch (InterruptedException e){
-                        logger.warn("Timeout elapsed. The SMT solver was stopped");
-                        System.out.println("TIMEOUT");
-                    } catch (Exception e) {
-                        logger.error("Thread " + threadID + ": " + e.getMessage());
-                        System.out.println("ERROR");
-                    }
-                }));
-                threads.get(threads.size()-1).start();
-            } catch (Exception e) {
-                logger.error(e.getMessage());
-                System.out.println("ERROR");
-            }
-        }*/
-
-        /*int loopcount = 0;
-        while (true){
-
-            logger.info("Mainloop: loop " + loopcount);
-            loopcount++;
-            synchronized(resultCollector){
-                if(resultCollector.getAggregatedResult().equals(FAIL)){
-                    // TODO: kill all threads
-                    sdm.requestShutdown("Done");
-                    /*for(Thread t:threads){
-                        logger.info("tried to interrupt");
-                        t.interrupt();
-                    }*//*
-                    logger.info("Parallel calculations ended. Result: FAIL");
-                    statisticManager.printThreadStatistics();
-                    res = resultCollector.getAggregatedResult();
-                    return;
-                } else {
-
-                    if (resultCollector.getNumberOfFinishedThreads() == totalThreadnumber) {//
-                        logger.info("Parallel calculations ended. Result: UNKNOWN/PASS");
-                        statisticManager.printThreadStatistics();
-                        res = resultCollector.getAggregatedResult();
-                        return;
-                    }
-                    logger.info("Mainloop: numberOfResults: " + resultCollector.getNumberOfFinishedThreads() + " totalThreadNumber: " + totalThreadnumber);
-
-                    //TODO : check if threads are still alive
-                    resultCollector.wait();
-                }
-            }
-        }*/
 
     }
 
