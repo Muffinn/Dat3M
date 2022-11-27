@@ -58,8 +58,8 @@ public class LFDSTestLarge extends AbstractCTest {
         });
     }
 
-	//@Test
-	//@CSVLogger.FileName("csv/assume")
+	@Test
+	@CSVLogger.FileName("csv/assume")
 	public void testAssume() throws Exception {
         AssumeSolver s = AssumeSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get());
         assertEquals(expected, s.getResult());
@@ -81,6 +81,7 @@ public class LFDSTestLarge extends AbstractCTest {
                 ParallelSolverConfiguration.SplittingObjectType.EVENT_SPLITTING_OBJECTS,
                 ParallelSolverConfiguration.SplittingObjectFilter.NO_SO_FILTER,
                 ParallelSolverConfiguration.SplittingObjectSelection.CHOSEN_SELECTION,
+                ParallelSolverConfiguration.StaticProgramAnalysis.BASELINE_SPA,
                 ParallelSolverConfiguration.FormulaGenerator.IN_SOLVER,
                 ParallelSolverConfiguration.ClauseSharingFilter.NO_CS_FILTER,
                 ParallelSolverConfiguration.ClauseReceivingFilter.NO_CR_FILTER,
@@ -106,6 +107,7 @@ public class LFDSTestLarge extends AbstractCTest {
                 ParallelSolverConfiguration.SplittingObjectType.EVENT_SPLITTING_OBJECTS,
                 ParallelSolverConfiguration.SplittingObjectFilter.NO_SO_FILTER,
                 ParallelSolverConfiguration.SplittingObjectSelection.CHOSEN_SELECTION,
+                ParallelSolverConfiguration.StaticProgramAnalysis.BASELINE_SPA,
                 ParallelSolverConfiguration.FormulaGenerator.IN_SOLVER,
                 ParallelSolverConfiguration.ClauseSharingFilter.NO_CS_FILTER,
                 ParallelSolverConfiguration.ClauseReceivingFilter.NO_CR_FILTER,
@@ -131,6 +133,7 @@ public class LFDSTestLarge extends AbstractCTest {
                 ParallelSolverConfiguration.SplittingObjectType.EVENT_SPLITTING_OBJECTS,
                 ParallelSolverConfiguration.SplittingObjectFilter.NO_SO_FILTER,
                 ParallelSolverConfiguration.SplittingObjectSelection.CHOSEN_SELECTION,
+                ParallelSolverConfiguration.StaticProgramAnalysis.BASELINE_SPA,
                 ParallelSolverConfiguration.FormulaGenerator.IN_SOLVER,
                 ParallelSolverConfiguration.ClauseSharingFilter.NO_CS_FILTER,
                 ParallelSolverConfiguration.ClauseReceivingFilter.NO_CR_FILTER,
@@ -155,6 +158,7 @@ public class LFDSTestLarge extends AbstractCTest {
                 ParallelSolverConfiguration.SplittingObjectType.EVENT_SPLITTING_OBJECTS,
                 ParallelSolverConfiguration.SplittingObjectFilter.NO_SO_FILTER,
                 ParallelSolverConfiguration.SplittingObjectSelection.CHOSEN_SELECTION,
+                ParallelSolverConfiguration.StaticProgramAnalysis.BASELINE_SPA,
                 ParallelSolverConfiguration.FormulaGenerator.IN_SOLVER,
                 ParallelSolverConfiguration.ClauseSharingFilter.NO_CS_FILTER,
                 ParallelSolverConfiguration.ClauseReceivingFilter.NO_CR_FILTER,
@@ -180,7 +184,7 @@ public class LFDSTestLarge extends AbstractCTest {
 
         ParallelAssumeSolver s = ParallelAssumeSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3,
         Configuration.defaultConfiguration(), shutdownManagerProvider.get(),
-                ParallelSolverConfiguration.defaultConfiguration());
+                ParallelSolverConfigurationFactory.basicEventConfig());
         assertEquals(expected, s.getResult());
     }
 

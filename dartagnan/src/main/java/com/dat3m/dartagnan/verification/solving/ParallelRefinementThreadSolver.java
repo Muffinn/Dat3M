@@ -146,7 +146,17 @@ public class ParallelRefinementThreadSolver extends ParallelThreadSolver {
             //memoryModel.configureAll(config);       nur einmal im main
             //baselineModel.configureAll(config); // Configure after cutting! //nur einmal im main
 
-            performStaticProgramAnalyses(mainTask, analysisContext, config); //note hiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiier
+            switch (mainParallelConfig.getStaticProgramAnalysis()){
+                case BASELINE_SPA:
+                    performStaticProgramAnalyses(mainTask, analysisContext, config);
+                    break;
+                case SPA_WITH_ASSUMPTIONS:
+                    performAlternativeStaticProgramAnalyses(mainTask, analysisContext, config, trueEventList, falseEventList);
+                    break;
+                default:
+                    throw(new Error(mainParallelConfig.getStaticProgramAnalysis().name() + "is not a supported static analysis of ParallelRefinementThreadSolver."));
+            }
+            performStaticProgramAnalyses(mainTask, analysisContext, config);
             //performAlternativeStaticProgramAnalyses(mainTask, analysisContext, config, trueEventList, falseEventList);
             baselineContext = Context.createCopyFrom(analysisContext);
             performStaticWmmAnalyses(mainTask, analysisContext, config);
