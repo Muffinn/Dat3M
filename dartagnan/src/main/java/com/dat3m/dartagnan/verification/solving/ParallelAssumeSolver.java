@@ -48,7 +48,7 @@ public class ParallelAssumeSolver extends ParallelSolver{
     protected void run()
             throws InterruptedException, SolverException, InvalidConfigurationException {
 
-
+        statisticManager.reportStart();
 
         Wmm memoryModel = mainTask.getMemoryModel();
         analysisContext = Context.create();

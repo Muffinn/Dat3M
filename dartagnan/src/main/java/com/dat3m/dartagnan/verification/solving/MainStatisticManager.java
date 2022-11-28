@@ -1,6 +1,7 @@
 package com.dat3m.dartagnan.verification.solving;
 
 import com.dat3m.dartagnan.program.event.core.Event;
+import com.dat3m.dartagnan.utils.Result;
 import com.dat3m.dartagnan.wmm.utils.Tuple;
 
 import java.util.BitSet;
@@ -9,15 +10,19 @@ import java.util.List;
 public class MainStatisticManager {
     private final ThreadStatisticManager[] threadStatisticManagers;
     private final ParallelSolverConfiguration parallelConfig;
-    private final SplittingManager fqmgr;
+    private final SplittingManager spmgr;
+    private Result myResult = Result.UNKNOWN;
+
+    private double startTime = -1;
+    private double endTime = -1;
 
     public MainStatisticManager(int numberOfSplits, ParallelSolverConfiguration parallelConfig, SplittingManager splittingManager){
         threadStatisticManagers = new ThreadStatisticManager[numberOfSplits];
         this.parallelConfig = parallelConfig;
-        this.fqmgr = splittingManager;
+        this.spmgr = splittingManager;
 
         for (int i = 0; i < numberOfSplits; i++){
-            threadStatisticManagers[i] = new ThreadStatisticManager(i);
+            threadStatisticManagers[i] = new ThreadStatisticManager(i, parallelConfig);
         }
     }
 
@@ -63,7 +68,7 @@ public class MainStatisticManager {
 
         switch (parallelConfig.getSplittingObjectType()){
             case EVENT_SPLITTING_OBJECTS:
-                List<Event> eventList = fqmgr.getEventList();
+                List<Event> eventList = spmgr.getEventList();
                 System.out.println("Event Scores:");
                 for (int i = 0; i < formulaLength; i++){
                     System.out.println("Event " + eventList.get(i).getCId() + " :");
@@ -74,7 +79,7 @@ public class MainStatisticManager {
                 break;
 
             case CO_RELATION_SPLITTING_OBJECTS:
-                List<Tuple> coTupleList = fqmgr.getTupleList();
+                List<Tuple> coTupleList = spmgr.getTupleList();
                 System.out.println("Event Scores:");
                 for (int i = 0; i < formulaLength; i++){
                     System.out.println("RF-Tuple " + coTupleList.get(i).getFirst().getCId() + ", " + coTupleList.get(i).getSecond().getCId() + " :");
@@ -84,7 +89,7 @@ public class MainStatisticManager {
                 }
                 break;
             case RF_RELATION_SPLITTING_OBJECTS:
-                List<Tuple> rfTupleList = fqmgr.getTupleList();
+                List<Tuple> rfTupleList = spmgr.getTupleList();
                 System.out.println("Event Scores:");
                 for (int i = 0; i < formulaLength; i++){
                     System.out.println("CO-Tuple " + rfTupleList.get(i).getFirst().getCId() + ", " + rfTupleList.get(i).getSecond().getCId() + " :");
@@ -99,5 +104,15 @@ public class MainStatisticManager {
                 throw(new Error("Unreachable code reached in MainStatisticManager::calculateLiteralStatistics()"));
         }
 
+    }
+
+    public void reportStart(){
+        this.startTime = System.currentTimeMillis();
+    }
+
+
+    public void reportResult(Result myResult){
+        endTime = System.currentTimeMillis();
+        this.myResult = myResult;
     }
 }

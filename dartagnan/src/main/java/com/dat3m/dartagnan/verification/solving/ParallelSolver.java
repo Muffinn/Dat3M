@@ -206,15 +206,19 @@ public abstract class ParallelSolver extends ModelChecker {
                     // TODO: kill all threads
                     sdm.requestShutdown("Done");
                     logger.info("Parallel calculations ended. Result: FAIL");
-                    statisticManager.printThreadStatistics();
                     res = resultCollector.getAggregatedResult();
+                    statisticManager.reportResult(res);
+                    statisticManager.printThreadStatistics();
+
                     return;
                 } else {
 
                     if (resultCollector.getNumberOfFinishedThreads() == totalThreadNumber) {//
                         logger.info("Parallel calculations ended. Result: UNKNOWN/PASS");
-                        statisticManager.printThreadStatistics();
                         res = resultCollector.getAggregatedResult();
+                        statisticManager.reportResult(res);
+                        statisticManager.printThreadStatistics();
+
                         return;
                     }
                     logger.info("MainLoop: numberOfResults: " + resultCollector.getNumberOfFinishedThreads() + " totalThreadNumber: " + totalThreadNumber);

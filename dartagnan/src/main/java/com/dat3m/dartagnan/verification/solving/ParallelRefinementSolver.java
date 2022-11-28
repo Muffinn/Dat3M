@@ -100,6 +100,7 @@ public class ParallelRefinementSolver extends ParallelSolver {
 
     protected void run() throws InterruptedException, SolverException, InvalidConfigurationException {
 
+        statisticManager.reportStart();
 
         Program program = mainTask.getProgram();
         Wmm memoryModel = mainTask.getMemoryModel();
