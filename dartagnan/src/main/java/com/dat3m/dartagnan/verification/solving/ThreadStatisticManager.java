@@ -42,13 +42,7 @@ public class ThreadStatisticManager {
 
     //..............Print...................
     public void print(){
-        System.out.println("Thread " + threadID + " report:");
-
-        if(endTime != (-1)){
-            System.out.println("TotalTime: " + (int)(calculateTotalTime()/1000) + " seconds");
-        }
-        System.out.println("Formula: " + myFormula);
-        System.out.println("Result " + myResult.name());
+        printGeneralInfo();
 
         System.out.println("");
         printSolverStats();
@@ -65,6 +59,16 @@ public class ThreadStatisticManager {
         }
 
         System.out.println("\n");
+    }
+
+    public void printGeneralInfo(){
+        System.out.println("Thread " + threadID + " report:");
+
+        if(endTime != (-1)){
+            System.out.println("TotalTime: " + (int)(calculateTotalTime()/1000) + " seconds");
+        }
+        System.out.println("Formula: " + myFormula);
+        System.out.println("Result " + myResult.name());
     }
 
     public void printSolverStats(){
