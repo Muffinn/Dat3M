@@ -115,10 +115,10 @@ public class ParallelRefinementThreadSolver extends ParallelThreadSolver {
         myStatisticManager.reportStart();
         logger.info("Thread " + myThreadID + ": " + "ThreadSolver Run starts");
 
-        mainRefinementCollector.registerReasonQueue(myReasonsQueue);
 
         //------------------------
         fetchSplittingObjects();
+        mainRefinementCollector.registerReasonQueue(myReasonsQueue);
 
         //----------------------------------------
 
@@ -126,7 +126,6 @@ public class ParallelRefinementThreadSolver extends ParallelThreadSolver {
         VerificationTask baselineTask;
         Wmm memoryModel;
         Context analysisContext;
-        //Set<Relation> cutRelations;
 
 
         synchronized (mainTask){
@@ -214,7 +213,7 @@ public class ParallelRefinementThreadSolver extends ParallelThreadSolver {
 
 
 
-
+        myStatisticManager.reportPreprocessingTime();
 
         //  ------ Just for statistics ------
         List<WMMSolver.Statistics> statList = new ArrayList<>();
@@ -255,10 +254,10 @@ public class ParallelRefinementThreadSolver extends ParallelThreadSolver {
             }
 
             if((iterationCount % refreshInterval) - 1 == 0){
-                //long newtime = System.currentTimeMillis();
+                long newTime = System.currentTimeMillis();
                 addForeignReasons(refiner, analysisContext.get(ExecutionAnalysis.class));
-                //long tookTime = System.currentTimeMillis() - newtime;
-                //logger.info("Thread " + myThreadID + ": " + tookTime + "tooktime");
+                long tookRTime = System.currentTimeMillis() - newTime;
+                myStatisticManager.addClauseReceivingTime(tookRTime);
             }
 
             WMMSolver.Statistics stats = solverResult.getStatistics();
@@ -269,8 +268,11 @@ public class ParallelRefinementThreadSolver extends ParallelThreadSolver {
             if (status == INCONSISTENT) {
                 long refineTime = System.currentTimeMillis();
                 DNF<CoreLiteral> reasons = solverResult.getCoreReasons();
-                mainRefinementCollector.addReason(reasons, myReasonsQueue);
 
+                long newTime = System.currentTimeMillis();
+                mainRefinementCollector.addReason(reasons, myReasonsQueue);
+                long tookSTime = System.currentTimeMillis() - newTime;
+                myStatisticManager.addClauseSharingTime(tookSTime);
 
                 BooleanFormula refinement = refiner.refine(reasons, context);
                 myProver.addConstraint(refinement);

@@ -58,8 +58,8 @@ public class LFDSTestLarge extends AbstractCTest {
         });
     }
 
-	@Test
-	@CSVLogger.FileName("csv/assume")
+	//@Test
+	//@CSVLogger.FileName("csv/assume")
 	public void testAssume() throws Exception {
         AssumeSolver s = AssumeSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get());
         assertEquals(expected, s.getResult());
@@ -99,24 +99,13 @@ public class LFDSTestLarge extends AbstractCTest {
     }
 
 
-    //@Test
+    @Test
     @CSVLogger.FileName("csv/parallelRefinement")
     public void testParallelRefinement1() throws Exception {
-        ParallelSolverConfiguration parallelConfig = new ParallelSolverConfiguration(
-                ParallelSolverConfiguration.SplittingStyle.BINARY_SPLITTING_STYLE,
-                ParallelSolverConfiguration.SplittingObjectType.EVENT_SPLITTING_OBJECTS,
-                ParallelSolverConfiguration.SplittingObjectFilter.NO_SO_FILTER,
-                ParallelSolverConfiguration.SplittingObjectSelection.CHOSEN_SELECTION,
-                ParallelSolverConfiguration.StaticProgramAnalysis.BASELINE_SPA,
-                ParallelSolverConfiguration.FormulaGenerator.IN_SOLVER,
-                ParallelSolverConfiguration.ClauseSharingFilter.NO_CS_FILTER,
-                ParallelSolverConfiguration.ClauseReceivingFilter.NO_CR_FILTER,
-                2,
-                2,
-                4,
-                -861449674903621944L);
+
         int[] chosenIDs = {442, 678};
-        parallelConfig.setChosenEvents(chosenIDs);
+        ParallelSolverConfiguration parallelConfig = ParallelSolverConfigurationFactory.chosenEventConfig(chosenIDs);
+
         ParallelRefinementSolver s = ParallelRefinementSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3,
                 Configuration.defaultConfiguration(), shutdownManagerProvider.get(),
                 parallelConfig);
@@ -178,7 +167,7 @@ public class LFDSTestLarge extends AbstractCTest {
 
 
 
-    @Test
+    //@Test
     //@CSVLogger.FileName("csv/assume")
     public void testParallelAssume() throws Exception {
 

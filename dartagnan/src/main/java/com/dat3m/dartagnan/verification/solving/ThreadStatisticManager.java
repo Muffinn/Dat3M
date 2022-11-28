@@ -47,13 +47,9 @@ public class ThreadStatisticManager {
         System.out.println("");
         printSolverStats();
 
-        if(parallelConfig.getClauseSharingFilter() != ParallelSolverConfiguration.ClauseSharingFilter.NO_CS_FILTER
-                || parallelConfig.getClauseSharingFilter() != ParallelSolverConfiguration.ClauseSharingFilter.NO_CLAUSE_SHARING) {
+        if(parallelConfig.getClauseSharingFilter() != ParallelSolverConfiguration.ClauseSharingFilter.NO_CLAUSE_SHARING) {
             System.out.println("");
             printClauseSharingStats();
-        }
-
-        if(parallelConfig.getClauseReceivingFilter() != ParallelSolverConfiguration.ClauseReceivingFilter.NO_CR_FILTER) {
             System.out.println("");
             printClauseReceivingStats();
         }
@@ -74,7 +70,7 @@ public class ThreadStatisticManager {
     public void printSolverStats(){
         System.out.println("Thread " + threadID + " Solver Times:");
         System.out.println("Preprocessing Time: " + toSeconds(preProcessingTime) + " seconds");
-        System.out.println("TotalSolverTime: " + toSeconds(totalSolverTime));
+        System.out.println("TotalSolverTime: " + toSeconds(totalSolverTime) + " seconds");
         if(totalCAATSolverTime > 0){System.out.println("TotalCAATSolverTime: " + toSeconds(totalCAATSolverTime) + " seconds");}
         if(totalWMMSolverTime > 0){System.out.println("TotalWMMSolverTime: " + toSeconds(totalWMMSolverTime) + " seconds");}
 
@@ -82,16 +78,20 @@ public class ThreadStatisticManager {
 
     public void printClauseSharingStats(){
         System.out.println("Thread " + threadID + " ClauseSharingStats: ");
-        System.out.println("ClauseSharingTime: " + toSeconds(clauseSharingTime) + " seconds");
-        System.out.println("ClauseSharingFilterTime: " + toSeconds(clauseSharingFilterTime) + " seconds");
-        System.out.println("Shared Clauses Filtered: " + clauseSharingFilterCount);
+        System.out.println("ClauseSharingTime: " + clauseSharingTime + " ms");
+        if(parallelConfig.getClauseSharingFilter() != ParallelSolverConfiguration.ClauseSharingFilter.NO_CS_FILTER){
+            System.out.println("ClauseSharingFilterTime: " + clauseSharingFilterTime + " ms");
+            System.out.println("Shared Clauses Filtered: " + clauseSharingFilterCount);
+        }
     }
 
     public void printClauseReceivingStats(){
         System.out.println("Thread " + threadID + " ClauseReceivingStats: ");
-        System.out.println("ClauseReceivingTime: " + toSeconds(clauseReceivingTime) + " seconds");
-        System.out.println("ClauseReceivingFilterTime: " + toSeconds(clauseReceivingFilterTime) + " seconds");
-        System.out.println("Received Clauses Filtered: " + clauseReceivingFilterCount);
+        System.out.println("ClauseReceivingTime: " + clauseReceivingTime + " ms");
+        if(parallelConfig.getClauseReceivingFilter() != ParallelSolverConfiguration.ClauseReceivingFilter.NO_CR_FILTER) {
+            System.out.println("ClauseReceivingFilterTime: " + clauseReceivingFilterTime + " ms");
+            System.out.println("Received Clauses Filtered: " + clauseReceivingFilterCount);
+        }
     }
 
     public int toSeconds(double timeInMillis){
