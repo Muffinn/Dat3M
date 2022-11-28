@@ -149,14 +149,16 @@ public class ThreadStatisticManager {
         clauseReceivingFilterTime += csf_time;
     }
 
+
+
     //................Count..Methods............
 
-    public void clauseSharingCountInc(){
-        clauseSharingFilterCount++;
+    public void clauseSharingCountInc(int filteredCount){
+        clauseSharingFilterCount += filteredCount;
     }
 
-    public void clauseReceivingCountInc(){
-        clauseReceivingFilterCount++;
+    public void clauseReceivingCountInc(int filteredCount){
+        clauseReceivingFilterCount += filteredCount;
     }
 
 
