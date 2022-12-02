@@ -225,6 +225,7 @@ public class ParallelRefinementThreadSolver extends ParallelThreadSolver {
         long totalRefiningTime = 0;
         //  ---------------------------------
 
+        //...................................................Refinement..LOOP.....................................
         logger.info("Refinement procedure started.");
         while (!myProver.isUnsat()) {
         	if(iterationCount == 0 && logger.isDebugEnabled()) {
@@ -239,6 +240,7 @@ public class ParallelRefinementThreadSolver extends ParallelThreadSolver {
 
             curTime = System.currentTimeMillis();
             totalNativeSolvingTime += (curTime - lastTime);
+            myStatisticManager.addCAATSolverTime(curTime - lastTime);
 
             logger.debug("Solver iteration: \n" +
                             " ===== Iteration: {} =====\n" +
@@ -252,8 +254,10 @@ public class ParallelRefinementThreadSolver extends ParallelThreadSolver {
                 logger.error("Thread " + myThreadID + ": " + e);
                 throw e;
             }
+            myStatisticManager.addWMMSolverTime(System.currentTimeMillis() - curTime);
 
-            if((iterationCount % refreshInterval) - 1 == 0){
+
+            if((iterationCount % refreshInterval) - 1 == 0 || refreshInterval == 1){
                 long newTime = System.currentTimeMillis();
                 addForeignReasons(refiner, analysisContext.get(ExecutionAnalysis.class));
                 long tookRTime = System.currentTimeMillis() - newTime;
@@ -270,7 +274,7 @@ public class ParallelRefinementThreadSolver extends ParallelThreadSolver {
                 DNF<CoreLiteral> reasons = solverResult.getCoreReasons();
 
                 long newTime = System.currentTimeMillis();
-                mainRefinementCollector.addReason(reasons, myReasonsQueue);
+                mainRefinementCollector.addReason(reasons, myReasonsQueue, myStatisticManager);
                 long tookSTime = System.currentTimeMillis() - newTime;
                 myStatisticManager.addClauseSharingTime(tookSTime);
 
@@ -566,8 +570,7 @@ public class ParallelRefinementThreadSolver extends ParallelThreadSolver {
 
     private void addForeignReasons(Refiner refiner, ExecutionAnalysis exec)
             throws InterruptedException{
-        long timenow = System.currentTimeMillis();
-
+        long timeBefore = System.currentTimeMillis();
         if(myReasonsQueue.isEmpty()){return;}
         Conjunction<CoreLiteral> reason = myReasonsQueue.poll();
         while (reason != null) {
@@ -595,6 +598,8 @@ public class ParallelRefinementThreadSolver extends ParallelThreadSolver {
             }
             reason = myReasonsQueue.poll();
         }
+        long timeAfter = System.currentTimeMillis();
+        myStatisticManager.addClauseReceivingFilterTime(timeAfter - timeBefore);
         //logger.info("Thread " + myThreadID + ": " + total + " reasons");
         //logger.info("Thread " + myThreadID + ": " + added + " added reasons");
         //logger.info("Thread " + myThreadID + ": " + (total - added) + " filtered reasons");
@@ -697,7 +702,7 @@ public class ParallelRefinementThreadSolver extends ParallelThreadSolver {
 
 
 
-    private BooleanFormula generateTupleFormula(){
+    /*private BooleanFormula generateTupleFormula(){
         BooleanFormulaManager bmgr = myCTX.getFormulaManager().getBooleanFormulaManager();
         BooleanFormula myFormula = bmgr.makeTrue();
         for (Tuple trueTuple : trueTupleList){
@@ -712,9 +717,9 @@ public class ParallelRefinementThreadSolver extends ParallelThreadSolver {
         return myFormula;
 
 
-    }
+    }*/
 
-    private BooleanFormula generateEventFormula(){
+    /*private BooleanFormula generateEventFormula(){
         BooleanFormulaManager bmgr = myCTX.getFormulaManager().getBooleanFormulaManager();
         BooleanFormula myFormula = bmgr.makeTrue();
         for (Event trueEvent : trueEventList){
@@ -729,7 +734,7 @@ public class ParallelRefinementThreadSolver extends ParallelThreadSolver {
         return myFormula;
 
 
-    }
+    }*/
 }
 
  /*   //------------myformula-Generation------------

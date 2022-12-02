@@ -7,7 +7,7 @@ public class ParallelSolverConfigurationFactory {
     public static ParallelSolverConfiguration basicEventConfig(){
         return new ParallelSolverConfiguration(
                 ParallelSolverConfiguration.SplittingStyle.BINARY_SPLITTING_STYLE,
-                ParallelSolverConfiguration.SplittingObjectType.EVENT_SPLITTING_OBJECTS,
+                ParallelSolverConfiguration.SplittingObjectType.BRANCH_EVENTS_SPLITTING_OBJECTS,
                 ParallelSolverConfiguration.SplittingObjectFilter.NO_SO_FILTER,
                 ParallelSolverConfiguration.SplittingObjectSelection.RANDOM_SELECTION,
                 ParallelSolverConfiguration.StaticProgramAnalysis.BASELINE_SPA,
@@ -23,7 +23,7 @@ public class ParallelSolverConfigurationFactory {
     public static ParallelSolverConfiguration seededEventConfig(long chosenSeed) {
         return  (new ParallelSolverConfiguration(
                 ParallelSolverConfiguration.SplittingStyle.BINARY_SPLITTING_STYLE,
-                ParallelSolverConfiguration.SplittingObjectType.EVENT_SPLITTING_OBJECTS,
+                ParallelSolverConfiguration.SplittingObjectType.BRANCH_EVENTS_SPLITTING_OBJECTS,
                 ParallelSolverConfiguration.SplittingObjectFilter.NO_SO_FILTER,
                 ParallelSolverConfiguration.SplittingObjectSelection.SEEDED_RANDOM_SELECTION,
                 ParallelSolverConfiguration.StaticProgramAnalysis.BASELINE_SPA,
@@ -40,7 +40,7 @@ public class ParallelSolverConfigurationFactory {
     public static ParallelSolverConfiguration chosenEventConfig(int[] chosenEvents){
         ParallelSolverConfiguration parallelConfig =  new ParallelSolverConfiguration(
                 ParallelSolverConfiguration.SplittingStyle.BINARY_SPLITTING_STYLE,
-                ParallelSolverConfiguration.SplittingObjectType.EVENT_SPLITTING_OBJECTS,
+                ParallelSolverConfiguration.SplittingObjectType.BRANCH_EVENTS_SPLITTING_OBJECTS,
                 ParallelSolverConfiguration.SplittingObjectFilter.NO_SO_FILTER,
                 ParallelSolverConfiguration.SplittingObjectSelection.CHOSEN_SELECTION,
                 ParallelSolverConfiguration.StaticProgramAnalysis.BASELINE_SPA,

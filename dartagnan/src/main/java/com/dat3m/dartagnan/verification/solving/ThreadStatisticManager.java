@@ -45,7 +45,7 @@ public class ThreadStatisticManager {
         printGeneralInfo();
 
         System.out.println("");
-        printSolverStats();
+        printSolverTime();
 
         if(parallelConfig.getClauseSharingFilter() != ParallelSolverConfiguration.ClauseSharingFilter.NO_CLAUSE_SHARING) {
             System.out.println("");
@@ -60,15 +60,15 @@ public class ThreadStatisticManager {
     public void printGeneralInfo(){
         System.out.println("Thread " + threadID + " report:");
 
-        if(endTime != (-1)){
-            System.out.println("TotalTime: " + (int)(calculateTotalTime()/1000) + " seconds");
-        }
+
+        System.out.println("TotalTime: " + (int)(calculateTotalTime()/1000) + " seconds");
         System.out.println("Formula: " + myFormula);
         System.out.println("Result " + myResult.name());
     }
 
-    public void printSolverStats(){
+    public void printSolverTime(){
         System.out.println("Thread " + threadID + " Solver Times:");
+        System.out.println("TotalTime: " + (int)(calculateTotalTime()/1000) + " seconds");
         System.out.println("Preprocessing Time: " + toSeconds(preProcessingTime) + " seconds");
         System.out.println("TotalSolverTime: " + toSeconds(totalSolverTime) + " seconds");
         if(totalCAATSolverTime > 0){System.out.println("TotalCAATSolverTime: " + toSeconds(totalCAATSolverTime) + " seconds");}

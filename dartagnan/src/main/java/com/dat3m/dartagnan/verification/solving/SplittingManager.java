@@ -1,11 +1,17 @@
 package com.dat3m.dartagnan.verification.solving;
 
 import com.dat3m.dartagnan.encoding.EncodingContext;
+import com.dat3m.dartagnan.program.Program;
+import com.dat3m.dartagnan.program.Thread;
 import com.dat3m.dartagnan.program.analysis.ExecutionAnalysis;
 import com.dat3m.dartagnan.program.event.core.Event;
 import com.dat3m.dartagnan.verification.Context;
 import com.dat3m.dartagnan.verification.VerificationTask;
+import com.dat3m.dartagnan.wmm.Relation;
+import com.dat3m.dartagnan.wmm.analysis.RelationAnalysis;
+import com.dat3m.dartagnan.wmm.relation.RelationNameRepository;
 import com.dat3m.dartagnan.wmm.utils.Tuple;
+import com.dat3m.dartagnan.wmm.utils.TupleSet;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.sosy_lab.common.configuration.InvalidConfigurationException;
@@ -161,7 +167,7 @@ public class SplittingManager {
         }
     }
 
-    public void orderEvents() {
+    public void orderEvents(Context analysisContext, VerificationTask myTask) {
         switch (parallelConfig.getSplittingObjectSelection()){
             case NO_SELECTION:
                 break;
@@ -182,6 +188,9 @@ public class SplittingManager {
                 sortEventsByID();
                 Collections.shuffle(eventList, parallelConfig.getShuffleRandom());
                 logger.info("Random Shuffle Seed: " + parallelConfig.getRandomSeed() + " .");
+                break;
+            case SCORE_SELECTION:
+                sortEventsByScore(analysisContext, myTask);
                 break;
 
             default:
@@ -363,6 +372,7 @@ public class SplittingManager {
     }
 
 
+    //...........................Event..Order.......................
     private void sortEventsByID(){
         eventList.sort(new Comparator<Event>() {
             @Override
@@ -395,6 +405,115 @@ public class SplittingManager {
         });
     }
 
+    private void sortEventsByScore(Context analysisContext, VerificationTask myTask){
+
+        List<Thread> threads =  eventList.get(0).getThread().getProgram().getThreads();
+        float[] scores = new float[parallelConfig.getFormulaLength()];
+        int[] cids = new int [parallelConfig.getFormulaLength()];
+        Arrays.fill(cids, -1);
+        for (Thread thread:threads){
+            float tHighScore = 0;
+            int cid = -1;
+            for(Event e : thread.getEvents()){
+                float eScore = betterEventScore(e, analysisContext, myTask);
+                if( eScore > tHighScore){
+                    tHighScore = eScore;
+                    cid = e.getCId();
+                }
+            }
+            for(int i = 0; i < scores.length; i++){
+                if(tHighScore > scores[i]){
+                    float tempScore  = scores[i];
+                    int tempCID = cids[i];
+                    scores[i]  = tHighScore;
+                    cids[i] = cid;
+                    tHighScore = tempScore;
+                    cid = tempCID;
+                }
+            }
+        }
+        sortToFront(cids);
+
+    }
+
+    private static int badEventScore(Event eventToScore, Context analysisContext){
+        int meCount = 0;
+        int impCount = 0;
+        Thread thread = eventToScore.getThread();
+        for (Event otherEvent: thread.getEvents()){
+            if(areEventsMutuallyExclusive(otherEvent, eventToScore, analysisContext)){
+                meCount++;
+            }
+            if(isEventImplied(eventToScore, otherEvent, analysisContext)){
+                impCount++;
+            }
+        }
+        int score = Math.min(meCount, impCount);
+        return score;
+    }
+
+    private static int betterEventScore(Event targetEvent, Context analysisContext, VerificationTask myTask){
+        int trueScore = 0;
+        int falseScore = 0;
+        Thread thread = targetEvent.getThread();
+        for (Event otherEvent: thread.getEvents()){
+            if(areEventsMutuallyExclusive(otherEvent, targetEvent, analysisContext)){
+
+                trueScore += simpleEventScore(targetEvent, analysisContext, myTask);
+            }
+            if(isEventImplied(otherEvent, targetEvent, analysisContext)){
+                falseScore += simpleEventScore(targetEvent, analysisContext, myTask);
+            }
+        }
+
+
+
+        int score = Math.min(trueScore, falseScore);
+        return score;
+    }
+
+    private static int simpleEventScore(Event targetEvent, Context analysisContext, VerificationTask myTask){
+        int score = 0;
+        String relationRFName = RelationNameRepository.RF;
+        Relation relationRF = myTask.getMemoryModel().getRelation(relationRFName);
+        RelationAnalysis relationAnalysis = analysisContext.get(RelationAnalysis.class);
+        RelationAnalysis.Knowledge knowledge = relationAnalysis.getKnowledge(relationRF);
+        TupleSet rfEncodeSet = knowledge.getMaySet();
+        List<Tuple> tupleListRF = new ArrayList<>(rfEncodeSet);
+        for(Tuple t:tupleListRF){
+            if (t.getFirst()==targetEvent || t.getSecond()==targetEvent){
+                score++;
+            }
+        }
+
+        String relationCOName = RelationNameRepository.CO;
+        Relation relationCO = myTask.getMemoryModel().getRelation(relationCOName);
+        RelationAnalysis.Knowledge knowledgeCO = relationAnalysis.getKnowledge(relationCO);
+        TupleSet coEncodeSet = knowledgeCO.getMaySet();
+        List<Tuple> tupleListCO = new ArrayList<>(coEncodeSet);
+        for(Tuple t:tupleListCO){
+            if (t.getFirst()==targetEvent || t.getSecond()==targetEvent){
+                score++;
+            }
+        }
+
+        /*String relationFRName = RelationNameRepository.FR;
+        Relation relationFR = myTask.getMemoryModel().getRelation(relationFRName);
+        RelationAnalysis.Knowledge knowledgeFR = relationAnalysis.getKnowledge(relationFR);
+        TupleSet frEncodeSet = knowledgeFR.getMaySet();
+        List<Tuple> tupleListFR = new ArrayList<>(frEncodeSet);
+        for(Tuple t:tupleListFR){
+            if (t.getFirst()==targetEvent || t.getSecond()==targetEvent){
+                score++;
+            }
+        }*/
+        //System.out.println("Event " + targetEvent.getCId() + ": " + score);
+
+        return score;
+    }
+
+
+    //......................Filter..for..Splitting..Events.............
     private void filterMEEvents(Context analysisContext){
         int formulaLength = parallelConfig.getFormulaLength();
         int foundItems = 1;
@@ -424,8 +543,6 @@ public class SplittingManager {
         eventList.removeAll(filteredEvents);
         logger.info("Filtered Events: " + filteredEvents);
     }
-
-
 
     private void filterImpliedEvents(Context analysisContext){
         int formulaLength = parallelConfig.getFormulaLength();
@@ -488,18 +605,19 @@ public class SplittingManager {
 
     }
 
-    private boolean areEventsMutuallyExclusive(Event e1, Event e2, Context analysisContext){
+    private static boolean areEventsMutuallyExclusive(Event e1, Event e2, Context analysisContext){
             ExecutionAnalysis exec = analysisContext.get(ExecutionAnalysis.class);
 
             return exec.areMutuallyExclusive(e1, e2);
     }
 
-    private boolean isEventImplied(Event start, Event implied, Context analysisContext){
+    private static boolean isEventImplied(Event start, Event implied, Context analysisContext){
         ExecutionAnalysis exec = analysisContext.get(ExecutionAnalysis.class);
 
         return exec.isImplied(start, implied);
     }
 
+    //......................Filter..for..Splitting..Tuples..........
     private void filterMETuples(Context analysisContext){
         int formulaLength = parallelConfig.getFormulaLength();
         int foundItems = 1;
@@ -539,7 +657,6 @@ public class SplittingManager {
         int formulaLength = parallelConfig.getFormulaLength();
         logger.info("Filter does nothing");
     }
-
 
     private boolean areTuplesMutuallyExclusive(Tuple t1, Tuple t2, Context analysisContext){
         return areEventsMutuallyExclusive(t1.getFirst(), t2.getFirst(), analysisContext)

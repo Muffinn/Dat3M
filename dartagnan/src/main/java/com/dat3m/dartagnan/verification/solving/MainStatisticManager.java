@@ -67,7 +67,8 @@ public class MainStatisticManager {
         }
 
         switch (parallelConfig.getSplittingObjectType()){
-            case EVENT_SPLITTING_OBJECTS:
+            case BRANCH_EVENTS_SPLITTING_OBJECTS:
+            case ALL_EVENTS_SPLITTING_OBJECTS:
                 List<Event> eventList = spmgr.getEventList();
                 System.out.println("Event Scores:");
                 for (int i = 0; i < formulaLength; i++){
@@ -82,7 +83,7 @@ public class MainStatisticManager {
                 List<Tuple> coTupleList = spmgr.getTupleList();
                 System.out.println("Event Scores:");
                 for (int i = 0; i < formulaLength; i++){
-                    System.out.println("RF-Tuple " + coTupleList.get(i).getFirst().getCId() + ", " + coTupleList.get(i).getSecond().getCId() + " :");
+                    System.out.println("CO-Tuple " + coTupleList.get(i).getFirst().getCId() + ", " + coTupleList.get(i).getSecond().getCId() + " :");
                     System.out.println("TotalTrueTime: " + (int)(totalTrueTime[i]/1000) + " seconds");
                     System.out.println("TotalFalseTime: " + (int)(totalFalseTime[i]/1000) + " seconds");
                     System.out.println("Score: " + literalScore[i] + "\n");
@@ -92,11 +93,13 @@ public class MainStatisticManager {
                 List<Tuple> rfTupleList = spmgr.getTupleList();
                 System.out.println("Event Scores:");
                 for (int i = 0; i < formulaLength; i++){
-                    System.out.println("CO-Tuple " + rfTupleList.get(i).getFirst().getCId() + ", " + rfTupleList.get(i).getSecond().getCId() + " :");
+                    System.out.println("RF-Tuple " + rfTupleList.get(i).getFirst().getCId() + ", " + rfTupleList.get(i).getSecond().getCId() + " :");
                     System.out.println("TotalTrueTime: " + (int)(totalTrueTime[i]/1000) + " seconds");
                     System.out.println("TotalFalseTime: " + (int)(totalFalseTime[i]/1000) + " seconds");
                     System.out.println("Score: " + literalScore[i] + "\n");
                 }
+                break;
+            case NO_SPLITTING_OBJECTS:
                 break;
 
 

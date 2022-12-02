@@ -1,32 +1,8 @@
 package com.dat3m.dartagnan.verification.solving;
 
 import com.dat3m.dartagnan.configuration.Baseline;
-import com.dat3m.dartagnan.encoding.*;
-import com.dat3m.dartagnan.program.Program;
-import com.dat3m.dartagnan.program.analysis.ExecutionAnalysis;
-import com.dat3m.dartagnan.program.event.Tag;
 import com.dat3m.dartagnan.program.event.core.Event;
-import com.dat3m.dartagnan.program.filter.FilterAbstract;
-import com.dat3m.dartagnan.program.filter.FilterBasic;
-import com.dat3m.dartagnan.solver.caat.CAATSolver;
-import com.dat3m.dartagnan.solver.caat4wmm.Refiner;
-import com.dat3m.dartagnan.solver.caat4wmm.WMMSolver;
-import com.dat3m.dartagnan.solver.caat4wmm.coreReasoning.CoreLiteral;
-import com.dat3m.dartagnan.solver.caat4wmm.coreReasoning.ExecLiteral;
-import com.dat3m.dartagnan.solver.caat4wmm.coreReasoning.RelLiteral;
-import com.dat3m.dartagnan.utils.logic.Conjunction;
-import com.dat3m.dartagnan.utils.logic.DNF;
-import com.dat3m.dartagnan.verification.Context;
 import com.dat3m.dartagnan.verification.VerificationTask;
-import com.dat3m.dartagnan.verification.model.EventData;
-import com.dat3m.dartagnan.verification.model.ExecutionModel;
-import com.dat3m.dartagnan.wmm.Definition;
-import com.dat3m.dartagnan.wmm.Relation;
-import com.dat3m.dartagnan.wmm.Wmm;
-import com.dat3m.dartagnan.wmm.axiom.Acyclic;
-import com.dat3m.dartagnan.wmm.axiom.Empty;
-import com.dat3m.dartagnan.wmm.axiom.ForceEncodeAxiom;
-import com.dat3m.dartagnan.wmm.definition.*;
 import com.dat3m.dartagnan.wmm.utils.Tuple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -40,16 +16,8 @@ import org.sosy_lab.java_smt.SolverContextFactory;
 import org.sosy_lab.java_smt.api.*;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.function.BiPredicate;
 
-import static com.dat3m.dartagnan.GlobalSettings.REFINEMENT_GENERATE_GRAPHVIZ_DEBUG_FILES;
 import static com.dat3m.dartagnan.configuration.OptionNames.BASELINE;
-import static com.dat3m.dartagnan.solver.caat.CAATSolver.Status.INCONCLUSIVE;
-import static com.dat3m.dartagnan.solver.caat.CAATSolver.Status.INCONSISTENT;
-import static com.dat3m.dartagnan.utils.Result.*;
-import static com.dat3m.dartagnan.utils.visualization.ExecutionGraphVisualizer.generateGraphvizFile;
-import static com.dat3m.dartagnan.wmm.relation.RelationNameRepository.*;
 
 /*
     Refinement is a custom solving procedure that starts from a weak memory model (possibly the empty model)
@@ -139,7 +107,8 @@ public abstract class ParallelThreadSolver extends ModelChecker {
                     break;
                 case NO_SPLITTING_OBJECTS:
                     break;
-                case EVENT_SPLITTING_OBJECTS:
+                case BRANCH_EVENTS_SPLITTING_OBJECTS:
+                case ALL_EVENTS_SPLITTING_OBJECTS:
                     List<List<Event>> eventListList =  mainSPMGR.generateEventListPair(myThreadID, myStatisticManager);
                     trueEventList.addAll(eventListList.get(0));
                     falseEventList.addAll(eventListList.get(1));
@@ -159,7 +128,8 @@ public abstract class ParallelThreadSolver extends ModelChecker {
                     case CO_RELATION_SPLITTING_OBJECTS:
                         myFormula = generateTupleFormula();
                         break;
-                    case EVENT_SPLITTING_OBJECTS:
+                    case BRANCH_EVENTS_SPLITTING_OBJECTS:
+                    case ALL_EVENTS_SPLITTING_OBJECTS:
                         myFormula = generateEventFormula();
                         break;
                     case NO_SPLITTING_OBJECTS:
@@ -178,7 +148,8 @@ public abstract class ParallelThreadSolver extends ModelChecker {
                     case NO_SPLITTING_OBJECTS:
                         myFormula = mainSPMGR.generateEmptyFormula(myCTX, myThreadID);
                         break;
-                    case EVENT_SPLITTING_OBJECTS:
+                    case BRANCH_EVENTS_SPLITTING_OBJECTS:
+                    case ALL_EVENTS_SPLITTING_OBJECTS:
                         myFormula = mainSPMGR.generateEventFormula(myCTX, context, myThreadID, myStatisticManager);
                         break;
                     default:

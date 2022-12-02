@@ -61,11 +61,13 @@ public class ParallelRefinementCollector {
 
 
 
-    public /*synchronized*/ void addReason(DNF<CoreLiteral> reason, ConcurrentLinkedQueue<Conjunction<CoreLiteral>> myQueue){
+    public /*synchronized*/ void addReason(DNF<CoreLiteral> reason, ConcurrentLinkedQueue<Conjunction<CoreLiteral>> myQueue,
+                                           ThreadStatisticManager statManager){
         List<Queue<Conjunction<CoreLiteral>>> reasonQueueListLocal;
         synchronized (reasonQueueList){
             reasonQueueListLocal = List.copyOf(reasonQueueList);
         }
+        long timeBefore = System.currentTimeMillis();
         for(Conjunction<CoreLiteral> cube : reason.getCubes()){
             if(!isFiltered(cube, myQueue)){
                 addReasonToFullList(cube);
@@ -77,7 +79,9 @@ public class ParallelRefinementCollector {
 
             }
         }
-;
+        long timeAfter = System.currentTimeMillis();
+        statManager.addClauseSharingFilterTime(timeAfter - timeBefore);
+
     }
 
     private Boolean isFiltered(Conjunction<CoreLiteral> cube, ConcurrentLinkedQueue<Conjunction<CoreLiteral>> myQueue){

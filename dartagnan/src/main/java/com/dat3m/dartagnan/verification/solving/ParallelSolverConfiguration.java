@@ -42,8 +42,8 @@ public class ParallelSolverConfiguration {
     @Option(description = "The type of Filter used in the Formulas", name = "maxConcurrentThreads", secure = true)
     private int maxNumberOfConcurrentThreads;
 
-    private final int numberOfSplits;
-    private final int formulaLength;
+    private int numberOfSplits;
+    private int formulaLength;
 
     @Option(description = "The type of Filter used in the Formulas", name = "randomSeed", secure = true)
     private long randomSeed;
@@ -57,7 +57,7 @@ public class ParallelSolverConfiguration {
     }
 
     public enum SplittingObjectType {
-        RF_RELATION_SPLITTING_OBJECTS, CO_RELATION_SPLITTING_OBJECTS, EVENT_SPLITTING_OBJECTS, NO_SPLITTING_OBJECTS;
+        RF_RELATION_SPLITTING_OBJECTS, CO_RELATION_SPLITTING_OBJECTS, BRANCH_EVENTS_SPLITTING_OBJECTS, ALL_EVENTS_SPLITTING_OBJECTS, NO_SPLITTING_OBJECTS;
     }
 
     public enum SplittingObjectFilter {
@@ -65,7 +65,7 @@ public class ParallelSolverConfiguration {
     }
 
     public enum SplittingObjectSelection {
-        RANDOM_SELECTION, SEEDED_RANDOM_SELECTION, NO_SELECTION, INDEX_SELECTION, CHOSEN_SELECTION;
+        RANDOM_SELECTION, SEEDED_RANDOM_SELECTION, NO_SELECTION, INDEX_SELECTION, CHOSEN_SELECTION, SCORE_SELECTION;
     }
 
 
@@ -267,10 +267,14 @@ public class ParallelSolverConfiguration {
 
     public void setQueueSettingIntN(int queueSettingIntN) {
         this.queueSettingIntN = queueSettingIntN;
+        this.numberOfSplits = calculateNrOfSplits();
+        this.formulaLength = calculateFormulaLength();
     }
 
     public void setQueueSettingIntM(int queueSettingIntM) {
         this.queueSettingIntM = queueSettingIntM;
+        this.numberOfSplits = calculateNrOfSplits();
+        this.formulaLength = calculateFormulaLength();
     }
 
     public void setMaxNumberOfConcurrentThreads(int maxNumberOfConcurrentThreads) {
