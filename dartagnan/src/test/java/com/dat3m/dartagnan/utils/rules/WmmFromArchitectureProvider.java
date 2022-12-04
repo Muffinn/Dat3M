@@ -31,6 +31,7 @@ public class WmmFromArchitectureProvider extends AbstractProvider<Wmm> {
         ARCH_WMM_MAP.put(Arch.POWER, () -> new ParserCat().parse(new File(CAT_RESOURCE_PATH + "cat/power.cat")));
         ARCH_WMM_MAP.put(Arch.LKMM, () -> new ParserCat().parse(new File(CAT_RESOURCE_PATH + "cat/linux-kernel.cat")));
         ARCH_WMM_MAP.put(Arch.RISCV, () -> new ParserCat().parse(new File(CAT_RESOURCE_PATH + "cat/riscv.cat")));
+        ARCH_WMM_MAP.put(Arch.C11, () -> new ParserCat().parse(new File(CAT_RESOURCE_PATH + "cat/svcomp.cat")));
     }
 
     private final Supplier<Arch> archSupplier;

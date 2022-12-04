@@ -1,7 +1,6 @@
 package com.dat3m.dartagnan.verification.solving;
 
 import com.dat3m.dartagnan.encoding.EncodingContext;
-import com.dat3m.dartagnan.program.Program;
 import com.dat3m.dartagnan.program.Thread;
 import com.dat3m.dartagnan.program.analysis.ExecutionAnalysis;
 import com.dat3m.dartagnan.program.event.core.Event;
@@ -415,7 +414,7 @@ public class SplittingManager {
             float tHighScore = 0;
             int cid = -1;
             for(Event e : thread.getEvents()){
-                float eScore = betterEventScore(e, analysisContext, myTask);
+                float eScore = derivedEventScore(e, analysisContext, myTask);
                 if( eScore > tHighScore){
                     tHighScore = eScore;
                     cid = e.getCId();
@@ -452,23 +451,25 @@ public class SplittingManager {
         return score;
     }
 
-    private static int betterEventScore(Event targetEvent, Context analysisContext, VerificationTask myTask){
+    private static int derivedEventScore(Event targetEvent, Context analysisContext, VerificationTask myTask){
         int trueScore = 0;
         int falseScore = 0;
         Thread thread = targetEvent.getThread();
         for (Event otherEvent: thread.getEvents()){
             if(areEventsMutuallyExclusive(otherEvent, targetEvent, analysisContext)){
-
-                trueScore += simpleEventScore(targetEvent, analysisContext, myTask);
+                trueScore += simpleEventScore(otherEvent, analysisContext, myTask);
             }
             if(isEventImplied(otherEvent, targetEvent, analysisContext)){
-                falseScore += simpleEventScore(targetEvent, analysisContext, myTask);
+                falseScore += simpleEventScore(otherEvent, analysisContext, myTask);
             }
         }
 
+        //System.out.println("Event T " + targetEvent.getCId() + ": " + trueScore);
 
+        //System.out.println("Event F " + targetEvent.getCId() + ": " + falseScore);
 
         int score = Math.min(trueScore, falseScore);
+        //System.out.println("Event " + targetEvent.getCId() + ": " + score);
         return score;
     }
 
@@ -509,6 +510,28 @@ public class SplittingManager {
         }*/
         //System.out.println("Event " + targetEvent.getCId() + ": " + score);
 
+        return score;
+    }
+
+    private static int advancedEventScore(Event targetEvent, Context analysisContext, VerificationTask myTask){
+        int trueScore = 0;
+        int falseScore = 0;
+        Thread thread = targetEvent.getThread();
+        for (Event otherEvent: thread.getEvents()){
+            if(areEventsMutuallyExclusive(otherEvent, targetEvent, analysisContext)){
+                trueScore += simpleEventScore(otherEvent, analysisContext, myTask);
+            }
+            if(isEventImplied(otherEvent, targetEvent, analysisContext)){
+                falseScore += simpleEventScore(otherEvent, analysisContext, myTask);
+            }
+        }
+
+        //System.out.println("Event T " + targetEvent.getCId() + ": " + trueScore);
+
+        //System.out.println("Event F " + targetEvent.getCId() + ": " + falseScore);
+
+        int score = Math.min(trueScore, falseScore);
+        //System.out.println("Event " + targetEvent.getCId() + ": " + score);
         return score;
     }
 

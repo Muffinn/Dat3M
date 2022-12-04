@@ -4,6 +4,8 @@ import com.dat3m.dartagnan.configuration.Arch;
 import com.dat3m.dartagnan.utils.Result;
 import com.dat3m.dartagnan.utils.rules.CSVLogger;
 import com.dat3m.dartagnan.utils.rules.Provider;
+import com.dat3m.dartagnan.utils.visualization.ExecutionGraphVisualizer;
+import com.dat3m.dartagnan.verification.model.ExecutionModel;
 import com.dat3m.dartagnan.verification.solving.*;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -11,8 +13,11 @@ import org.junit.runners.Parameterized;
 import org.sosy_lab.common.configuration.Configuration;
 import org.sosy_lab.java_smt.SolverContextFactory;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 
 import static com.dat3m.dartagnan.configuration.Arch.*;
 import static com.dat3m.dartagnan.utils.ResourceHelper.TEST_RESOURCE_PATH;
@@ -48,6 +53,8 @@ public class LFDSTestLarge extends AbstractCTest {
             //{"safe_stack-3", POWER, FAIL}, //Power ausschalten*/
             {"dglm-3", TSO, UNKNOWN},
             //{"dglm-3", ARM8, UNKNOWN},
+                //{"dglm-3", C11, UNKNOWN},
+
             //{"dglm-3", POWER, UNKNOWN},
             //{"ms-3", TSO, UNKNOWN},
             //{"ms-3", ARM8, UNKNOWN},
@@ -69,6 +76,11 @@ public class LFDSTestLarge extends AbstractCTest {
 	//@CSVLogger.FileName("csv/refinement")
 	public void testRefinement() throws Exception {
         RefinementSolver s = RefinementSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get());
+        ExecutionModel ec = ExecutionModel.withContext(s.getEncodingContext());
+        ec.initialize(proverProvider.get().getModel());
+
+
+
         assertEquals(expected, s.getResult());
 	}
 
@@ -77,11 +89,11 @@ public class LFDSTestLarge extends AbstractCTest {
     @CSVLogger.FileName("csv/parallelRefinement")
     public void testParallelRefinement0() throws Exception {
         int[] chosenIDs = {181, 417, 653};
-        //ParallelSolverConfiguration parallelConfig = ParallelSolverConfigurationFactory.chosenEventConfig(chosenIDs);
-        ParallelSolverConfiguration parallelConfig = ParallelSolverConfigurationFactory.basicEventConfig();
-        parallelConfig.setSplittingObjectType(ParallelSolverConfiguration.SplittingObjectType.ALL_EVENTS_SPLITTING_OBJECTS);
-        parallelConfig.setSplittingObjectSelection(ParallelSolverConfiguration.SplittingObjectSelection.SCORE_SELECTION);
-        parallelConfig.setQueueSettingIntN(2);
+        ParallelSolverConfiguration parallelConfig = ParallelSolverConfigurationFactory.chosenEventConfig(chosenIDs);
+        //ParallelSolverConfiguration parallelConfig = ParallelSolverConfigurationFactory.basicEventConfig();
+        //parallelConfig.setSplittingObjectType(ParallelSolverConfiguration.SplittingObjectType.BRANCH_EVENTS_SPLITTING_OBJECTS);
+        //parallelConfig.setSplittingObjectSelection(ParallelSolverConfiguration.SplittingObjectSelection.SCORE_SELECTION);
+        //parallelConfig.setQueueSettingIntN(2);
         ParallelRefinementSolver s = ParallelRefinementSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3,
                 Configuration.defaultConfiguration(), shutdownManagerProvider.get(),
                 parallelConfig);
@@ -90,14 +102,15 @@ public class LFDSTestLarge extends AbstractCTest {
     }
 
 
-    //@Test
+    @Test
     @CSVLogger.FileName("csv/parallelRefinement")
     public void testParallelRefinement1() throws Exception {
 
         int[] chosenIDs = {442, 678};
         ParallelSolverConfiguration parallelConfig = ParallelSolverConfigurationFactory.chosenEventConfig(chosenIDs);
-        parallelConfig.setClauseReceivingFilter(ParallelSolverConfiguration.ClauseReceivingFilter.IMPLIES_CR_FILTER);
-        //parallelConfig.setClauseSharingFilter(ParallelSolverConfiguration.ClauseSharingFilter.DUPLICATE_CS_FILTER);
+        //parallelConfig.setSplittingObjectType(ParallelSolverConfiguration.SplittingObjectType.BRANCH_EVENTS_SPLITTING_OBJECTS);
+        //parallelConfig.setSplittingObjectSelection(ParallelSolverConfiguration.SplittingObjectSelection.SCORE_SELECTION);
+        //parallelConfig.setQueueSettingIntN(2);
 
         ParallelRefinementSolver s = ParallelRefinementSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3,
                 Configuration.defaultConfiguration(), shutdownManagerProvider.get(),
@@ -107,13 +120,14 @@ public class LFDSTestLarge extends AbstractCTest {
     }
 
 
-    //@Test
+    @Test
     @CSVLogger.FileName("csv/parallelRefinement")
     public void testParallelRefinement2() throws Exception {
         int[] chosenIDs = {442, 678};
         ParallelSolverConfiguration parallelConfig = ParallelSolverConfigurationFactory.chosenEventConfig(chosenIDs);
-        //parallelConfig.setClauseReceivingFilter(ParallelSolverConfiguration.ClauseReceivingFilter.IMPLIES_CR_FILTER);
-        parallelConfig.setClauseSharingFilter(ParallelSolverConfiguration.ClauseSharingFilter.DUPLICATE_CS_FILTER);
+        //parallelConfig.setSplittingObjectType(ParallelSolverConfiguration.SplittingObjectType.BRANCH_EVENTS_SPLITTING_OBJECTS);
+        //parallelConfig.setSplittingObjectSelection(ParallelSolverConfiguration.SplittingObjectSelection.SCORE_SELECTION);
+        //parallelConfig.setQueueSettingIntN(2);
         ParallelRefinementSolver s = ParallelRefinementSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3,
                 Configuration.defaultConfiguration(), shutdownManagerProvider.get(),
                 parallelConfig);
@@ -121,14 +135,14 @@ public class LFDSTestLarge extends AbstractCTest {
         assertEquals(expected, s.getResult());
     }
 
-    //@Test
+    @Test
     @CSVLogger.FileName("csv/parallelRefinement")
     public void testParallelRefinement3() throws Exception {
         int[] chosenIDs = {442, 678};
         ParallelSolverConfiguration parallelConfig = ParallelSolverConfigurationFactory.chosenEventConfig(chosenIDs);
-        //parallelConfig.setClauseReceivingFilter(ParallelSolverConfiguration.ClauseReceivingFilter.IMPLIES_CR_FILTER);
-        parallelConfig.setClauseSharingFilter(ParallelSolverConfiguration.ClauseSharingFilter.DUPLICATE_CS_FILTER);
-        parallelConfig.setChosenEvents(chosenIDs);
+        //parallelConfig.setSplittingObjectType(ParallelSolverConfiguration.SplittingObjectType.BRANCH_EVENTS_SPLITTING_OBJECTS);
+        //parallelConfig.setSplittingObjectSelection(ParallelSolverConfiguration.SplittingObjectSelection.SCORE_SELECTION);
+        //parallelConfig.setQueueSettingIntN(2);
         ParallelRefinementSolver s = ParallelRefinementSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3,
                 Configuration.defaultConfiguration(), shutdownManagerProvider.get(),
                 parallelConfig);
