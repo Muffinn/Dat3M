@@ -81,16 +81,16 @@ public class SplittingManager {
             throws InvalidConfigurationException{
         switch(parallelConfig.getSplittingStyle()){
             case NO_SPLITTING_STYLE:
-                createEmptyBitSetQueue(parallelConfig.getQueueSettingIntN());
+                createEmptyBitSetQueue(parallelConfig.getSplittingIntN());
                 break;
             case LINEAR_AND_BINARY_SPLITTING_STYLE:
-                createLinearAndBinarySplitting(parallelConfig.getQueueSettingIntN(), parallelConfig.getQueueSettingIntM());
+                createLinearAndBinarySplitting(parallelConfig.getSplittingIntN(), parallelConfig.getSplittingIntM());
                 break;
             case LINEAR_SPLITTING_STYLE:
-                createLinearAndBinarySplitting(parallelConfig.getQueueSettingIntN(), 0);
+                createLinearAndBinarySplitting(parallelConfig.getSplittingIntN(), 0);
                 break;
             case BINARY_SPLITTING_STYLE:
-                createLinearAndBinarySplitting(1, parallelConfig.getQueueSettingIntN());
+                createLinearAndBinarySplitting(1, parallelConfig.getSplittingIntN());
                 break;
             default:
                 throw(new InvalidConfigurationException(parallelConfig.getSplittingStyle().name() + "is not supported by populateFormulaQueue."));

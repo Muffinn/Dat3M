@@ -13,22 +13,23 @@ public class ThreadStatisticManager {
     private BitSet[] bitSetPair;
 
 
-    private double startTime = -1;
-    private double endTime = -1;
+    private long startTime = -1;
+    private long endTime = -1;
 
-    private double preProcessingTime = -1;
+    private long preProcessingTime = -1;
 
-    private double totalWMMSolverTime = 0;
-    private double totalCAATSolverTime= 0;
-    private double totalSolverTime= 0;
+    private long totalWMMSolverTime = 0;
+    private long totalCAATSolverTime= 0;
+    private long totalSolverTime= 0;
 
-    private double clauseSharingTime = 0;
-    private double clauseSharingFilterTime = 0;
+
+    private long clauseSharingTime = 0;
+    private long clauseSharingFilterTime = 0;
     private int clauseSharingFilterCount = 0;
 
 
-    private double clauseReceivingTime = 0;
-    private double clauseReceivingFilterTime = 0;
+    private long clauseReceivingTime = 0;
+    private long clauseReceivingFilterTime = 0;
     private int clauseReceivingFilterCount = 0;
 
 
@@ -94,12 +95,12 @@ public class ThreadStatisticManager {
         }
     }
 
-    public int toSeconds(double timeInMillis){
+    public int toSeconds(long timeInMillis){
         return ((int)(timeInMillis/1000));
     }
 
     //..............Derived..Stats............
-    public double calculateTotalTime(){
+    public long calculateTotalTime(){
         return endTime-startTime;
     }
 
@@ -118,34 +119,47 @@ public class ThreadStatisticManager {
         this.preProcessingTime = System.currentTimeMillis() - this.startTime;
     }
 
+    public String reportString(){
+        String reportString;
+
+        reportString = bitSetPair[0].toString().replaceAll(",", "")
+                + "," + bitSetPair[1].toString().replaceAll(",", "")
+                + "," + totalSolverTime
+                + "," + totalWMMSolverTime
+                + "," + totalCAATSolverTime
+        ;
+
+    return reportString;
+    }
+
     //..............Add..Time..Methods..........
-    public void addWMMSolverTime(double wmmTime){
+    public void addWMMSolverTime(long wmmTime){
         totalWMMSolverTime += wmmTime;
         totalSolverTime += wmmTime;
     }
 
-    public void addCAATSolverTime(double caatTime){
+    public void addCAATSolverTime(long caatTime){
         totalCAATSolverTime += caatTime;
         totalSolverTime += caatTime;
     }
 
-    public void addAssumeSolverTime(double assumeTime){
+    public void addAssumeSolverTime(long assumeTime){
         totalSolverTime+= assumeTime;
     }
 
-    public void addClauseSharingTime(double cs_time){
+    public void addClauseSharingTime(long cs_time){
         clauseSharingTime += cs_time;
     }
 
-    public void addClauseSharingFilterTime(double csf_time){
+    public void addClauseSharingFilterTime(long csf_time){
         clauseSharingFilterTime += csf_time;
     }
 
-    public void addClauseReceivingTime(double cr_time){
+    public void addClauseReceivingTime(long cr_time){
         clauseReceivingTime += cr_time;
     }
 
-    public void addClauseReceivingFilterTime(double csf_time){
+    public void addClauseReceivingFilterTime(long csf_time){
         clauseReceivingFilterTime += csf_time;
     }
 
@@ -178,7 +192,7 @@ public class ThreadStatisticManager {
         return bitSetPair;
     }
 
-    public double getTotalTime(){
+    public long getTotalTime(){
         return calculateTotalTime();
     }
 

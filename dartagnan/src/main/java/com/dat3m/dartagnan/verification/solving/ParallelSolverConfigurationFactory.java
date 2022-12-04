@@ -66,8 +66,8 @@ public class ParallelSolverConfigurationFactory {
                 parallelConfig.getFormulaGenerator(),
                 parallelConfig.getClauseSharingFilter(),
                 parallelConfig.getClauseReceivingFilter(),
-                parallelConfig.getQueueSettingIntN(),
-                parallelConfig.getQueueSettingIntM(),
+                parallelConfig.getSplittingIntN(),
+                parallelConfig.getSplittingIntM(),
                 parallelConfig.getMaxNumberOfConcurrentThreads(),
                 parallelConfig.getRandomSeed()
         );

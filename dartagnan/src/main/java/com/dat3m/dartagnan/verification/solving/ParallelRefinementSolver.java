@@ -76,9 +76,11 @@ public class ParallelRefinementSolver extends ParallelSolver {
 
     // ======================================================================
 
-    private ParallelRefinementSolver(SolverContext c, ProverEnvironment p, VerificationTask t, ShutdownManager sdm, SolverContextFactory.Solvers solverType, Configuration solverConfig, ParallelSolverConfiguration parallelConfig)
+    private ParallelRefinementSolver(SolverContext c, ProverEnvironment p, VerificationTask t, ShutdownManager sdm,
+                                     SolverContextFactory.Solvers solverType, Configuration solverConfig,
+                                     ParallelSolverConfiguration parallelConfig, String reportFileName)
             throws InvalidConfigurationException{
-        super(c, p, t, sdm, solverType, solverConfig, parallelConfig);
+        super(c, p, t, sdm, solverType, solverConfig, parallelConfig, reportFileName);
 
         this.refinementCollector = new ParallelRefinementCollector(0, parallelConfig);
 
@@ -87,11 +89,14 @@ public class ParallelRefinementSolver extends ParallelSolver {
     //TODO: We do not yet use Witness information. The problem is that WitnessGraph.encode() generates
     // constraints on hb, which is not encoded in Refinement.
     //TODO (2): Add possibility for Refinement to handle CAT-properties (it ignores them for now).
-    public static ParallelRefinementSolver run(SolverContext ctx, ProverEnvironment prover, VerificationTask task, SolverContextFactory.Solvers solverType, Configuration solverConfig,
-                                               ShutdownManager sdm, ParallelSolverConfiguration parallelConfig)
+    public static ParallelRefinementSolver run(SolverContext ctx, ProverEnvironment prover, VerificationTask task,
+                                               SolverContextFactory.Solvers solverType, Configuration solverConfig,
+                                               ShutdownManager sdm, ParallelSolverConfiguration parallelConfig,
+                                               String reportFileName)
             throws InterruptedException, SolverException, InvalidConfigurationException {
         task.getConfig().inject(parallelConfig);
-        ParallelRefinementSolver s = new ParallelRefinementSolver(ctx, prover, task, sdm, solverType, solverConfig, parallelConfig);
+        ParallelRefinementSolver s = new ParallelRefinementSolver(ctx, prover, task, sdm, solverType, solverConfig,
+                parallelConfig, reportFileName);
         task.getConfig().inject(s);
         logger.info("{}: {}", BASELINE, s.baselines);
         s.run();

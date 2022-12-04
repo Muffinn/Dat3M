@@ -160,11 +160,13 @@ public class Dartagnan extends BaseOptions {
                 			break;
 							case PARALLEL_ASSUME:
 							modelChecker = ParallelAssumeSolver.run(ctx, prover, task, SolverContextFactory.Solvers.Z3,
-									Configuration.defaultConfiguration(), sdm, ParallelSolverConfigurationFactory.basicEventConfig());
+									Configuration.defaultConfiguration(), sdm,
+									ParallelSolverConfigurationFactory.basicEventConfig(), "-1");
 							break;
 						case PARALLEL_CAAT:
 							modelChecker = ParallelRefinementSolver.run(ctx, prover,task, SolverContextFactory.Solvers.Z3,
-									Configuration.defaultConfiguration(), sdm, ParallelSolverConfigurationFactory.basicEventConfig());
+									Configuration.defaultConfiguration(), sdm,
+									ParallelSolverConfigurationFactory.basicEventConfig(), "-1");
 							break;
 
 

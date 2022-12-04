@@ -58,7 +58,7 @@ public abstract class ParallelSolver extends ModelChecker {
 
     protected final MainStatisticManager statisticManager;
 
-    public ParallelSolver(SolverContext c, ProverEnvironment p, VerificationTask t, ShutdownManager sdm, SolverContextFactory.Solvers solverType, Configuration solverConfig, ParallelSolverConfiguration parallelConfig)
+    public ParallelSolver(SolverContext c, ProverEnvironment p, VerificationTask t, ShutdownManager sdm, SolverContextFactory.Solvers solverType, Configuration solverConfig, ParallelSolverConfiguration parallelConfig, String reportFileName)
             throws InvalidConfigurationException{
         mainCTX = c;
         mainProver = p;
@@ -68,7 +68,7 @@ public abstract class ParallelSolver extends ModelChecker {
         this.solverType = solverType;
         this.solverConfig = solverConfig;
         this.parallelConfig = parallelConfig;
-        this.statisticManager = new MainStatisticManager(parallelConfig.getNumberOfSplits(), parallelConfig, spmgr);
+        this.statisticManager = new MainStatisticManager(parallelConfig.getNumberOfSplits(), parallelConfig, spmgr, reportFileName);
         this.resultCollector = new ParallelResultCollector(PASS, parallelConfig);
     }
 

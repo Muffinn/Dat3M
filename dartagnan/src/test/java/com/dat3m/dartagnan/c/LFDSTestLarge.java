@@ -48,10 +48,10 @@ public class LFDSTestLarge extends AbstractCTest {
 	@Parameterized.Parameters(name = "{index}: {0}, target={1}")
     public static Iterable<Object[]> data() throws IOException {
 		return Arrays.asList(new Object[][]{
-            //{"safe_stack-3", TSO, FAIL},
+            //{"safe_stack-3", TSO, Result.FAIL},
             //{"safe_stack-3", ARM8, FAIL},
             //{"safe_stack-3", POWER, FAIL}, //Power ausschalten*/
-            {"dglm-3", TSO, UNKNOWN},
+            //{"dglm-3", TSO, UNKNOWN},
             //{"dglm-3", ARM8, UNKNOWN},
                 //{"dglm-3", C11, UNKNOWN},
 
@@ -59,7 +59,7 @@ public class LFDSTestLarge extends AbstractCTest {
             //{"ms-3", TSO, UNKNOWN},
             //{"ms-3", ARM8, UNKNOWN},
             //{"ms-3", POWER, UNKNOWN},
-            //{"treiber-3", TSO, UNKNOWN},
+            {"treiber-3", TSO, UNKNOWN},
             //{"treiber-3", ARM8, UNKNOWN},
             //{"treiber-3", POWER, UNKNOWN},
         });
@@ -88,15 +88,15 @@ public class LFDSTestLarge extends AbstractCTest {
     @Test
     @CSVLogger.FileName("csv/parallelRefinement")
     public void testParallelRefinement0() throws Exception {
-        int[] chosenIDs = {181, 417, 653};
+        int[] chosenIDs = {442, 678};
         ParallelSolverConfiguration parallelConfig = ParallelSolverConfigurationFactory.chosenEventConfig(chosenIDs);
         //ParallelSolverConfiguration parallelConfig = ParallelSolverConfigurationFactory.basicEventConfig();
         //parallelConfig.setSplittingObjectType(ParallelSolverConfiguration.SplittingObjectType.BRANCH_EVENTS_SPLITTING_OBJECTS);
         //parallelConfig.setSplittingObjectSelection(ParallelSolverConfiguration.SplittingObjectSelection.SCORE_SELECTION);
         //parallelConfig.setQueueSettingIntN(2);
-        ParallelRefinementSolver s = ParallelRefinementSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3,
-                Configuration.defaultConfiguration(), shutdownManagerProvider.get(),
-                parallelConfig);
+        ParallelRefinementSolver s = ParallelRefinementSolver.run(contextProvider.get(), proverProvider.get(),
+                taskProvider.get(), SolverContextFactory.Solvers.Z3, Configuration.defaultConfiguration(),
+                shutdownManagerProvider.get(), parallelConfig, "randomtest");
                 //SeedLeaderboard.Dglm3TsoLeaderboard(1));
         assertEquals(expected, s.getResult());
     }
@@ -114,7 +114,7 @@ public class LFDSTestLarge extends AbstractCTest {
 
         ParallelRefinementSolver s = ParallelRefinementSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3,
                 Configuration.defaultConfiguration(), shutdownManagerProvider.get(),
-                parallelConfig);
+                parallelConfig, "randomtest");
                 //SeedLeaderboard.Dglm3Arm8Leaderboard(1));
         assertEquals(expected, s.getResult());
     }
@@ -128,9 +128,9 @@ public class LFDSTestLarge extends AbstractCTest {
         //parallelConfig.setSplittingObjectType(ParallelSolverConfiguration.SplittingObjectType.BRANCH_EVENTS_SPLITTING_OBJECTS);
         //parallelConfig.setSplittingObjectSelection(ParallelSolverConfiguration.SplittingObjectSelection.SCORE_SELECTION);
         //parallelConfig.setQueueSettingIntN(2);
-        ParallelRefinementSolver s = ParallelRefinementSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3,
-                Configuration.defaultConfiguration(), shutdownManagerProvider.get(),
-                parallelConfig);
+        ParallelRefinementSolver s = ParallelRefinementSolver.run(contextProvider.get(), proverProvider.get(),
+                taskProvider.get(), SolverContextFactory.Solvers.Z3, Configuration.defaultConfiguration(),
+                shutdownManagerProvider.get(), parallelConfig, "randomtest");
                 //SeedLeaderboard.Ms3TsoLeaderboard(1));
         assertEquals(expected, s.getResult());
     }
@@ -143,9 +143,10 @@ public class LFDSTestLarge extends AbstractCTest {
         //parallelConfig.setSplittingObjectType(ParallelSolverConfiguration.SplittingObjectType.BRANCH_EVENTS_SPLITTING_OBJECTS);
         //parallelConfig.setSplittingObjectSelection(ParallelSolverConfiguration.SplittingObjectSelection.SCORE_SELECTION);
         //parallelConfig.setQueueSettingIntN(2);
-        ParallelRefinementSolver s = ParallelRefinementSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3,
+        ParallelRefinementSolver s = ParallelRefinementSolver.run(contextProvider.get(), proverProvider.get(),
+                taskProvider.get(), SolverContextFactory.Solvers.Z3,
                 Configuration.defaultConfiguration(), shutdownManagerProvider.get(),
-                parallelConfig);
+                parallelConfig, "randomtest");
                 //SeedLeaderboard.Ms3Arm8Leaderboard(1));
         assertEquals(expected, s.getResult());
     }
@@ -157,9 +158,10 @@ public class LFDSTestLarge extends AbstractCTest {
     //@CSVLogger.FileName("csv/assume")
     public void testParallelAssume() throws Exception {
 
-        ParallelAssumeSolver s = ParallelAssumeSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3,
-        Configuration.defaultConfiguration(), shutdownManagerProvider.get(),
-                ParallelSolverConfigurationFactory.basicEventConfig());
+        ParallelAssumeSolver s = ParallelAssumeSolver.run(contextProvider.get(), proverProvider.get(),
+                taskProvider.get(), SolverContextFactory.Solvers.Z3, Configuration.defaultConfiguration(),
+                shutdownManagerProvider.get(), ParallelSolverConfigurationFactory.basicEventConfig(),
+                "-1");
         assertEquals(expected, s.getResult());
     }
 

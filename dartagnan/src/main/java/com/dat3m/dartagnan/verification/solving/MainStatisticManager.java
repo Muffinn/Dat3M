@@ -4,8 +4,15 @@ import com.dat3m.dartagnan.program.event.core.Event;
 import com.dat3m.dartagnan.utils.Result;
 import com.dat3m.dartagnan.wmm.utils.Tuple;
 
+import java.io.FileWriter;
 import java.util.BitSet;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 
 public class MainStatisticManager {
     private final ThreadStatisticManager[] threadStatisticManagers;
@@ -13,10 +20,13 @@ public class MainStatisticManager {
     private final SplittingManager spmgr;
     private Result myResult = Result.UNKNOWN;
 
-    private double startTime = -1;
-    private double endTime = -1;
+    private long startTime = -1;
+    private long endTime = -1;
 
-    public MainStatisticManager(int numberOfSplits, ParallelSolverConfiguration parallelConfig, SplittingManager splittingManager){
+    private final String reportFileName;
+
+    public MainStatisticManager(int numberOfSplits, ParallelSolverConfiguration parallelConfig, SplittingManager splittingManager, String reportFileName){
+        this.reportFileName = reportFileName;
         threadStatisticManagers = new ThreadStatisticManager[numberOfSplits];
         this.parallelConfig = parallelConfig;
         this.spmgr = splittingManager;
@@ -36,6 +46,7 @@ public class MainStatisticManager {
             tSM.print();
         }
         printLiteralStatistics();
+        createReportFile();
     }
 
     public void printLiteralStatistics(){
@@ -45,8 +56,8 @@ public class MainStatisticManager {
 
         int formulaLength = parallelConfig.getFormulaLength();
         int[] literalScore = new int[formulaLength];
-        double[] totalTrueTime = new double[formulaLength];
-        double[] totalFalseTime = new double[formulaLength];
+        long[] totalTrueTime = new long[formulaLength];
+        long[] totalFalseTime = new long[formulaLength];
 
         int numberOfSplits = parallelConfig.getNumberOfSplits();
         for (int i = 0; i < numberOfSplits; i++){
@@ -117,5 +128,30 @@ public class MainStatisticManager {
     public void reportResult(Result myResult){
         endTime = System.currentTimeMillis();
         this.myResult = myResult;
+    }
+
+    public void createReportFile(){
+        if (reportFileName.equals("-1")){
+            return;
+        }
+
+        String fullName = "output/reports/" + reportFileName + ".csv";
+        try(FileWriter fileWriter = new FileWriter(fullName, true);
+             PrintWriter printWriter = new PrintWriter(fileWriter);) {
+
+
+
+
+            StringBuilder sb = new StringBuilder();
+            for(ThreadStatisticManager tsmtsmtsm : threadStatisticManagers) {
+                sb.append(tsmtsmtsm.reportString());
+                sb.append(",");
+            }
+            printWriter.println(sb);
+
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
     }
 }
