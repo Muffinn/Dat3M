@@ -12,6 +12,12 @@ public class ParallelSolverConfiguration {
     @Option(description = "The Style of the Splitting: linear, binary or mixed", name = "formulaQueueStyle", secure = true)
     private SplittingStyle splittingStyle;
 
+    @Option(description = "First Int used to generate the splitting", name = "queueSettingInt1", secure = true)
+    private int splittingIntN;
+
+    @Option(description = "Second Int used to generate the slitting", name = "queueSettingInt2", secure = true)
+    private int splittingIntM;
+
     @Option(description = "The objects used to generate the splitting assumptions", name = "formulaItemType", secure = true)
     private SplittingObjectType splittingObjectType;
 
@@ -20,6 +26,9 @@ public class ParallelSolverConfiguration {
 
     @Option(description = "The way in which the splitting Objects are selected", name = "formulaItemOrder", secure = true)
     private SplittingObjectSelection splittingObjectSelection;
+
+    @Option(description = "The randomSeed used to chose random Splitting Objects", name = "randomSeed", secure = true)
+    private long randomSeed;
 
     @Option(description = "deprecated only use in_solver", name = "formulaGeneration", secure = true)
     private FormulaGenerator formulaGenerator;
@@ -30,14 +39,13 @@ public class ParallelSolverConfiguration {
     @Option(description = "Chose if shared clauses should be filtered", name = "clauseSharingFilter", secure = true)
     private ClauseSharingFilter clauseSharingFilter;
 
+    @Option(description =  "Set how often Threads collect foreign clauses", name = "clasueSharingInterval", secure = true)
+    private int clauseSharingInterval;
+
     @Option(description = "Chose if received clauses should be filtered", name = "clauseReceivingFilter", secure = true)
     private ClauseReceivingFilter clauseReceivingFilter;
 
-    @Option(description = "First Int used to generate the splitting", name = "queueSettingInt1", secure = true)
-    private int splittingIntN;
 
-    @Option(description = "Second Int used to generate the slitting", name = "queueSettingInt2", secure = true)
-    private int splittingIntM;
 
     @Option(description = "The maximum number of concurrent threads", name = "maxConcurrentThreads", secure = true)
     private int maxNumberOfConcurrentThreads;
@@ -45,8 +53,15 @@ public class ParallelSolverConfiguration {
     private int numberOfSplits;
     private int formulaLength;
 
-    @Option(description = "The randomSeed used to chose random Splitting Objects", name = "randomSeed", secure = true)
-    private long randomSeed;
+    //data report
+
+    private boolean initialisedFileReport = false;
+    private String reportFileName = "noNameInitialized";
+    private String architecture = "noArchInitialized";
+    private String targetName = "noTargetNameInitialized";
+    private String solverName = "noSovlerNameGiven";
+
+
 
     private int[] chosenEvents;
 
@@ -89,23 +104,22 @@ public class ParallelSolverConfiguration {
 
     /**
      * Constructor for ParallelSolverConfiguration with a chosen Randomseed
-     * @param splittingObjectType Type of Items in the formulas. Choice of RF-Relation, CO-Relations and Events
-     * @param splittingObjectFilter Filter Mutually Exclusive and/or Implied Items
-     * @param splittingObjectSelection Order Items random, by ID or not at all
      * @param splittingStyle Tautology or Splits
-     * @param formulaGenerator generate Formula in Solver or in the FormulaQueueManager
-     * @param clauseSharingFilter filter which clauses are filtered
      * @param splittingIntN Int value used to generate the formulas
      * @param splittingIntM Int value used to generate the formulas
      * @param maxNumberOfConcurrentThreads amount of threads that can run concurrent
+     * @param splittingObjectType Type of Items in the formulas. Choice of RF-Relation, CO-Relations and Events
+     * @param splittingObjectFilter Filter Mutually Exclusive and/or Implied Items
+     * @param splittingObjectSelection Order Items random, by ID or not at all
      * @param randomSeed fixed random seed. used if SEEDED_RANDOM_ORDER is enabled
+     * @param formulaGenerator generate Formula in Solver or in the FormulaQueueManager
+     * @param clauseSharingFilter filter which clauses are filtered
      * @throws InvalidConfigurationException some configurations are not supported in combination with other configuration
      */
-    public ParallelSolverConfiguration(SplittingStyle splittingStyle, SplittingObjectType splittingObjectType, SplittingObjectFilter splittingObjectFilter,
-                                       SplittingObjectSelection splittingObjectSelection, StaticProgramAnalysis staticProgramAnalysis,
-                                       FormulaGenerator formulaGenerator, ClauseSharingFilter clauseSharingFilter,
-                                       ClauseReceivingFilter clauseReceivingFilter,
-                                       int splittingIntN, int splittingIntM, int maxNumberOfConcurrentThreads, long randomSeed)
+    public ParallelSolverConfiguration(SplittingStyle splittingStyle, int splittingIntN, int splittingIntM, int maxNumberOfConcurrentThreads, SplittingObjectType splittingObjectType, SplittingObjectFilter splittingObjectFilter,
+                                       SplittingObjectSelection splittingObjectSelection, long randomSeed, StaticProgramAnalysis staticProgramAnalysis,
+                                       FormulaGenerator formulaGenerator, ClauseSharingFilter clauseSharingFilter, int clauseSharingInterval,
+                                       ClauseReceivingFilter clauseReceivingFilter)
              {
 
         if (splittingObjectType != SplittingObjectType.NO_SPLITTING_OBJECTS) {
@@ -126,6 +140,7 @@ public class ParallelSolverConfiguration {
         }
         this.staticProgramAnalysis = staticProgramAnalysis;
         this.clauseSharingFilter = clauseSharingFilter;
+        this.clauseSharingInterval = clauseSharingInterval;
         this.clauseReceivingFilter = clauseReceivingFilter;
         this.splittingIntN = splittingIntN;
         this.splittingIntM = splittingIntM;
@@ -252,6 +267,18 @@ public class ParallelSolverConfiguration {
         this.randomSeed = randomSeed;
     }
 
+    public void setClauseSharingInterval(int clauseSharingInterval){
+        this.clauseSharingInterval = clauseSharingInterval;
+    }
+
+    public void initializeFileReport(String reportFileName, String architectureName, String targetName, String solverName){
+        this.initialisedFileReport = true;
+        this.reportFileName = reportFileName;
+        this.architecture = architectureName;
+        this.targetName = targetName;
+        this.solverName = solverName;
+    }
+
     //----------------------------------GETTER--------------------------------
 
     public SplittingObjectType getSplittingObjectType() {
@@ -313,4 +340,24 @@ public class ParallelSolverConfiguration {
     }
 
     public int[] getChosenEvents() {return chosenEvents;}
+
+    public int getClauseSharingInterval() {
+        return clauseSharingInterval;
+    }
+
+    public boolean isInitialisedFileReport() {
+        return initialisedFileReport;
+    }
+
+    public String getReportFileName() {
+        return reportFileName;
+    }
+
+    public String getArchitecture() {
+        return architecture;
+    }
+
+    public String getTargetName() {
+        return targetName;
+    }
 }

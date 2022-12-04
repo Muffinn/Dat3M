@@ -7,50 +7,43 @@ public class ParallelSolverConfigurationFactory {
     public static ParallelSolverConfiguration basicEventConfig(){
         return new ParallelSolverConfiguration(
                 ParallelSolverConfiguration.SplittingStyle.BINARY_SPLITTING_STYLE,
-                ParallelSolverConfiguration.SplittingObjectType.BRANCH_EVENTS_SPLITTING_OBJECTS,
+                3, 0, 4, ParallelSolverConfiguration.SplittingObjectType.BRANCH_EVENTS_SPLITTING_OBJECTS,
                 ParallelSolverConfiguration.SplittingObjectFilter.NO_SO_FILTER,
                 ParallelSolverConfiguration.SplittingObjectSelection.RANDOM_SELECTION,
-                ParallelSolverConfiguration.StaticProgramAnalysis.BASELINE_SPA,
+                -861449674903621944L, ParallelSolverConfiguration.StaticProgramAnalysis.BASELINE_SPA,
                 ParallelSolverConfiguration.FormulaGenerator.IN_SOLVER,
                 ParallelSolverConfiguration.ClauseSharingFilter.NO_CS_FILTER,
-                ParallelSolverConfiguration.ClauseReceivingFilter.NO_CR_FILTER,
-                3,
-                0,
-                4,
-                -861449674903621944L);
+                5,
+                ParallelSolverConfiguration.ClauseReceivingFilter.NO_CR_FILTER
+        );
     }
 
     public static ParallelSolverConfiguration seededEventConfig(long chosenSeed) {
         return  (new ParallelSolverConfiguration(
                 ParallelSolverConfiguration.SplittingStyle.BINARY_SPLITTING_STYLE,
-                ParallelSolverConfiguration.SplittingObjectType.BRANCH_EVENTS_SPLITTING_OBJECTS,
+                3, 0, 4, ParallelSolverConfiguration.SplittingObjectType.BRANCH_EVENTS_SPLITTING_OBJECTS,
                 ParallelSolverConfiguration.SplittingObjectFilter.NO_SO_FILTER,
                 ParallelSolverConfiguration.SplittingObjectSelection.SEEDED_RANDOM_SELECTION,
-                ParallelSolverConfiguration.StaticProgramAnalysis.BASELINE_SPA,
+                chosenSeed, ParallelSolverConfiguration.StaticProgramAnalysis.BASELINE_SPA,
                 ParallelSolverConfiguration.FormulaGenerator.IN_SOLVER,
                 ParallelSolverConfiguration.ClauseSharingFilter.NO_CS_FILTER,
-                ParallelSolverConfiguration.ClauseReceivingFilter.NO_CR_FILTER,
-                3,
-                0,
-                4,
-                chosenSeed
+                5,
+                ParallelSolverConfiguration.ClauseReceivingFilter.NO_CR_FILTER
         ));
     }
 
     public static ParallelSolverConfiguration chosenEventConfig(int[] chosenEvents){
         ParallelSolverConfiguration parallelConfig =  new ParallelSolverConfiguration(
                 ParallelSolverConfiguration.SplittingStyle.BINARY_SPLITTING_STYLE,
-                ParallelSolverConfiguration.SplittingObjectType.BRANCH_EVENTS_SPLITTING_OBJECTS,
+                chosenEvents.length, 0, 4, ParallelSolverConfiguration.SplittingObjectType.BRANCH_EVENTS_SPLITTING_OBJECTS,
                 ParallelSolverConfiguration.SplittingObjectFilter.NO_SO_FILTER,
                 ParallelSolverConfiguration.SplittingObjectSelection.CHOSEN_SELECTION,
-                ParallelSolverConfiguration.StaticProgramAnalysis.BASELINE_SPA,
+                0L, ParallelSolverConfiguration.StaticProgramAnalysis.BASELINE_SPA,
                 ParallelSolverConfiguration.FormulaGenerator.IN_SOLVER,
                 ParallelSolverConfiguration.ClauseSharingFilter.NO_CS_FILTER,
-                ParallelSolverConfiguration.ClauseReceivingFilter.NO_CR_FILTER,
-                chosenEvents.length,
-                0,
-                4,
-                0L);
+                5,
+                ParallelSolverConfiguration.ClauseReceivingFilter.NO_CR_FILTER
+        );
         parallelConfig.setChosenEvents(chosenEvents);
         return parallelConfig;
     }
@@ -59,17 +52,14 @@ public class ParallelSolverConfigurationFactory {
     public static ParallelSolverConfiguration copyConfiguration(ParallelSolverConfiguration parallelConfig){
         return new ParallelSolverConfiguration(
                 parallelConfig.getSplittingStyle(),
-                parallelConfig.getSplittingObjectType(),
+                parallelConfig.getSplittingIntN(), parallelConfig.getSplittingIntM(), parallelConfig.getMaxNumberOfConcurrentThreads(), parallelConfig.getSplittingObjectType(),
                 parallelConfig.getSplittingObjectFilter(),
                 parallelConfig.getSplittingObjectSelection(),
-                parallelConfig.getStaticProgramAnalysis(),
+                parallelConfig.getRandomSeed(), parallelConfig.getStaticProgramAnalysis(),
                 parallelConfig.getFormulaGenerator(),
                 parallelConfig.getClauseSharingFilter(),
-                parallelConfig.getClauseReceivingFilter(),
-                parallelConfig.getSplittingIntN(),
-                parallelConfig.getSplittingIntM(),
-                parallelConfig.getMaxNumberOfConcurrentThreads(),
-                parallelConfig.getRandomSeed()
+                parallelConfig.getClauseSharingInterval(),
+                parallelConfig.getClauseReceivingFilter()
         );
     }
 

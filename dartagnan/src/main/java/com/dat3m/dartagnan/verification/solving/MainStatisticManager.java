@@ -6,12 +6,8 @@ import com.dat3m.dartagnan.wmm.utils.Tuple;
 
 import java.io.FileWriter;
 import java.util.BitSet;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 
 public class MainStatisticManager {
@@ -23,10 +19,8 @@ public class MainStatisticManager {
     private long startTime = -1;
     private long endTime = -1;
 
-    private final String reportFileName;
 
-    public MainStatisticManager(int numberOfSplits, ParallelSolverConfiguration parallelConfig, SplittingManager splittingManager, String reportFileName){
-        this.reportFileName = reportFileName;
+    public MainStatisticManager(int numberOfSplits, ParallelSolverConfiguration parallelConfig, SplittingManager splittingManager){
         threadStatisticManagers = new ThreadStatisticManager[numberOfSplits];
         this.parallelConfig = parallelConfig;
         this.spmgr = splittingManager;
@@ -131,11 +125,12 @@ public class MainStatisticManager {
     }
 
     public void createReportFile(){
-        if (reportFileName.equals("-1")){
+        if (!parallelConfig.isInitialisedFileReport()){
             return;
         }
 
-        String fullName = "output/reports/" + reportFileName + ".csv";
+
+        String fullName = "output/reports/" + parallelConfig.getReportFileName() + ".csv";
         try(FileWriter fileWriter = new FileWriter(fullName, true);
              PrintWriter printWriter = new PrintWriter(fileWriter);) {
 

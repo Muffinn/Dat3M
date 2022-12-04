@@ -5,7 +5,6 @@ import com.dat3m.dartagnan.configuration.Arch;
 import com.dat3m.dartagnan.utils.Result;
 import com.dat3m.dartagnan.utils.rules.CSVLogger;
 import com.dat3m.dartagnan.utils.rules.Provider;
-import com.dat3m.dartagnan.utils.visualization.ExecutionGraphVisualizer;
 import com.dat3m.dartagnan.verification.model.ExecutionModel;
 import com.dat3m.dartagnan.verification.solving.*;
 import org.junit.Test;
@@ -14,12 +13,8 @@ import org.junit.runners.Parameterized;
 import org.sosy_lab.common.configuration.Configuration;
 import org.sosy_lab.java_smt.SolverContextFactory;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Calendar;
-import java.util.concurrent.TimeUnit;
 
 import static com.dat3m.dartagnan.configuration.Arch.*;
 import static com.dat3m.dartagnan.utils.ResourceHelper.TEST_RESOURCE_PATH;
@@ -29,14 +24,14 @@ import static org.junit.Assert.assertEquals;
 @RunWith(Parameterized.class)
 public class MyLFDSTestLarge extends AbstractCTest {
 
-    private String reportName;
+    private String reportFileName;
 
-    public MyLFDSTestLarge(String name, Arch target, Result expected, String reportName) {
+    public MyLFDSTestLarge(String name, Arch target, Result expected, String reportFileName) {
         super(name, target, expected);
         //Calendar date = Calendar.getInstance();
         //String dateS = (date.get(Calendar.DAY_OF_MONTH)) + "_" + date.get(Calendar.MONTH)
         //        + "_" + date.get(Calendar.YEAR) + "_" + date.get(Calendar.HOUR_OF_DAY) + "_" + date.get(Calendar.MINUTE);
-        this.reportName = reportName + "_" + name + "_" + target.toString();// + "_" + date;
+        this.reportFileName = reportFileName;
     }
 
     @Override
@@ -96,9 +91,11 @@ public class MyLFDSTestLarge extends AbstractCTest {
     public void testParallelRefinement0() throws Exception {
         int[] chosenIDs = {442, 678};
         ParallelSolverConfiguration parallelConfig = ParallelSolverConfigurationFactory.chosenEventConfig(chosenIDs);
+        parallelConfig.initializeFileReport(reportFileName, target.toString(), name, "PR");
         ParallelRefinementSolver s = ParallelRefinementSolver.run(contextProvider.get(), proverProvider.get(),
                 taskProvider.get(), SolverContextFactory.Solvers.Z3, Configuration.defaultConfiguration(),
-                shutdownManagerProvider.get(), parallelConfig, "PR_" + reportName);
+                shutdownManagerProvider.get(), parallelConfig);
+
                 //SeedLeaderboard.Dglm3TsoLeaderboard(1));
         assertEquals(expected, s.getResult());
     }

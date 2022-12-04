@@ -78,9 +78,9 @@ public class ParallelRefinementSolver extends ParallelSolver {
 
     private ParallelRefinementSolver(SolverContext c, ProverEnvironment p, VerificationTask t, ShutdownManager sdm,
                                      SolverContextFactory.Solvers solverType, Configuration solverConfig,
-                                     ParallelSolverConfiguration parallelConfig, String reportFileName)
+                                     ParallelSolverConfiguration parallelConfig)
             throws InvalidConfigurationException{
-        super(c, p, t, sdm, solverType, solverConfig, parallelConfig, reportFileName);
+        super(c, p, t, sdm, solverType, solverConfig, parallelConfig);
 
         this.refinementCollector = new ParallelRefinementCollector(0, parallelConfig);
 
@@ -91,12 +91,11 @@ public class ParallelRefinementSolver extends ParallelSolver {
     //TODO (2): Add possibility for Refinement to handle CAT-properties (it ignores them for now).
     public static ParallelRefinementSolver run(SolverContext ctx, ProverEnvironment prover, VerificationTask task,
                                                SolverContextFactory.Solvers solverType, Configuration solverConfig,
-                                               ShutdownManager sdm, ParallelSolverConfiguration parallelConfig,
-                                               String reportFileName)
+                                               ShutdownManager sdm, ParallelSolverConfiguration parallelConfig)
             throws InterruptedException, SolverException, InvalidConfigurationException {
         task.getConfig().inject(parallelConfig);
         ParallelRefinementSolver s = new ParallelRefinementSolver(ctx, prover, task, sdm, solverType, solverConfig,
-                parallelConfig, reportFileName);
+                parallelConfig);
         task.getConfig().inject(s);
         logger.info("{}: {}", BASELINE, s.baselines);
         s.run();
