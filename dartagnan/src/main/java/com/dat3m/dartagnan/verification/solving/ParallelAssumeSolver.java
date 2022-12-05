@@ -31,15 +31,15 @@ public class ParallelAssumeSolver extends ParallelSolver{
 
     public ParallelAssumeSolver(SolverContext ctx, ProverEnvironment prover, VerificationTask task, ShutdownManager sdm,
                                 SolverContextFactory.Solvers solver, Configuration solverConfig,
-                                ParallelSolverConfiguration parallelConfig, String reportFileName)
+                                ParallelSolverConfiguration parallelConfig)
             throws InvalidConfigurationException{
-        super(ctx, prover, task, sdm, solver, solverConfig, parallelConfig, reportFileName);
+        super(ctx, prover, task, sdm, solver, solverConfig, parallelConfig);
     }
 
     public static ParallelAssumeSolver run(SolverContext mainCTX, ProverEnvironment prover, VerificationTask task, SolverContextFactory.Solvers solver, Configuration solverConfig,
-                                   ShutdownManager sdm, ParallelSolverConfiguration parallelConfig, String reportFileName)
+                                   ShutdownManager sdm, ParallelSolverConfiguration parallelConfig)
             throws InterruptedException, SolverException, InvalidConfigurationException{
-        ParallelAssumeSolver parallelAssumeSolver = new ParallelAssumeSolver(mainCTX, prover, task, sdm, solver, solverConfig, parallelConfig, reportFileName);
+        ParallelAssumeSolver parallelAssumeSolver = new ParallelAssumeSolver(mainCTX, prover, task, sdm, solver, solverConfig, parallelConfig);
         parallelAssumeSolver.run();
         return parallelAssumeSolver;
     }

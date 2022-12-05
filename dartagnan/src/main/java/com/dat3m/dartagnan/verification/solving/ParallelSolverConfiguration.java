@@ -18,6 +18,13 @@ public class ParallelSolverConfiguration {
     @Option(description = "Second Int used to generate the slitting", name = "queueSettingInt2", secure = true)
     private int splittingIntM;
 
+    private int numberOfSplits; //derived from SplittingStyle, n and m
+    private int formulaLength; //derived from SplittingStyle, n and m
+
+
+    @Option(description = "The maximum number of concurrent threads", name = "maxConcurrentThreads", secure = true)
+    private int maxNumberOfConcurrentThreads;
+
     @Option(description = "The objects used to generate the splitting assumptions", name = "formulaItemType", secure = true)
     private SplittingObjectType splittingObjectType;
 
@@ -47,17 +54,14 @@ public class ParallelSolverConfiguration {
 
 
 
-    @Option(description = "The maximum number of concurrent threads", name = "maxConcurrentThreads", secure = true)
-    private int maxNumberOfConcurrentThreads;
 
-    private int numberOfSplits;
-    private int formulaLength;
+
 
     //data report
 
     private boolean initialisedFileReport = false;
     private String reportFileName = "noNameInitialized";
-    private String architecture = "noArchInitialized";
+    private String architectureName = "noArchInitialized";
     private String targetName = "noTargetNameInitialized";
     private String solverName = "noSovlerNameGiven";
 
@@ -188,25 +192,29 @@ public class ParallelSolverConfiguration {
         }
     }
 
-    public String toDataReport(){
-        String dataReport = new String();
+    public String toString(){
+        String toString = new String();
 
-        dataReport += splittingStyle + ",";
-        dataReport += splittingObjectType + ",";
-        dataReport += splittingObjectFilter + ",";
-        dataReport += splittingObjectSelection + ",";
-        dataReport += staticProgramAnalysis + ",";
-        dataReport += clauseSharingFilter + ",";
-        dataReport += clauseReceivingFilter + ",";
-        dataReport += splittingIntN + ",";
-        dataReport += splittingIntM + ",";
-        dataReport += maxNumberOfConcurrentThreads + ",";
-        dataReport += randomSeed + ",";
+        toString += splittingStyle + ",";
+        toString += splittingIntN + ",";
+        toString += splittingIntM + ",";
+        toString += numberOfSplits + ",";
+        toString += formulaLength + ",";
+        toString += maxNumberOfConcurrentThreads + ",";
+        toString += splittingObjectType + ",";
+        toString += splittingObjectFilter + ",";
+        toString += splittingObjectSelection + ",";
+        toString += randomSeed + ",";
+        toString += staticProgramAnalysis + ",";
+        toString += clauseSharingFilter + ",";
+        toString += clauseSharingInterval + ",";
+        toString += clauseReceivingFilter;
 
 
 
 
-        return dataReport;
+
+        return toString;
     }
 
     //----------------------------------SETTER--------------------------------
@@ -274,7 +282,7 @@ public class ParallelSolverConfiguration {
     public void initializeFileReport(String reportFileName, String architectureName, String targetName, String solverName){
         this.initialisedFileReport = true;
         this.reportFileName = reportFileName;
-        this.architecture = architectureName;
+        this.architectureName = architectureName;
         this.targetName = targetName;
         this.solverName = solverName;
     }
@@ -353,11 +361,15 @@ public class ParallelSolverConfiguration {
         return reportFileName;
     }
 
-    public String getArchitecture() {
-        return architecture;
+    public String getArchitectureName() {
+        return architectureName;
     }
 
     public String getTargetName() {
         return targetName;
+    }
+
+    public String getSolverName() {
+        return solverName;
     }
 }

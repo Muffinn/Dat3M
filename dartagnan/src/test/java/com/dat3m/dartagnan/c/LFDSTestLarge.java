@@ -96,7 +96,7 @@ public class LFDSTestLarge extends AbstractCTest {
         //parallelConfig.setQueueSettingIntN(2);
         ParallelRefinementSolver s = ParallelRefinementSolver.run(contextProvider.get(), proverProvider.get(),
                 taskProvider.get(), SolverContextFactory.Solvers.Z3, Configuration.defaultConfiguration(),
-                shutdownManagerProvider.get(), parallelConfig, "randomtest");
+                shutdownManagerProvider.get(), parallelConfig);
                 //SeedLeaderboard.Dglm3TsoLeaderboard(1));
         assertEquals(expected, s.getResult());
     }
@@ -114,7 +114,7 @@ public class LFDSTestLarge extends AbstractCTest {
 
         ParallelRefinementSolver s = ParallelRefinementSolver.run(contextProvider.get(), proverProvider.get(), taskProvider.get(), SolverContextFactory.Solvers.Z3,
                 Configuration.defaultConfiguration(), shutdownManagerProvider.get(),
-                parallelConfig, "randomtest");
+                parallelConfig);
                 //SeedLeaderboard.Dglm3Arm8Leaderboard(1));
         assertEquals(expected, s.getResult());
     }
@@ -130,7 +130,7 @@ public class LFDSTestLarge extends AbstractCTest {
         //parallelConfig.setQueueSettingIntN(2);
         ParallelRefinementSolver s = ParallelRefinementSolver.run(contextProvider.get(), proverProvider.get(),
                 taskProvider.get(), SolverContextFactory.Solvers.Z3, Configuration.defaultConfiguration(),
-                shutdownManagerProvider.get(), parallelConfig, "randomtest");
+                shutdownManagerProvider.get(), parallelConfig);
                 //SeedLeaderboard.Ms3TsoLeaderboard(1));
         assertEquals(expected, s.getResult());
     }
@@ -146,7 +146,7 @@ public class LFDSTestLarge extends AbstractCTest {
         ParallelRefinementSolver s = ParallelRefinementSolver.run(contextProvider.get(), proverProvider.get(),
                 taskProvider.get(), SolverContextFactory.Solvers.Z3,
                 Configuration.defaultConfiguration(), shutdownManagerProvider.get(),
-                parallelConfig, "randomtest");
+                parallelConfig);
                 //SeedLeaderboard.Ms3Arm8Leaderboard(1));
         assertEquals(expected, s.getResult());
     }
@@ -160,8 +160,7 @@ public class LFDSTestLarge extends AbstractCTest {
 
         ParallelAssumeSolver s = ParallelAssumeSolver.run(contextProvider.get(), proverProvider.get(),
                 taskProvider.get(), SolverContextFactory.Solvers.Z3, Configuration.defaultConfiguration(),
-                shutdownManagerProvider.get(), ParallelSolverConfigurationFactory.basicEventConfig(),
-                "-1");
+                shutdownManagerProvider.get(), ParallelSolverConfigurationFactory.basicEventConfig());
         assertEquals(expected, s.getResult());
     }
 

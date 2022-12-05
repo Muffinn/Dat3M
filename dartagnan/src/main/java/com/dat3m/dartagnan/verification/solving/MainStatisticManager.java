@@ -6,6 +6,7 @@ import com.dat3m.dartagnan.wmm.utils.Tuple;
 
 import java.io.FileWriter;
 import java.util.BitSet;
+import java.util.Calendar;
 import java.util.List;
 
 import java.io.PrintWriter;
@@ -128,23 +129,42 @@ public class MainStatisticManager {
         if (!parallelConfig.isInitialisedFileReport()){
             return;
         }
+        Calendar date = Calendar.getInstance();
+        String reportFileName = parallelConfig.getReportFileName() + "_" + parallelConfig.getSolverName() + "_"
+                + parallelConfig.getTargetName() + "_" + parallelConfig.getArchitectureName();
 
 
-        String fullName = "output/reports/" + parallelConfig.getReportFileName() + ".csv";
+        String fullName = "output/reports/" + reportFileName + ".csv";
+        StringBuilder sb = new StringBuilder();
+
+        sb.append(parallelConfig.getReportFileName());
+        sb.append(",");
+        sb.append(parallelConfig.getSolverName());
+        sb.append(",");
+        sb.append(parallelConfig.getTargetName());
+        sb.append(",");
+        sb.append(parallelConfig.getArchitectureName());
+        sb.append(",");
+        sb.append(date.get(Calendar.DAY_OF_MONTH));
+        sb.append(".");
+        sb.append(date.get(Calendar.MONTH));
+        sb.append(".");
+        sb.append(date.get(Calendar.YEAR));
+        sb.append(",");
+
+        sb.append(parallelConfig);
+        sb.append(",");
+
+
+
+        for(ThreadStatisticManager tsmtsmtsm : threadStatisticManagers) {
+            sb.append(tsmtsmtsm.reportString());
+            sb.append(",");
+        }
+
         try(FileWriter fileWriter = new FileWriter(fullName, true);
              PrintWriter printWriter = new PrintWriter(fileWriter);) {
-
-
-
-
-            StringBuilder sb = new StringBuilder();
-            for(ThreadStatisticManager tsmtsmtsm : threadStatisticManagers) {
-                sb.append(tsmtsmtsm.reportString());
-                sb.append(",");
-            }
             printWriter.println(sb);
-
-
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }

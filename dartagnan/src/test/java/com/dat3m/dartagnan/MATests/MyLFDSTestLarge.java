@@ -28,9 +28,6 @@ public class MyLFDSTestLarge extends AbstractCTest {
 
     public MyLFDSTestLarge(String name, Arch target, Result expected, String reportFileName) {
         super(name, target, expected);
-        //Calendar date = Calendar.getInstance();
-        //String dateS = (date.get(Calendar.DAY_OF_MONTH)) + "_" + date.get(Calendar.MONTH)
-        //        + "_" + date.get(Calendar.YEAR) + "_" + date.get(Calendar.HOUR_OF_DAY) + "_" + date.get(Calendar.MINUTE);
         this.reportFileName = reportFileName;
     }
 
@@ -107,8 +104,7 @@ public class MyLFDSTestLarge extends AbstractCTest {
 
         ParallelAssumeSolver s = ParallelAssumeSolver.run(contextProvider.get(), proverProvider.get(),
                 taskProvider.get(), SolverContextFactory.Solvers.Z3, Configuration.defaultConfiguration(),
-                shutdownManagerProvider.get(), ParallelSolverConfigurationFactory.basicEventConfig(),
-                "-1");
+                shutdownManagerProvider.get(), ParallelSolverConfigurationFactory.basicEventConfig());
         assertEquals(expected, s.getResult());
     }
 
