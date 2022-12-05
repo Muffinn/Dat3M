@@ -155,8 +155,41 @@ public class MainStatisticManager {
         sb.append(parallelConfig);
         sb.append(",");
 
+        int formulaLength = parallelConfig.getFormulaLength();
+        sb.append("{");
+        switch (parallelConfig.getSplittingObjectType()){
+            case BRANCH_EVENTS_SPLITTING_OBJECTS:
+            case ALL_EVENTS_SPLITTING_OBJECTS:
+                List<Event> eventList = spmgr.getEventList();
+                for (int i = 0; i < formulaLength; i++){
+                    sb.append(eventList.get(i).getCId());
+                    sb.append(" ");
+                }
+                break;
+
+            case CO_RELATION_SPLITTING_OBJECTS:
+            case RF_RELATION_SPLITTING_OBJECTS:
+                List<Tuple> tupleList = spmgr.getTupleList();
+
+                for (int i = 0; i < formulaLength; i++){
+                    sb.append("[");
+                    sb.append(tupleList.get(i).getFirst());
+                    sb.append(" ");
+                    sb.append(tupleList.get(i).getSecond());
+                    sb.append("]");
+                }
+                break;
+
+            case NO_SPLITTING_OBJECTS:
+                break;
+
+            default:
+                throw(new Error("Unreachable code reached in MainStatisticManager::calculateLiteralStatistics()"));
+        }
+        sb.append("},");
 
 
+        sb.append("threadStats:,");
         for(ThreadStatisticManager tsmtsmtsm : threadStatisticManagers) {
             sb.append(tsmtsmtsm.reportString());
             sb.append(",");
