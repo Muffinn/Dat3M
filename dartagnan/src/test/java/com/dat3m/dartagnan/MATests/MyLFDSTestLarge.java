@@ -48,7 +48,7 @@ public class MyLFDSTestLarge extends AbstractCTest {
 	@Parameterized.Parameters(name = "{index}: {0}, target={1}")
     public static Iterable<Object[]> data() throws IOException {
 		return Arrays.asList(new Object[][]{
-            //{"safe_stack-3", TSO, Result.FAIL},
+            {"safe_stack-3", TSO, Result.FAIL, "kaktus"},
             //{"safe_stack-3", ARM8, Result.FAIL},
             //{"safe_stack-3", C11, Result.FAIL},
             {"dglm-3", TSO, UNKNOWN, "kaktus"},
@@ -83,7 +83,7 @@ public class MyLFDSTestLarge extends AbstractCTest {
 	}
 
 
-    //@Test
+    @Test
     @CSVLogger.FileName("csv/parallelRefinement")
     public void testParallelRefinement0() throws Exception {
         int[] chosenIDs = {442, 678};
@@ -98,8 +98,8 @@ public class MyLFDSTestLarge extends AbstractCTest {
     }
 
 
-    @Test
-    @CSVLogger.FileName("csv/assume")
+    //@Test
+    //@CSVLogger.FileName("csv/assume")
     public void testParallelAssume() throws Exception {
 
         ParallelAssumeSolver s = ParallelAssumeSolver.run(contextProvider.get(), proverProvider.get(),

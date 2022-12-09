@@ -11,7 +11,7 @@ public class ThreadStatisticManager {
     private BooleanFormula  myFormula;
     private Result myResult;
     private BitSet[] bitSetPair;
-
+    private boolean resultReported;
 
     private long startTime = -1;
     private long endTime = -1;
@@ -38,12 +38,17 @@ public class ThreadStatisticManager {
         this.threadID = threadID;
         this.parallelConfig = parallelConfig;
         bitSetPair = new BitSet[]{new BitSet(), new BitSet()};
+        this.resultReported = false;
 
     }
 
 
     //..............Print...................
     public void printThreadStatistics(){
+        if(!resultReported){
+            System.out.println("Thread " + threadID + " did not finish calculations and aborted.\n \n");
+        }
+
         printGeneralInfo();
 
         System.out.println("");
@@ -108,6 +113,7 @@ public class ThreadStatisticManager {
 
     //..................Report..Stats............
     public void reportResult(Result myResult){
+        resultReported = true;
         endTime = System.currentTimeMillis();
         this.myResult = myResult;
     }
@@ -121,6 +127,10 @@ public class ThreadStatisticManager {
     }
 
     public String reportString(){
+        if(!resultReported){
+            return "-1, -1, -1, -1, -1, -1";
+        }
+
         String reportString;
 
         reportString = bitSetPair[0].toString().replaceAll(",", "")
