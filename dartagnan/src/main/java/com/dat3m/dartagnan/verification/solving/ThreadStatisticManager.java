@@ -47,6 +47,7 @@ public class ThreadStatisticManager {
     public void printThreadStatistics(){
         if(!resultReported){
             System.out.println("Thread " + threadID + " did not finish calculations and aborted.\n \n");
+            return;
         }
 
         printGeneralInfo();
@@ -65,6 +66,10 @@ public class ThreadStatisticManager {
     }
 
     public void printGeneralInfo(){
+        if(!resultReported){
+            System.out.println("Thread " + threadID + " did not finish calculations and aborted.\n \n");
+            return;
+        }
         System.out.println("Thread " + threadID + " report:");
 
 
@@ -74,6 +79,11 @@ public class ThreadStatisticManager {
     }
 
     public void printSolverTime(){
+        if(!resultReported){
+            System.out.println("Thread " + threadID + " did not finish calculations and aborted.\n \n");
+            return;
+        }
+
         System.out.println("Thread " + threadID + " Solver Times:");
         System.out.println("TotalTime: " + (int)(calculateTotalTime()/1000) + " seconds");
         System.out.println("Preprocessing Time: " + toSeconds(preProcessingTime) + " seconds");
@@ -84,6 +94,11 @@ public class ThreadStatisticManager {
     }
 
     public void printClauseSharingStats(){
+        if(!resultReported){
+            System.out.println("Thread " + threadID + " did not finish calculations and aborted.\n \n");
+            return;
+        }
+
         System.out.println("Thread " + threadID + " ClauseSharingStats: ");
         System.out.println("ClauseSharingTime: " + clauseSharingTime + " ms");
         if(parallelConfig.getClauseSharingFilter() != ParallelSolverConfiguration.ClauseSharingFilter.NO_CS_FILTER){
@@ -93,6 +108,11 @@ public class ThreadStatisticManager {
     }
 
     public void printClauseReceivingStats(){
+        if(!resultReported){
+            System.out.println("Thread " + threadID + " did not finish calculations and aborted.\n \n");
+            return;
+        }
+
         System.out.println("Thread " + threadID + " ClauseReceivingStats: ");
         System.out.println("ClauseReceivingTime: " + clauseReceivingTime + " ms");
         if(parallelConfig.getClauseReceivingFilter() != ParallelSolverConfiguration.ClauseReceivingFilter.NO_CR_FILTER) {

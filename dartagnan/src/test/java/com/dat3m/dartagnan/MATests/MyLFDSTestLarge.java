@@ -49,11 +49,14 @@ public class MyLFDSTestLarge extends AbstractCTest {
     public static Iterable<Object[]> data() throws IOException {
 		return Arrays.asList(new Object[][]{
             {"safe_stack-3", TSO, Result.FAIL, "kaktus"},
+                {"safe_stack-3", TSO, Result.FAIL, "kaktus"},
+                {"safe_stack-3", TSO, Result.FAIL, "kaktus"},
+                {"safe_stack-3", TSO, Result.FAIL, "kaktus"},
             //{"safe_stack-3", ARM8, Result.FAIL},
             //{"safe_stack-3", C11, Result.FAIL},
-            {"dglm-3", TSO, UNKNOWN, "kaktus"},
-            {"dglm-3", ARM8, UNKNOWN, "kaktus"},
-            {"dglm-3", C11, UNKNOWN, "kaktus"},
+            //{"dglm-3", TSO, UNKNOWN, "kaktus"},
+            //{"dglm-3", ARM8, UNKNOWN, "kaktus"},
+            //{"dglm-3", C11, UNKNOWN, "kaktus"},
             //{"ms-3", TSO, UNKNOWN},
             //{"ms-3", ARM8, UNKNOWN},
             //{"ms-3", C11, UNKNOWN},
@@ -87,7 +90,7 @@ public class MyLFDSTestLarge extends AbstractCTest {
     @CSVLogger.FileName("csv/parallelRefinement")
     public void testParallelRefinement0() throws Exception {
         int[] chosenIDs = {442, 678};
-        ParallelSolverConfiguration parallelConfig = ParallelSolverConfigurationFactory.basicEventConfig();
+        ParallelSolverConfiguration parallelConfig = ParallelSolverConfigurationFactory.noSplittingConfig(4);
         parallelConfig.initializeFileReport(reportFileName, target.toString(), name, "PR");
         ParallelRefinementSolver s = ParallelRefinementSolver.run(contextProvider.get(), proverProvider.get(),
                 taskProvider.get(), SolverContextFactory.Solvers.Z3, Configuration.defaultConfiguration(),
@@ -104,7 +107,7 @@ public class MyLFDSTestLarge extends AbstractCTest {
 
         ParallelAssumeSolver s = ParallelAssumeSolver.run(contextProvider.get(), proverProvider.get(),
                 taskProvider.get(), SolverContextFactory.Solvers.Z3, Configuration.defaultConfiguration(),
-                shutdownManagerProvider.get(), ParallelSolverConfigurationFactory.basicEventConfig());
+                shutdownManagerProvider.get(), ParallelSolverConfigurationFactory.randomEventConfig());
         assertEquals(expected, s.getResult());
     }
 

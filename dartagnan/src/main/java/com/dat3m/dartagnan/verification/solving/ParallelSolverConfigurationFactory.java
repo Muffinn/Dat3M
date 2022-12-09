@@ -4,7 +4,7 @@ public class ParallelSolverConfigurationFactory {
 
 
 
-    public static ParallelSolverConfiguration basicEventConfig(){
+    public static ParallelSolverConfiguration randomEventConfig(){
         return new ParallelSolverConfiguration(
                 ParallelSolverConfiguration.SplittingStyle.BINARY_SPLITTING_STYLE,
                 3, 0, 4, ParallelSolverConfiguration.SplittingObjectType.BRANCH_EVENTS_SPLITTING_OBJECTS,

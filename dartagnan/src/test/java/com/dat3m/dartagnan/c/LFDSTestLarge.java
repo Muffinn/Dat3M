@@ -156,7 +156,7 @@ public class LFDSTestLarge extends AbstractCTest {
 
         ParallelAssumeSolver s = ParallelAssumeSolver.run(contextProvider.get(), proverProvider.get(),
                 taskProvider.get(), SolverContextFactory.Solvers.Z3, Configuration.defaultConfiguration(),
-                shutdownManagerProvider.get(), ParallelSolverConfigurationFactory.basicEventConfig());
+                shutdownManagerProvider.get(), ParallelSolverConfigurationFactory.randomEventConfig());
         assertEquals(expected, s.getResult());
     }
 
