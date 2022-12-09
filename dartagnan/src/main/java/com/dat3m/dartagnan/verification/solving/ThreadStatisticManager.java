@@ -37,12 +37,13 @@ public class ThreadStatisticManager {
     public ThreadStatisticManager(int threadID, ParallelSolverConfiguration parallelConfig){
         this.threadID = threadID;
         this.parallelConfig = parallelConfig;
+        bitSetPair = new BitSet[]{new BitSet(), new BitSet()};
 
     }
 
 
     //..............Print...................
-    public void print(){
+    public void printThreadStatistics(){
         printGeneralInfo();
 
         System.out.println("");
@@ -124,6 +125,7 @@ public class ThreadStatisticManager {
 
         reportString = bitSetPair[0].toString().replaceAll(",", "")
                 + "," + bitSetPair[1].toString().replaceAll(",", "")
+                + "," + calculateTotalTime()
                 + "," + totalSolverTime
                 + "," + totalWMMSolverTime
                 + "," + totalCAATSolverTime

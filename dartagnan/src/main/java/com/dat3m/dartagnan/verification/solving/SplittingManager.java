@@ -42,7 +42,7 @@ public class SplittingManager {
             throws InvalidConfigurationException{
         this.bitsetQueue = new ConcurrentLinkedQueue<BitSet[]>();
         this.parallelConfig = parallelConfig;
-        populateFormulaQueue();
+        populateBitSetQueue();
     }
 
 
@@ -77,7 +77,7 @@ public class SplittingManager {
 
     public List<Event> getEventList() {return eventList;}
 
-    public void populateFormulaQueue()
+    public void populateBitSetQueue()
             throws InvalidConfigurationException{
         switch(parallelConfig.getSplittingStyle()){
             case NO_SPLITTING_STYLE:

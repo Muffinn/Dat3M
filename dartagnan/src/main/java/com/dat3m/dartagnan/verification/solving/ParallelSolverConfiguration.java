@@ -93,7 +93,7 @@ public class ParallelSolverConfiguration {
     }
 
     public enum FormulaGenerator {
-        IN_MANAGER, IN_SOLVER;
+        DEPRECATED, IN_SOLVER;
     }
 
     public enum ClauseSharingFilter {
@@ -126,22 +126,13 @@ public class ParallelSolverConfiguration {
                                        ClauseReceivingFilter clauseReceivingFilter)
              {
 
-        if (splittingObjectType != SplittingObjectType.NO_SPLITTING_OBJECTS) {
-            if(splittingStyle == SplittingStyle.NO_SPLITTING_STYLE){
-                throw (new Error("TAUTOLOGY_FORMULA_STYLE FormulaQueueStyle is only supported with FormulaItemType TAUTOLOGY_FORMULAS."));
-            }
-            this.splittingObjectType = splittingObjectType;
-            this.splittingObjectFilter = splittingObjectFilter;
-            this.splittingObjectSelection = splittingObjectSelection;
-            this.splittingStyle = splittingStyle;
-            this.formulaGenerator = formulaGenerator;
-        } else {
-            this.splittingObjectType = SplittingObjectType.NO_SPLITTING_OBJECTS;
-            this.splittingObjectFilter = SplittingObjectFilter.NO_SO_FILTER;
-            this.splittingObjectSelection = SplittingObjectSelection.NO_SELECTION;
-            this.splittingStyle = SplittingStyle.NO_SPLITTING_STYLE;
-            this.formulaGenerator = FormulaGenerator.IN_MANAGER;
-        }
+
+        this.splittingObjectType = splittingObjectType;
+        this.splittingObjectFilter = splittingObjectFilter;
+        this.splittingObjectSelection = splittingObjectSelection;
+        this.splittingStyle = splittingStyle;
+        this.formulaGenerator = formulaGenerator;
+
         this.staticProgramAnalysis = staticProgramAnalysis;
         this.clauseSharingFilter = clauseSharingFilter;
         this.clauseSharingInterval = clauseSharingInterval;

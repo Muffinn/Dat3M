@@ -48,6 +48,22 @@ public class ParallelSolverConfigurationFactory {
         return parallelConfig;
     }
 
+    public static ParallelSolverConfiguration noSplittingConfig(int numberOfSplits){
+        return new ParallelSolverConfiguration(ParallelSolverConfiguration.SplittingStyle.NO_SPLITTING_STYLE,
+                numberOfSplits,
+                0,
+                numberOfSplits,
+                ParallelSolverConfiguration.SplittingObjectType.NO_SPLITTING_OBJECTS,
+                ParallelSolverConfiguration.SplittingObjectFilter.NO_SO_FILTER,
+                ParallelSolverConfiguration.SplittingObjectSelection.NO_SELECTION,
+                0L,
+                ParallelSolverConfiguration.StaticProgramAnalysis.BASELINE_SPA,
+                ParallelSolverConfiguration.FormulaGenerator.DEPRECATED,
+                ParallelSolverConfiguration.ClauseSharingFilter.NO_CS_FILTER,
+                5,
+                ParallelSolverConfiguration.ClauseReceivingFilter.NO_CR_FILTER
+        );
+    }
 
     public static ParallelSolverConfiguration copyConfiguration(ParallelSolverConfiguration parallelConfig){
         return new ParallelSolverConfiguration(

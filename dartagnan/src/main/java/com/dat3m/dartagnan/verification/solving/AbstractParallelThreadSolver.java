@@ -30,9 +30,9 @@ import static com.dat3m.dartagnan.configuration.OptionNames.BASELINE;
           provided by the theory solver.
  */
 @Options
-public abstract class ParallelThreadSolver extends ModelChecker {
+public abstract class AbstractParallelThreadSolver extends ModelChecker {
 
-    protected final static Logger logger = LogManager.getLogger(ParallelThreadSolver.class);
+    protected final static Logger logger = LogManager.getLogger(AbstractParallelThreadSolver.class);
 
     protected final SolverContext myCTX;
     protected final ProverEnvironment myProver;
@@ -60,10 +60,10 @@ public abstract class ParallelThreadSolver extends ModelChecker {
 
     // ======================================================================
 
-    public ParallelThreadSolver(VerificationTask mainTask, SplittingManager mainSPMGR, ShutdownManager sdm,
-                                ParallelResultCollector mainResultCollector,
-                                SolverContextFactory.Solvers solver, Configuration solverConfig, int threadID,
-                                ParallelSolverConfiguration parallelConfig, ThreadStatisticManager myStatisticManager)
+    public AbstractParallelThreadSolver(VerificationTask mainTask, SplittingManager mainSPMGR, ShutdownManager sdm,
+                                        ParallelResultCollector mainResultCollector,
+                                        SolverContextFactory.Solvers solver, Configuration solverConfig, int threadID,
+                                        ParallelSolverConfiguration parallelConfig, ThreadStatisticManager myStatisticManager)
             throws InvalidConfigurationException{
         myCTX = SolverContextFactory.createSolverContext(
                 solverConfig,
@@ -139,7 +139,7 @@ public abstract class ParallelThreadSolver extends ModelChecker {
                         throw(new Error(mainParallelConfig.getSplittingObjectType() + "is not supported in generateMyFormula in ParallelThreadSolver."));
                 }
                 break;
-            case IN_MANAGER:
+            case DEPRECATED:
                 switch (mainParallelConfig.getSplittingObjectType()){
                     case RF_RELATION_SPLITTING_OBJECTS:
                     case CO_RELATION_SPLITTING_OBJECTS:

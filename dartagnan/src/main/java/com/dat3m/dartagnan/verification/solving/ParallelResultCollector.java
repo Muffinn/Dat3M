@@ -54,7 +54,7 @@ public class ParallelResultCollector {
 
     public void printTimes(){
         for(ThreadStatisticManager tSM: statisticManagers){
-            tSM.print();
+            tSM.printThreadStatistics();
         }
     }
 

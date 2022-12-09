@@ -3,8 +3,6 @@ package com.dat3m.dartagnan.verification.solving;
 import com.dat3m.dartagnan.configuration.Baseline;
 import com.dat3m.dartagnan.encoding.*;
 import com.dat3m.dartagnan.program.Program;
-import com.dat3m.dartagnan.program.analysis.BranchEquivalence;
-import com.dat3m.dartagnan.program.event.core.Event;
 import com.dat3m.dartagnan.program.filter.FilterAbstract;
 import com.dat3m.dartagnan.solver.caat4wmm.WMMSolver;
 import com.dat3m.dartagnan.solver.caat4wmm.coreReasoning.CoreLiteral;
@@ -18,16 +16,10 @@ import com.dat3m.dartagnan.verification.model.ExecutionModel;
 import com.dat3m.dartagnan.wmm.Definition;
 import com.dat3m.dartagnan.wmm.Relation;
 import com.dat3m.dartagnan.wmm.Wmm;
-import com.dat3m.dartagnan.wmm.analysis.RelationAnalysis;
 import com.dat3m.dartagnan.wmm.axiom.Acyclic;
 import com.dat3m.dartagnan.wmm.axiom.Empty;
 import com.dat3m.dartagnan.wmm.axiom.ForceEncodeAxiom;
 import com.dat3m.dartagnan.wmm.definition.*;
-import com.dat3m.dartagnan.wmm.relation.RelationNameRepository;
-import com.dat3m.dartagnan.wmm.utils.Tuple;
-import com.dat3m.dartagnan.wmm.utils.TupleSet;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.sosy_lab.common.ShutdownManager;
 import org.sosy_lab.common.configuration.Configuration;
 import org.sosy_lab.common.configuration.InvalidConfigurationException;
@@ -38,10 +30,8 @@ import org.sosy_lab.java_smt.api.*;
 
 import java.util.*;
 import java.util.function.BiPredicate;
-import java.util.stream.Collectors;
 
 import static com.dat3m.dartagnan.configuration.OptionNames.BASELINE;
-import static com.dat3m.dartagnan.utils.Result.*;
 import static com.dat3m.dartagnan.utils.visualization.ExecutionGraphVisualizer.generateGraphvizFile;
 import static com.dat3m.dartagnan.wmm.relation.RelationNameRepository.*;
 
@@ -56,7 +46,7 @@ import static com.dat3m.dartagnan.wmm.relation.RelationNameRepository.*;
           provided by the theory solver.
  */
 @Options
-public class ParallelRefinementSolver extends ParallelSolver {
+public class ParallelRefinementSolver extends AbstractParallelSolver {
 
 
     private Set<Relation> cutRelations;

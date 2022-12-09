@@ -4,11 +4,6 @@ import com.dat3m.dartagnan.encoding.*;
 import com.dat3m.dartagnan.verification.Context;
 import com.dat3m.dartagnan.verification.VerificationTask;
 import com.dat3m.dartagnan.wmm.Wmm;
-import com.dat3m.dartagnan.wmm.analysis.RelationAnalysis;
-import com.dat3m.dartagnan.wmm.Relation;
-import com.dat3m.dartagnan.wmm.relation.RelationNameRepository;
-import com.dat3m.dartagnan.wmm.utils.Tuple;
-import com.dat3m.dartagnan.wmm.utils.TupleSet;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.sosy_lab.common.ShutdownManager;
@@ -17,12 +12,8 @@ import org.sosy_lab.common.configuration.InvalidConfigurationException;
 import org.sosy_lab.java_smt.SolverContextFactory;
 import org.sosy_lab.java_smt.api.*;
 
-import java.util.*;
 
-import static com.dat3m.dartagnan.utils.Result.*;
-
-
-public class ParallelAssumeSolver extends ParallelSolver{
+public class ParallelAssumeSolver extends AbstractParallelSolver {
 
     private static final Logger logger = LogManager.getLogger(AssumeSolver.class);
 
@@ -37,7 +28,7 @@ public class ParallelAssumeSolver extends ParallelSolver{
     }
 
     public static ParallelAssumeSolver run(SolverContext mainCTX, ProverEnvironment prover, VerificationTask task, SolverContextFactory.Solvers solver, Configuration solverConfig,
-                                   ShutdownManager sdm, ParallelSolverConfiguration parallelConfig)
+                                           ShutdownManager sdm, ParallelSolverConfiguration parallelConfig)
             throws InterruptedException, SolverException, InvalidConfigurationException{
         ParallelAssumeSolver parallelAssumeSolver = new ParallelAssumeSolver(mainCTX, prover, task, sdm, solver, solverConfig, parallelConfig);
         parallelAssumeSolver.run();

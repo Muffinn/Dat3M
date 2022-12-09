@@ -35,7 +35,6 @@ import org.sosy_lab.common.configuration.Configuration;
 import org.sosy_lab.common.configuration.InvalidConfigurationException;
 import org.sosy_lab.common.configuration.Option;
 import org.sosy_lab.common.configuration.Options;
-import org.sosy_lab.common.log.BasicLogManager;
 import org.sosy_lab.java_smt.SolverContextFactory;
 import org.sosy_lab.java_smt.api.*;
 
@@ -62,7 +61,7 @@ import static com.dat3m.dartagnan.wmm.relation.RelationNameRepository.*;
           provided by the theory solver.
  */
 @Options
-public class ParallelRefinementThreadSolver extends ParallelThreadSolver {
+public class ParallelRefinementThreadSolver extends AbstractParallelThreadSolver {
 
     private final static Logger logger = LogManager.getLogger(ParallelRefinementThreadSolver.class);
 
@@ -98,7 +97,7 @@ public class ParallelRefinementThreadSolver extends ParallelThreadSolver {
 
         this.mainRefinementCollector = mainRefinementCollector;
 
-        this.refreshInterval = 5;
+        this.refreshInterval = parallelConfig.getClauseSharingInterval();
         this.myReasonsQueue = new ConcurrentLinkedQueue<Conjunction<CoreLiteral>>();
 
         this.mainCutRelations = cutRelations;

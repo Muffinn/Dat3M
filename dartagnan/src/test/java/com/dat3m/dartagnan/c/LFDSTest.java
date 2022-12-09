@@ -4,15 +4,10 @@ import com.dat3m.dartagnan.utils.Result;
 import com.dat3m.dartagnan.utils.rules.CSVLogger;
 import com.dat3m.dartagnan.utils.rules.Provider;
 import com.dat3m.dartagnan.verification.solving.AssumeSolver;
-import com.dat3m.dartagnan.verification.solving.ParallelAssumeSolver;
-import com.dat3m.dartagnan.verification.solving.QueueType;
 import com.dat3m.dartagnan.verification.solving.RefinementSolver;
 import com.dat3m.dartagnan.configuration.Arch;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.sosy_lab.common.configuration.Configuration;
-import org.sosy_lab.java_smt.SolverContextFactory;
 
 import java.io.IOException;
 import java.util.Arrays;

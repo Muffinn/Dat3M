@@ -40,9 +40,9 @@ import static com.dat3m.dartagnan.utils.Result.PASS;
           provided by the theory solver.
  */
 @Options
-public abstract class ParallelSolver extends ModelChecker {
+public abstract class AbstractParallelSolver extends ModelChecker {
 
-    protected static final Logger logger = LogManager.getLogger(ParallelSolver.class);
+    protected static final Logger logger = LogManager.getLogger(AbstractParallelSolver.class);
 
     protected final SolverContext mainCTX;
     protected final ProverEnvironment mainProver;
@@ -58,7 +58,7 @@ public abstract class ParallelSolver extends ModelChecker {
 
     protected final MainStatisticManager statisticManager;
 
-    public ParallelSolver(SolverContext c, ProverEnvironment p, VerificationTask t, ShutdownManager sdm, SolverContextFactory.Solvers solverType, Configuration solverConfig, ParallelSolverConfiguration parallelConfig)
+    public AbstractParallelSolver(SolverContext c, ProverEnvironment p, VerificationTask t, ShutdownManager sdm, SolverContextFactory.Solvers solverType, Configuration solverConfig, ParallelSolverConfiguration parallelConfig)
             throws InvalidConfigurationException{
         mainCTX = c;
         mainProver = p;
@@ -151,7 +151,7 @@ public abstract class ParallelSolver extends ModelChecker {
                         // TODO: kill all threads
                         sdm.requestShutdown("Done");
                         logger.info("Parallel calculations ended. Result: FAIL");
-                        statisticManager.printThreadStatistics();
+                        statisticManager.printStatistics();
                         res = resultCollector.getAggregatedResult();
                         return;
                     }
@@ -195,7 +195,7 @@ public abstract class ParallelSolver extends ModelChecker {
                     logger.info("Parallel calculations ended. Result: FAIL");
                     res = resultCollector.getAggregatedResult();
                     statisticManager.reportResult(res);
-                    statisticManager.printThreadStatistics();
+                    statisticManager.printStatistics();
 
                     return;
                 } else {
@@ -204,7 +204,7 @@ public abstract class ParallelSolver extends ModelChecker {
                         logger.info("Parallel calculations ended. Result: UNKNOWN/PASS");
                         res = resultCollector.getAggregatedResult();
                         statisticManager.reportResult(res);
-                        statisticManager.printThreadStatistics();
+                        statisticManager.printStatistics();
 
                         return;
                     }

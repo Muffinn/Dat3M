@@ -4,24 +4,20 @@ import com.dat3m.dartagnan.encoding.*;
 import com.dat3m.dartagnan.utils.Result;
 import com.dat3m.dartagnan.verification.Context;
 import com.dat3m.dartagnan.verification.VerificationTask;
-import com.dat3m.dartagnan.wmm.utils.Tuple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.sosy_lab.common.ShutdownManager;
 import org.sosy_lab.common.configuration.Configuration;
 import org.sosy_lab.common.configuration.InvalidConfigurationException;
-import org.sosy_lab.common.log.BasicLogManager;
 import org.sosy_lab.java_smt.SolverContextFactory;
 import org.sosy_lab.java_smt.api.*;
-
-import java.util.*;
 
 import static com.dat3m.dartagnan.utils.Result.FAIL;
 import static com.dat3m.dartagnan.utils.Result.PASS;
 import static java.util.Collections.singletonList;
 
 
-public class ParallelAssumeThreadSolver extends ParallelThreadSolver{
+public class ParallelAssumeThreadSolver extends AbstractParallelThreadSolver {
 
     private static final Logger logger = LogManager.getLogger(ParallelRefinementThreadSolver.class);
 

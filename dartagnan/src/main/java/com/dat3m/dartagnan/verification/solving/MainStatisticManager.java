@@ -36,9 +36,9 @@ public class MainStatisticManager {
     }
 
 
-    public void printThreadStatistics(){
+    public void printStatistics(){
         for(ThreadStatisticManager tSM: threadStatisticManagers){
-            tSM.print();
+            tSM.printThreadStatistics();
         }
         printLiteralStatistics();
         createReportFile();
@@ -125,6 +125,10 @@ public class MainStatisticManager {
         this.myResult = myResult;
     }
 
+    private long calcTotalTime(){
+        return (endTime - startTime);
+    }
+
     public void createReportFile(){
         if (!parallelConfig.isInitialisedFileReport()){
             return;
@@ -189,7 +193,9 @@ public class MainStatisticManager {
         sb.append("},");
 
 
-        sb.append("threadStats:,");
+        sb.append("timeStats:,");
+        sb.append(calcTotalTime());
+        sb.append(",");
         for(ThreadStatisticManager tsmtsmtsm : threadStatisticManagers) {
             sb.append(tsmtsmtsm.reportString());
             sb.append(",");

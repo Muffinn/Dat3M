@@ -1,4 +1,4 @@
-package com.dat3m.dartagnan.MATests;
+package com.dat3m.dartagnan.MATests.basicTests;
 
 import com.dat3m.dartagnan.c.AbstractCTest;
 import com.dat3m.dartagnan.configuration.Arch;
@@ -15,6 +15,7 @@ import org.sosy_lab.java_smt.SolverContextFactory;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.LinkedList;
 
 import static com.dat3m.dartagnan.configuration.Arch.*;
 import static com.dat3m.dartagnan.utils.ResourceHelper.TEST_RESOURCE_PATH;
@@ -22,13 +23,15 @@ import static com.dat3m.dartagnan.utils.Result.UNKNOWN;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(Parameterized.class)
-public class MyLFDSTestLarge extends AbstractCTest {
+public class NoSplittingWithSharingTest extends AbstractCTest {
 
     private String reportFileName;
+    private int nrThreads;
 
-    public MyLFDSTestLarge(String name, Arch target, Result expected, String reportFileName) {
+    public NoSplittingWithSharingTest(String name, Arch target, Result expected, String reportFileName, int nrThreads) {
         super(name, target, expected);
         this.reportFileName = reportFileName;
+        this.nrThreads = nrThreads;
     }
 
     @Override
@@ -47,20 +50,30 @@ public class MyLFDSTestLarge extends AbstractCTest {
 
 	@Parameterized.Parameters(name = "{index}: {0}, target={1}")
     public static Iterable<Object[]> data() throws IOException {
-		return Arrays.asList(new Object[][]{
-            //{"safe_stack-3", TSO, Result.FAIL},
-            //{"safe_stack-3", ARM8, Result.FAIL},
-            //{"safe_stack-3", C11, Result.FAIL},
-            {"dglm-3", TSO, UNKNOWN, "kaktus"},
-            {"dglm-3", ARM8, UNKNOWN, "kaktus"},
-            {"dglm-3", C11, UNKNOWN, "kaktus"},
-            //{"ms-3", TSO, UNKNOWN},
-            //{"ms-3", ARM8, UNKNOWN},
-            //{"ms-3", C11, UNKNOWN},
-            //{"treiber-3", TSO, UNKNOWN, "bamboo"},
-            //{"treiber-3", ARM8, UNKNOWN, "bamboo"},
-            //{"treiber-3", C11, UNKNOWN, "bamboo"},
-        });
+		Object[] jitDelete = new Object[]{"treiber-3", C11, UNKNOWN, "JIT_Delete", 1};
+        LinkedList<Object[]> objectList = new LinkedList<Object[]>();
+        objectList.add(jitDelete);
+        for(int i = 1; i < 6; i++){
+            for (int j = 0; j < 10; j++) {
+                Object[][] parameterArray = new Object[][]{
+                        //{"safe_stack-3", TSO, Result.FAIL},
+                        //{"safe_stack-3", ARM8, Result.FAIL},
+                        //{"safe_stack-3", C11, Result.FAIL},
+                        {"dglm-3", TSO, UNKNOWN, "noSplitting", i},
+                        {"dglm-3", ARM8, UNKNOWN, "noSplitting", i},
+                        {"dglm-3", C11, UNKNOWN, "noSplitting", i},
+                        {"ms-3", TSO, UNKNOWN, "noSplitting", i},
+                        {"ms-3", ARM8, UNKNOWN, "noSplitting", i},
+                        {"ms-3", C11, UNKNOWN, "noSplitting", i},
+                        {"treiber-3", TSO, UNKNOWN, "noSplitting", i},
+                        {"treiber-3", ARM8, UNKNOWN, "noSplitting", i},
+                        {"treiber-3", C11, UNKNOWN, "noSplitting", i},
+                };
+                objectList.addAll(Arrays.asList(parameterArray));
+            }
+
+        }
+        return objectList;
     }
 
 	//@Test
@@ -83,23 +96,22 @@ public class MyLFDSTestLarge extends AbstractCTest {
 	}
 
 
-    //@Test
+    @Test
     @CSVLogger.FileName("csv/parallelRefinement")
-    public void testParallelRefinement0() throws Exception {
-        int[] chosenIDs = {442, 678};
-        ParallelSolverConfiguration parallelConfig = ParallelSolverConfigurationFactory.basicEventConfig();
+    public void testParallelRefinement() throws Exception {
+        ParallelSolverConfiguration parallelConfig = ParallelSolverConfigurationFactory.noSplittingConfig(nrThreads);
+
         parallelConfig.initializeFileReport(reportFileName, target.toString(), name, "PR");
+
         ParallelRefinementSolver s = ParallelRefinementSolver.run(contextProvider.get(), proverProvider.get(),
                 taskProvider.get(), SolverContextFactory.Solvers.Z3, Configuration.defaultConfiguration(),
                 shutdownManagerProvider.get(), parallelConfig);
-
-                //SeedLeaderboard.Dglm3TsoLeaderboard(1));
         assertEquals(expected, s.getResult());
     }
 
 
-    @Test
-    @CSVLogger.FileName("csv/assume")
+    //@Test
+    //@CSVLogger.FileName("csv/assume")
     public void testParallelAssume() throws Exception {
 
         ParallelAssumeSolver s = ParallelAssumeSolver.run(contextProvider.get(), proverProvider.get(),

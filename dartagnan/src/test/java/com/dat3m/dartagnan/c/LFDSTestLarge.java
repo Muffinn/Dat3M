@@ -4,7 +4,6 @@ import com.dat3m.dartagnan.configuration.Arch;
 import com.dat3m.dartagnan.utils.Result;
 import com.dat3m.dartagnan.utils.rules.CSVLogger;
 import com.dat3m.dartagnan.utils.rules.Provider;
-import com.dat3m.dartagnan.utils.visualization.ExecutionGraphVisualizer;
 import com.dat3m.dartagnan.verification.model.ExecutionModel;
 import com.dat3m.dartagnan.verification.solving.*;
 import org.junit.Test;
@@ -13,11 +12,8 @@ import org.junit.runners.Parameterized;
 import org.sosy_lab.common.configuration.Configuration;
 import org.sosy_lab.java_smt.SolverContextFactory;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
 
 import static com.dat3m.dartagnan.configuration.Arch.*;
 import static com.dat3m.dartagnan.utils.ResourceHelper.TEST_RESOURCE_PATH;
