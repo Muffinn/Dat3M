@@ -32,6 +32,20 @@ public class ParallelSolverConfigurationFactory {
         ));
     }
 
+    public static ParallelSolverConfiguration scoredEventConfig() {
+        return  (new ParallelSolverConfiguration(
+                ParallelSolverConfiguration.SplittingStyle.BINARY_SPLITTING_STYLE,
+                2, 0, 4, ParallelSolverConfiguration.SplittingObjectType.BRANCH_EVENTS_SPLITTING_OBJECTS,
+                ParallelSolverConfiguration.SplittingObjectFilter.NO_SO_FILTER,
+                ParallelSolverConfiguration.SplittingObjectSelection.SCORE_SELECTION,
+                0, ParallelSolverConfiguration.StaticProgramAnalysis.BASELINE_SPA,
+                ParallelSolverConfiguration.FormulaGenerator.IN_SOLVER,
+                ParallelSolverConfiguration.ClauseSharingFilter.NO_CS_FILTER,
+                5,
+                ParallelSolverConfiguration.ClauseReceivingFilter.NO_CR_FILTER
+        ));
+    }
+
     public static ParallelSolverConfiguration chosenEventConfig(int[] chosenEvents){
         ParallelSolverConfiguration parallelConfig =  new ParallelSolverConfiguration(
                 ParallelSolverConfiguration.SplittingStyle.BINARY_SPLITTING_STYLE,

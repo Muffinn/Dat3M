@@ -216,6 +216,8 @@ public class ParallelSolverConfiguration {
 
     public void setSplittingStyle(SplittingStyle splittingStyle) {
         this.splittingStyle = splittingStyle;
+        this.numberOfSplits = calculateNrOfSplits();
+        this.formulaLength = calculateFormulaLength();
     }
 
     public void setSplittingObjectType(SplittingObjectType splittingObjectType) {
