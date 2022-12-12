@@ -148,14 +148,15 @@ public class ThreadStatisticManager {
 
     public String reportString(){
         if(!resultReported){
-            return "-1, -1, -1, -1, -1, -1";
+            return "-1, -1, -1, -1, -1, -1, -1";
         }
 
         String reportString;
 
         reportString = bitSetPair[0].toString().replaceAll(",", "")
                 + "," + bitSetPair[1].toString().replaceAll(",", "")
-                + "," + calculateTotalTime()
+                + "," + startTime
+                + "," + endTime
                 + "," + totalSolverTime
                 + "," + totalWMMSolverTime
                 + "," + totalCAATSolverTime

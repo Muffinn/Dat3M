@@ -194,7 +194,9 @@ public class MainStatisticManager {
 
 
         sb.append("timeStats:,");
-        sb.append(calcTotalTime());
+        sb.append(startTime);
+        sb.append(",");
+        sb.append(endTime);
         sb.append(",");
         for(ThreadStatisticManager tsmtsmtsm : threadStatisticManagers) {
             sb.append(tsmtsmtsm.reportString());
