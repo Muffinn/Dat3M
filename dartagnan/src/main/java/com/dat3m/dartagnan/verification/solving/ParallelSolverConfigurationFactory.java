@@ -72,7 +72,7 @@ public class ParallelSolverConfigurationFactory {
                 ParallelSolverConfiguration.SplittingObjectSelection.NO_SELECTION,
                 0L,
                 ParallelSolverConfiguration.StaticProgramAnalysis.BASELINE_SPA,
-                ParallelSolverConfiguration.FormulaGenerator.DEPRECATED,
+                ParallelSolverConfiguration.FormulaGenerator.DEPRECATED,  //TODO implement in Solver generation of empty Formulas and get rid of this option
                 ParallelSolverConfiguration.ClauseSharingFilter.NO_CS_FILTER,
                 5,
                 ParallelSolverConfiguration.ClauseReceivingFilter.NO_CR_FILTER
