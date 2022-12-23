@@ -67,6 +67,7 @@ public class ParallelRefinementCollector {
         synchronized (reasonQueueList){
             reasonQueueListLocal = List.copyOf(reasonQueueList);
         }
+        int filterCount = 0;
         long timeBefore = System.currentTimeMillis();
         for(Conjunction<CoreLiteral> cube : reason.getCubes()){
             if(!isFiltered(cube, myQueue)){
@@ -77,10 +78,13 @@ public class ParallelRefinementCollector {
                     }
                 }
 
+            } else {
+                filterCount++;
             }
         }
         long timeAfter = System.currentTimeMillis();
         statManager.addClauseSharingFilterTime(timeAfter - timeBefore);
+        statManager.clauseSharingCountInc(filterCount);
 
     }
 

@@ -160,6 +160,12 @@ public class ThreadStatisticManager {
                 + "," + totalSolverTime
                 + "," + totalWMMSolverTime
                 + "," + totalCAATSolverTime
+                + "," + clauseSharingTime
+                + "," + clauseSharingFilterCount
+                + "," + clauseSharingFilterTime
+                + "," + clauseReceivingTime
+                + "," + clauseReceivingFilterCount
+                + "," + clauseReceivingFilterTime
         ;
 
     return reportString;

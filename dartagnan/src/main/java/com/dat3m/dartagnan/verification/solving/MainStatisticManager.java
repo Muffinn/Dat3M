@@ -21,6 +21,7 @@ public class MainStatisticManager {
     private long endTime = -1;
 
 
+
     public MainStatisticManager(int numberOfSplits, ParallelSolverConfiguration parallelConfig, SplittingManager splittingManager){
         threadStatisticManagers = new ThreadStatisticManager[numberOfSplits];
         this.parallelConfig = parallelConfig;
@@ -125,6 +126,7 @@ public class MainStatisticManager {
         this.myResult = myResult;
     }
 
+
     private long calcTotalTime(){
         return (endTime - startTime);
     }
@@ -177,9 +179,9 @@ public class MainStatisticManager {
 
                 for (int i = 0; i < formulaLength; i++){
                     sb.append("[");
-                    sb.append(tupleList.get(i).getFirst());
+                    sb.append(tupleList.get(i).getFirst().getCId());
                     sb.append(" ");
-                    sb.append(tupleList.get(i).getSecond());
+                    sb.append(tupleList.get(i).getSecond().getCId());
                     sb.append("]");
                 }
                 break;
@@ -191,7 +193,8 @@ public class MainStatisticManager {
                 throw(new Error("Unreachable code reached in MainStatisticManager::calculateLiteralStatistics()"));
         }
         sb.append("},");
-
+        sb.append(spmgr.getFilteredLiterals());
+        sb.append(",");
 
         sb.append("timeStats:,");
         sb.append(startTime);

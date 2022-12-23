@@ -570,6 +570,7 @@ public class ParallelRefinementThreadSolver extends AbstractParallelThreadSolver
     private void addForeignReasons(Refiner refiner, ExecutionAnalysis exec)
             throws InterruptedException{
         long timeBefore = System.currentTimeMillis();
+        int filterCount = 0;
         if(myReasonsQueue.isEmpty()){return;}
         Conjunction<CoreLiteral> reason = myReasonsQueue.poll();
         while (reason != null) {
@@ -580,16 +581,22 @@ public class ParallelRefinementThreadSolver extends AbstractParallelThreadSolver
                 case IMPLIES_CR_FILTER:
                     if(imp_CR_filter(exec, reason)){
                         myProver.addConstraint(refiner.refineConjunction(reason, context));
+                    }else{
+                        filterCount++;
                     }
                     break;
                 case IMP_AND_ME_CR_FILTER:
                     if(imp_me_CR_filter(exec, reason)){
                         myProver.addConstraint(refiner.refineConjunction(reason, context));
+                    }else{
+                        filterCount++;
                     }
                     break;
                 case MUTUALLY_EXCLUSIVE_CR_FILTER:
                     if(me_CR_filter(exec, reason)){
                         myProver.addConstraint(refiner.refineConjunction(reason, context));
+                    }else{
+                        filterCount++;
                     }
                     break;
                 default:
@@ -599,6 +606,7 @@ public class ParallelRefinementThreadSolver extends AbstractParallelThreadSolver
         }
         long timeAfter = System.currentTimeMillis();
         myStatisticManager.addClauseReceivingFilterTime(timeAfter - timeBefore);
+        myStatisticManager.clauseReceivingCountInc(filterCount);
         //logger.info("Thread " + myThreadID + ": " + total + " reasons");
         //logger.info("Thread " + myThreadID + ": " + added + " added reasons");
         //logger.info("Thread " + myThreadID + ": " + (total - added) + " filtered reasons");

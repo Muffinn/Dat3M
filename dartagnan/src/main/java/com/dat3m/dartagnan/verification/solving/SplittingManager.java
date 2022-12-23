@@ -11,6 +11,7 @@ import com.dat3m.dartagnan.wmm.analysis.RelationAnalysis;
 import com.dat3m.dartagnan.wmm.relation.RelationNameRepository;
 import com.dat3m.dartagnan.wmm.utils.Tuple;
 import com.dat3m.dartagnan.wmm.utils.TupleSet;
+import java_cup.Main;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.sosy_lab.common.configuration.InvalidConfigurationException;
@@ -34,9 +35,10 @@ public class SplittingManager {
     //private BooleanFormulaManager bmgr;
     //private VerificationTask task;
     //private Context analysisContext;
-
     private String relationName;
     private final ParallelSolverConfiguration parallelConfig;
+
+    private int filteredLiterals = 0;
 
     public SplittingManager(ParallelSolverConfiguration parallelConfig)
             throws InvalidConfigurationException{
@@ -563,6 +565,7 @@ public class SplittingManager {
                 foundItems++;
             }
         }
+        filteredLiterals += filteredEvents.size();
         eventList.removeAll(filteredEvents);
         logger.info("Filtered Events: " + filteredEvents);
     }
@@ -575,7 +578,7 @@ public class SplittingManager {
         while (foundItems < formulaLength && i < eventList.size()){
             boolean isImplied = false;
             for (int j = 0; (j < i) && (!isImplied); j++){
-                isImplied = isEventImplied(eventList.get(j), eventList.get(i), analysisContext);
+                isImplied = isEventImplied(eventList.get(j), eventList.get(i), analysisContext)|| isEventImplied(eventList.get(i), eventList.get(j), analysisContext);
             }
             if(isImplied){
                 filteredEvents.add(this.eventList.get(i));
@@ -593,6 +596,7 @@ public class SplittingManager {
                 foundItems++;
             }
         }
+        filteredLiterals += filteredEvents.size();
         eventList.removeAll(filteredEvents);
         logger.info("Filtered Events: " + filteredEvents);
     }
@@ -605,7 +609,7 @@ public class SplittingManager {
         while (foundItems < formulaLength && i < eventList.size()){
             boolean isMEorImplied = false;
             for (int j = 0; (j < i) && (!isMEorImplied); j++){
-                isMEorImplied = isEventImplied(eventList.get(j), eventList.get(i), analysisContext) || areEventsMutuallyExclusive(eventList.get(i), eventList.get(j), analysisContext);
+                isMEorImplied = isEventImplied(eventList.get(j), eventList.get(i), analysisContext)|| isEventImplied(eventList.get(i), eventList.get(j), analysisContext) || areEventsMutuallyExclusive(eventList.get(i), eventList.get(j), analysisContext);
             }
             if(isMEorImplied){
                 filteredEvents.add(this.eventList.get(i));
@@ -623,6 +627,7 @@ public class SplittingManager {
                 foundItems++;
             }
         }
+        filteredLiterals += filteredEvents.size();
         eventList.removeAll(filteredEvents);
         logger.info("Filtered Events: " + filteredEvents);
 
@@ -694,135 +699,7 @@ public class SplittingManager {
         return false;
     }
 
-
-
-    /*public void relationTuplesMutuallyExlusive(int maxLength, int maxTrue, List<Tuple> tupleList, String relationName){
-        removeMutualExclusiveTuples(tupleList, maxLength);
-        int newMaxLength = Math.min(tupleList.size(), maxLength);
-        int newMaxTrue = Math.min(maxTrue, newMaxLength);
-        relationTuples(newMaxLength, newMaxTrue, tupleList, relationName);
-    }*/
-
-    /*public void relationTuples(int maxLength, int maxTrue, List<Tuple> tupleList, String relationName)
-        throws IllegalArgumentException{
-        if(maxLength > tupleList.size()){
-            throw new IllegalArgumentException("Tuplelist of size " + tupleList.size() + " contains to few items to fill Formula of size " + maxLength);
-        }
-        BooleanFormula newFormula = bmgr.makeTrue();
-
-        recursiveRelationTuples(newFormula,0, maxLength, 0, maxTrue, tupleList, relationName);
-
-    }*/
-
-    /*private void recursiveRelationTuples(BooleanFormula currentFormula, int length, int maxLength, int anzTrue, int maxTrue, List<Tuple> tupleList, String relationName){
-
-        BooleanFormula var = task.getMemoryModel().getRelation(relationName).getSMTVar(tupleList.get(length), encodingctx);
-        BooleanFormula notVar = bmgr.not(var);
-        var = bmgr.and(var, currentFormula);
-        notVar = bmgr.and(notVar, currentFormula);
-
-
-        if(!(anzTrue + 1 == maxTrue || length + 1 == maxLength)){
-            recursiveRelationTuples(notVar, length + 1, maxLength, anzTrue, maxTrue, tupleList, relationName);
-            recursiveRelationTuples(var, length + 1, maxLength,anzTrue + 1, maxTrue, tupleList, relationName);
-        } else {
-            oldAddFormula(notVar);
-            //System.out.println("Added Formula: " + notVar);
-            //System.out.println("Length: " + (length + 1) + " AnzTrue: " + anzTrue);
-            oldAddFormula(var);
-            //.out.println("Added Formula: " + var);
-            //System.out.println("Length: " + (length + 1) + " AnzTrue: " + (anzTrue + 1));
-        }
-    }*/
-
-    /*public void createTrues(int numberOfTrues){
-        for (int i = 0; i < numberOfTrues; i++){
-            oldAddFormula(bmgr.makeTrue());
-        }
-    }*/
-
-    /*public void mutuallyExclusiveEventsQueue(int maxLength, int maxTrue, List<Event> eventList){
-        removeMutualExclusiveEvents(eventList, maxLength);
-        int newMaxLength = Math.min(eventList.size(), maxLength);
-        int newMaxTrue = Math.min(maxTrue, newMaxLength);
-        eventsQueue(newMaxLength, newMaxTrue, eventList);
-    }*/
-
-    /*public void eventsQueue(int maxLength, int maxTrue, List<Event> eventList)
-        throws IllegalArgumentException{
-            if(maxLength > eventList.size()){
-                throw new IllegalArgumentException("Eventlist of size " + eventList.size() + " contains to few items to fill Formula of size " + maxLength);
-            }
-            BooleanFormula newFormula = bmgr.makeTrue();
-
-            recursiveEventsQueue(newFormula, 0, maxLength, 0, maxTrue, eventList);
-    }*/
-
-    /*private void recursiveEventsQueue(BooleanFormula currentFormula, int length, int maxLength, int anzTrue, int maxTrue, List<Event> eventList){
-
-        BooleanFormula var = eventList.get(length).exec(); //encodingContext.exec(evebtList.get(length));
-        BooleanFormula notVar = bmgr.not(var);
-        var = bmgr.and(var, currentFormula);
-        notVar = bmgr.and(notVar, currentFormula);
-
-
-        if(!(anzTrue + 1 == maxTrue || length + 1 == maxLength)){
-            recursiveEventsQueue(notVar, length + 1, maxLength, anzTrue, maxTrue, eventList);
-            recursiveEventsQueue(var, length + 1, maxLength,anzTrue + 1, maxTrue, eventList);
-        } else {
-            oldAddFormula(notVar);
-            System.out.println("Added Formula: " + notVar);
-            //System.out.println("Length: " + (length + 1) + " AnzTrue: " + anzTrue);
-            oldAddFormula(var);
-            System.out.println("Added Formula: " + var);
-            //System.out.println("Length: " + (length + 1) + " AnzTrue: " + (anzTrue + 1));
-        }
-    }*/
-
-
-    /*private void removeMutualExclusiveEvents(List<Event> eventList, int numberOfWantedEvents){
-        ExecutionAnalysis exec = analysisContext.get(ExecutionAnalysis.class);
-        for(int i = 1; i < eventList.size(); i++){
-            for(int j = 0; j < i; j++){
-                if(exec.areMutuallyExclusive(eventList.get(i), eventList.get(j))){
-                    System.out.println("Tuple " + eventList.get(j) + " is mutually exclusive to Tuple " + eventList.get(i));
-                    eventList.remove(i);
-                    i--;
-                }
-
-            }
-            if(i == numberOfWantedEvents){
-                return;
-            }
-        }
-        System.out.println("I searched for " + numberOfWantedEvents + " Tuples, but only found " + eventList.size() + ".");
-
+    public int getFilteredLiterals() {
+        return filteredLiterals;
     }
-
-
-    private void removeMutualExclusiveTuples(List<Tuple> tupleList, int numberOfWantedTuples){
-        for(int i = 1; i < tupleList.size(); i++){
-            for(int j = 0; j < i; j++){
-                if(areMutuallyExclusive(tupleList.get(i), tupleList.get(j))){
-                    System.out.println("Tuple " + tupleList.get(j) + " is mutually exclusive to Tuple " + tupleList.get(i));
-                    tupleList.remove(i);
-                    i--;
-                }
-
-            }
-            if(i == numberOfWantedTuples){
-                return;
-            }
-        }
-        System.out.println("I searched for " + numberOfWantedTuples + " Tuples, but only found " + tupleList.size() + ".");
-
-    }
-
-    private boolean areMutuallyExclusive(Tuple firstTuple, Tuple secondTuple){
-        ExecutionAnalysis exec = analysisContext.get(ExecutionAnalysis.class);
-        return exec.areMutuallyExclusive(firstTuple.getFirst(), secondTuple.getFirst())
-                || exec.areMutuallyExclusive(firstTuple.getFirst(), secondTuple.getSecond())
-                || exec.areMutuallyExclusive(firstTuple.getSecond(), secondTuple.getFirst())
-                || exec.areMutuallyExclusive(firstTuple.getSecond(), secondTuple.getSecond());
-    }*/
 }

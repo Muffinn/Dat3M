@@ -62,6 +62,64 @@ public class ParallelSolverConfigurationFactory {
         return parallelConfig;
     }
 
+    public static ParallelSolverConfiguration randomCOTupleConfig(){
+        return new ParallelSolverConfiguration(
+                ParallelSolverConfiguration.SplittingStyle.BINARY_SPLITTING_STYLE,
+                4, 1, 4, ParallelSolverConfiguration.SplittingObjectType.CO_RELATION_SPLITTING_OBJECTS,
+                ParallelSolverConfiguration.SplittingObjectFilter.NO_SO_FILTER,
+                ParallelSolverConfiguration.SplittingObjectSelection.RANDOM_SELECTION,
+                -861449674903621944L, ParallelSolverConfiguration.StaticProgramAnalysis.BASELINE_SPA,
+                ParallelSolverConfiguration.FormulaGenerator.IN_SOLVER,
+                ParallelSolverConfiguration.ClauseSharingFilter.NO_CS_FILTER,
+                5,
+                ParallelSolverConfiguration.ClauseReceivingFilter.NO_CR_FILTER
+        );
+    }
+
+    public static ParallelSolverConfiguration seededCOTupleConfig(long seed){
+        return new ParallelSolverConfiguration(
+                ParallelSolverConfiguration.SplittingStyle.BINARY_SPLITTING_STYLE,
+                4, 1, 4, ParallelSolverConfiguration.SplittingObjectType.CO_RELATION_SPLITTING_OBJECTS,
+                ParallelSolverConfiguration.SplittingObjectFilter.NO_SO_FILTER,
+                ParallelSolverConfiguration.SplittingObjectSelection.SEEDED_RANDOM_SELECTION,
+                seed, ParallelSolverConfiguration.StaticProgramAnalysis.BASELINE_SPA,
+                ParallelSolverConfiguration.FormulaGenerator.IN_SOLVER,
+                ParallelSolverConfiguration.ClauseSharingFilter.NO_CS_FILTER,
+                5,
+                ParallelSolverConfiguration.ClauseReceivingFilter.NO_CR_FILTER
+        );
+    }
+
+    public static ParallelSolverConfiguration randomRFTupleConfig(){
+        return new ParallelSolverConfiguration(
+                ParallelSolverConfiguration.SplittingStyle.BINARY_SPLITTING_STYLE,
+                4, 1, 4, ParallelSolverConfiguration.SplittingObjectType.RF_RELATION_SPLITTING_OBJECTS,
+                ParallelSolverConfiguration.SplittingObjectFilter.NO_SO_FILTER,
+                ParallelSolverConfiguration.SplittingObjectSelection.RANDOM_SELECTION,
+                -861449674903621944L, ParallelSolverConfiguration.StaticProgramAnalysis.BASELINE_SPA,
+                ParallelSolverConfiguration.FormulaGenerator.IN_SOLVER,
+                ParallelSolverConfiguration.ClauseSharingFilter.NO_CS_FILTER,
+                5,
+                ParallelSolverConfiguration.ClauseReceivingFilter.NO_CR_FILTER
+        );
+    }
+
+    public static ParallelSolverConfiguration seededRFTupleConfig(long seed){
+        return new ParallelSolverConfiguration(
+                ParallelSolverConfiguration.SplittingStyle.BINARY_SPLITTING_STYLE,
+                4, 1, 4, ParallelSolverConfiguration.SplittingObjectType.RF_RELATION_SPLITTING_OBJECTS,
+                ParallelSolverConfiguration.SplittingObjectFilter.NO_SO_FILTER,
+                ParallelSolverConfiguration.SplittingObjectSelection.SEEDED_RANDOM_SELECTION,
+                seed, ParallelSolverConfiguration.StaticProgramAnalysis.BASELINE_SPA,
+                ParallelSolverConfiguration.FormulaGenerator.IN_SOLVER,
+                ParallelSolverConfiguration.ClauseSharingFilter.NO_CS_FILTER,
+                5,
+                ParallelSolverConfiguration.ClauseReceivingFilter.NO_CR_FILTER
+        );
+    }
+
+
+
     public static ParallelSolverConfiguration noSplittingConfig(int numberOfSplits){
         return new ParallelSolverConfiguration(ParallelSolverConfiguration.SplittingStyle.NO_SPLITTING_STYLE,
                 numberOfSplits,
@@ -73,7 +131,7 @@ public class ParallelSolverConfigurationFactory {
                 0L,
                 ParallelSolverConfiguration.StaticProgramAnalysis.BASELINE_SPA,
                 ParallelSolverConfiguration.FormulaGenerator.DEPRECATED,  //TODO implement in Solver generation of empty Formulas and get rid of this option
-                ParallelSolverConfiguration.ClauseSharingFilter.NO_CS_FILTER,
+                ParallelSolverConfiguration.ClauseSharingFilter.NO_CLAUSE_SHARING,
                 5,
                 ParallelSolverConfiguration.ClauseReceivingFilter.NO_CR_FILTER
         );

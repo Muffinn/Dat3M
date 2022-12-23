@@ -99,7 +99,7 @@ public abstract class AbstractParallelSolver extends ModelChecker {
                 List<Tuple> tupleListCO = new ArrayList<>(coEncodeSet);
                 spmgr.setTupleList(tupleListCO);
                 spmgr.orderTuples();
-                spmgr.filterTuples(analysisContext);
+                spmgr.filterTuples(context.getAnalysisContext());
                 break;
             case RF_RELATION_SPLITTING_OBJECTS:
                 String relationRFName = RelationNameRepository.RF;
@@ -111,7 +111,7 @@ public abstract class AbstractParallelSolver extends ModelChecker {
                 List<Tuple> tupleListRF = new ArrayList<>(rfEncodeSet);
                 spmgr.setTupleList(tupleListRF);
                 spmgr.orderTuples();
-                spmgr.filterTuples(analysisContext);
+                spmgr.filterTuples(context.getAnalysisContext());
                 break;
             case BRANCH_EVENTS_SPLITTING_OBJECTS:
                 BranchEquivalence branchEquivalence = context.getAnalysisContext().get(BranchEquivalence.class);
@@ -119,13 +119,13 @@ public abstract class AbstractParallelSolver extends ModelChecker {
                 List<Event> branchEventList = branchEquivalence.getAllEquivalenceClasses().stream().filter(c -> c!=initialClass).map(c -> c.getRepresentative()).collect(Collectors.toList());
                 spmgr.setEventList(branchEventList);
                 spmgr.orderEvents(context.getAnalysisContext(), myTask);
-                spmgr.filterEvents(analysisContext);
+                spmgr.filterEvents(context.getAnalysisContext());
                 break;
             case ALL_EVENTS_SPLITTING_OBJECTS:
                 List<Event> allEventList = myTask.getProgram().getEvents();
                 spmgr.setEventList(allEventList);
                 spmgr.orderEvents(context.getAnalysisContext(), myTask);
-                spmgr.filterEvents(analysisContext);
+                spmgr.filterEvents(context.getAnalysisContext());
                 break;
             case NO_SPLITTING_OBJECTS:
                 break;
